@@ -5,6 +5,8 @@ use std::collections::HashMap;
 pub enum CacheError {
     CapacityExceeded,
     KeyNotFound,
+    KeyTooLong,
+    ValueTooLong,
 }
 
 pub type CacheResult<T> = Result<T, CacheError>;
@@ -43,21 +45,44 @@ impl Value {
 
 pub struct Cache {
     capacity: u64,
-//    key_maxlen: u64,
-//    value_maxlen: u64,
+    key_maxlen: u64,
+    value_maxlen: u64,
     storage: HashMap<Key, Value>,
 }
 
 impl Cache {
-    fn new(capacity: u64) -> Cache {
+    fn new(capacity: u64, key_maxlen: u64, value_maxlen: u64) -> Cache {
         Cache {
             capacity: capacity,
+            key_maxlen: key_maxlen,
+            value_maxlen: value_maxlen,
             storage: HashMap::new(),
         }
     }
 
+    fn with_defaults(capacity: u64) -> Cache {
+        Cache::new(
+            capacity,
+            1024, // key_maxlen = 1kb
+            1048576 // value_maxlen = 1mb
+            )
+    }
+
+
+    fn check_key_len(&self, key: &Key) -> bool {
+        key.len() as u64 <= self.key_maxlen
+    }
+
+    fn check_value_len(&self, value: &Value) -> bool {
+        value.len() as u64 <= self.value_maxlen
+    }
+
+
     fn get(&self, key: Key) -> CacheResult<&Value> {
-        // check key size
+        // Check key size
+        if (!self.check_key_len(&key)) {
+            return Err(CacheError::KeyTooLong);
+        }
 
         match self.storage.get(&key) {
             Some(value) => Ok(value),
@@ -66,7 +91,13 @@ impl Cache {
     }
 
     fn set(&mut self, key: Key, value: Value) -> CacheResult<()> {
-        // check key & value sizes
+        // Check key & value sizes
+        if (!self.check_key_len(&key)) {
+            return Err(CacheError::KeyTooLong);
+        }
+        if (!self.check_value_len(&value)) {
+            return Err(CacheError::ValueTooLong);
+        }
 
         // Check capacity if adding new key
         if (!self.storage.contains_key(&key)) {
@@ -100,7 +131,7 @@ mod tests {
 
     #[test]
     fn test_set_one_key() {
-        let mut cache = Cache::new(1);
+        let mut cache = Cache::with_defaults(1);
 
         let key = Key::new(vec![1, 2, 3]);
         let value = Value::new(vec![4, 5, 6]);
@@ -113,7 +144,7 @@ mod tests {
 
     #[test]
     fn test_key_not_found() {
-        let mut cache = Cache::new(1);
+        let mut cache = Cache::with_defaults(1);
 
         // Retrieve a different key to the one set
         cache.set(Key::new(vec![1]), Value::new(vec![9]));
@@ -124,19 +155,35 @@ mod tests {
 
     #[test]
     fn test_store_beyond_capacity() {
-        let mut cache = Cache::new(1);
+        let mut cache = Cache::with_defaults(1);
 
-        // we reached capacity
+        // we've now reached capacity
         let rv = cache.set(Key::new(vec![1]), Value::new(vec![9]));
         assert!(rv.is_ok());
 
-        // overwrite is ok
+        // overwriting is ok
         let rv = cache.set(Key::new(vec![1]), Value::new(vec![9]));
         assert!(rv.is_ok());
 
-        // cannot store a new key
+        // but we cannot store a new key
         let rv = cache.set(Key::new(vec![2]), Value::new(vec![9]));
         assert_rv_eq(rv, CacheError::CapacityExceeded);
     }
 
+    #[test]
+    fn test_exceed_item_size_limits() {
+        let mut cache = Cache::new(1, 1, 1);
+
+        // use a key that is too long
+        let rv = cache.set(Key::new(vec![1, 2]), Value::new(vec![9]));
+        assert_rv_eq(rv, CacheError::KeyTooLong);
+
+        // use a value that is too long
+        let rv = cache.set(Key::new(vec![1]), Value::new(vec![9, 8]));
+        assert_rv_eq(rv, CacheError::ValueTooLong);
+
+        // use a key that is too long
+        let rv = cache.get(Key::new(vec![1, 2]));
+        assert_rv_eq(rv, CacheError::KeyTooLong);
+    }
 }
