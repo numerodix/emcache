@@ -40,8 +40,8 @@ mod tests {
     fn test_set_one_key() {
         let mut cache = Cache::new(1);
 
-        let key = "name".to_string().into_bytes();
-        let value = "jimmy".to_string().into_bytes();
+        let key = [1, 2, 3];
+        let value = [4, 5, 6];
 
         cache.set(key.clone(), value.clone());
         let value_found = cache.get(key).unwrap();
