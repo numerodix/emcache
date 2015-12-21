@@ -78,6 +78,15 @@ impl Cache {
     }
 
 
+    fn contains_key(&self, key: Key) -> CacheResult<bool> {
+        // Check key size
+        if (!self.check_key_len(&key)) {
+            return Err(CacheError::KeyTooLong);
+        }
+
+        Ok(self.storage.contains_key(&key))
+    }
+
     fn get(&self, key: Key) -> CacheResult<&Value> {
         // Check key size
         if (!self.check_key_len(&key)) {
@@ -136,7 +145,18 @@ mod tests {
         let key = Key::new(vec![1, 2, 3]);
         let value = Value::new(vec![4, 5, 6]);
 
+        // First set it
         cache.set(key.clone(), value.clone());
+
+        // Then test for it
+        let rv = cache.contains_key(key.clone());
+        assert_eq!(rv.unwrap(), true);
+
+        // Test for a key that was not set
+        let rv = cache.contains_key(Key::new(vec![9, 8]));
+        assert_eq!(rv.unwrap(), false);
+
+        // Now fetch it
         let value_found = cache.get(key).unwrap();
 
         assert_eq!(&value, value_found);
@@ -174,16 +194,20 @@ mod tests {
     fn test_exceed_item_size_limits() {
         let mut cache = Cache::new(1, 1, 1);
 
-        // use a key that is too long
+        // set: use a key that is too long
         let rv = cache.set(Key::new(vec![1, 2]), Value::new(vec![9]));
         assert_rv_eq(rv, CacheError::KeyTooLong);
 
-        // use a value that is too long
+        // set: use a value that is too long
         let rv = cache.set(Key::new(vec![1]), Value::new(vec![9, 8]));
         assert_rv_eq(rv, CacheError::ValueTooLong);
 
-        // use a key that is too long
+        // get: use a key that is too long
         let rv = cache.get(Key::new(vec![1, 2]));
+        assert_rv_eq(rv, CacheError::KeyTooLong);
+
+        // contains_key: use a key that is too long
+        let rv = cache.contains_key(Key::new(vec![1, 2]));
         assert_rv_eq(rv, CacheError::KeyTooLong);
     }
 }
