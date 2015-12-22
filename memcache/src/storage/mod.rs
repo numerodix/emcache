@@ -7,7 +7,9 @@ pub mod key;
 pub mod typedefs;
 pub mod value;
 
-mod tests;  // needed for visibility inside our module only
+// internal stuff
+mod tests;  // needed to be part of the compilation unit in test mode
+mod utils;
 
 
 // Export our public api

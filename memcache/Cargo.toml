@@ -2,3 +2,6 @@
 name = "memcache"
 version = "0.1.0"
 authors = ["Martin Matusiak"]
+
+[dependencies]
+time = "0.1"

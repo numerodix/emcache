@@ -88,8 +88,10 @@ fn test_exceed_item_size_limits() {
     assert_rv_eq(rv, CacheError::ValueTooLong);
 
     // get: use a key that is too long
-    let rv = cache.get(&key!(1, 2));
-    assert_rv_eq(rv, CacheError::KeyTooLong);
+    { // borrowing cache  // XXX
+        let rv = cache.get(&key!(1, 2));
+        assert_rv_eq(rv, CacheError::KeyTooLong);
+    }
 
     // contains_key: use a key that is too long
     let rv = cache.contains_key(&key!(1, 2));
