@@ -90,22 +90,22 @@ impl Cache {
     }
 
 
-    fn contains_key(&self, key: Key) -> CacheResult<bool> {
+    fn contains_key(&self, key: &Key) -> CacheResult<bool> {
         // Check key size
-        if (!self.check_key_len(&key)) {
+        if (!self.check_key_len(key)) {
             return Err(CacheError::KeyTooLong);
         }
 
-        Ok(self.storage.contains_key(&key))
+        Ok(self.storage.contains_key(key))
     }
 
-    fn get(&self, key: Key) -> CacheResult<&Value> {
+    fn get(&self, key: &Key) -> CacheResult<&Value> {
         // Check key size
-        if (!self.check_key_len(&key)) {
+        if (!self.check_key_len(key)) {
             return Err(CacheError::KeyTooLong);
         }
 
-        match self.storage.get(&key) {
+        match self.storage.get(key) {
             Some(value) => Ok(value),
             None => Err(CacheError::KeyNotFound),
         }
@@ -161,15 +161,15 @@ mod tests {
         cache.set(key.clone(), value.clone());
 
         // Then test for it
-        let rv = cache.contains_key(key.clone());
+        let rv = cache.contains_key(&key);
         assert_eq!(rv.unwrap(), true);
 
         // Test for a key that was not set
-        let rv = cache.contains_key(Key::arr(&[9, 8]));
+        let rv = cache.contains_key(&Key::arr(&[9, 8]));
         assert_eq!(rv.unwrap(), false);
 
         // Now fetch it
-        let value_found = cache.get(key).unwrap();
+        let value_found = cache.get(&key).unwrap();
 
         assert_eq!(value, *value_found);
     }
@@ -180,7 +180,7 @@ mod tests {
 
         // Retrieve a different key to the one set
         cache.set(Key::arr(&[1]), Value::arr(&[9]));
-        let rv = cache.get(Key::arr(&[2]));
+        let rv = cache.get(&Key::arr(&[2]));
 
         assert_rv_eq(rv, CacheError::KeyNotFound);
     }
@@ -215,11 +215,11 @@ mod tests {
         assert_rv_eq(rv, CacheError::ValueTooLong);
 
         // get: use a key that is too long
-        let rv = cache.get(Key::arr(&[1, 2]));
+        let rv = cache.get(&Key::arr(&[1, 2]));
         assert_rv_eq(rv, CacheError::KeyTooLong);
 
         // contains_key: use a key that is too long
-        let rv = cache.contains_key(Key::arr(&[1, 2]));
+        let rv = cache.contains_key(&Key::arr(&[1, 2]));
         assert_rv_eq(rv, CacheError::KeyTooLong);
     }
 }
