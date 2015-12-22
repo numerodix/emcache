@@ -13,7 +13,9 @@ fn assert_rv_eq<T>(rv: CacheResult<T>, err: CacheError) {
     // Now check if the error constructor is the right one
     match rv {
         Ok(_) => (),
-        Err(e) => { assert_eq!(e, err); }
+        Err(e) => {
+            assert_eq!(e, err);
+        }
     };
 }
 

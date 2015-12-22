@@ -31,7 +31,7 @@ impl Cache {
 
     pub fn with_defaults(capacity: u64) -> Cache {
         Cache::new(capacity,
-                   -1,  // item_lifetime = -1 (unlimited)
+                   -1, // item_lifetime = -1 (unlimited)
                    250, // key_maxlen = 250b
                    1048576 /* value_maxlen = 1mb */)
     }
