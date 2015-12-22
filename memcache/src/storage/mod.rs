@@ -1,18 +1,25 @@
 // declare sub modules
+pub mod macros;  // must be listed first since macros are order dependent
+
 pub mod cache;
 pub mod errors;
 pub mod key;
 pub mod typedefs;
 pub mod value;
 
+// public api
+pub use self::cache::Cache;
+pub use self::key::Key;
+pub use self::value::Value;
+
 
 #[cfg(test)]
 mod tests {
     use super::cache::Cache;
     use super::errors::CacheError;
-    use super::key::*;
+    use super::key::Key;
     use super::typedefs::CacheResult;
-    use super::value::*;
+    use super::value::Value;
 
 
     // helper func since assert_eq!(rv.unwrap(), err) does not work
