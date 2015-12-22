@@ -8,15 +8,21 @@ use super::value::Value;
 
 pub struct Cache {
     capacity: u64,
+    item_lifetime: i64,
     key_maxlen: u64,
     value_maxlen: u64,
     storage: HashMap<Key, Value>,
 }
 
 impl Cache {
-    pub fn new(capacity: u64, key_maxlen: u64, value_maxlen: u64) -> Cache {
+    pub fn new(capacity: u64,
+               item_lifetime: i64,
+               key_maxlen: u64,
+               value_maxlen: u64)
+               -> Cache {
         Cache {
             capacity: capacity,
+            item_lifetime: item_lifetime,
             key_maxlen: key_maxlen,
             value_maxlen: value_maxlen,
             storage: HashMap::new(),
@@ -24,11 +30,10 @@ impl Cache {
     }
 
     pub fn with_defaults(capacity: u64) -> Cache {
-        Cache::new(
-            capacity,
-            1024, // key_maxlen = 1kb
-            1048576 // value_maxlen = 1mb
-            )
+        Cache::new(capacity,
+                   -1,  // item_lifetime = -1 (unlimited)
+                   250, // key_maxlen = 250b
+                   1048576 /* value_maxlen = 1mb */)
     }
 
 

@@ -75,7 +75,7 @@ fn test_store_beyond_capacity() {
 
 #[test]
 fn test_exceed_item_size_limits() {
-    let mut cache = Cache::new(1, 1, 1);
+    let mut cache = Cache::new(1, -1, 1, 1);
 
     // set: use a key that is too long
     let rv = cache.set(key!(1, 2), value!(9));
@@ -92,4 +92,18 @@ fn test_exceed_item_size_limits() {
     // contains_key: use a key that is too long
     let rv = cache.contains_key(&key!(1, 2));
     assert_rv_eq(rv, CacheError::KeyTooLong);
+}
+
+#[test]
+fn test_expired_key() {
+    let mut cache = Cache::new(1, 0, 1, 1);
+
+    let key = key!(1);
+    let value = value!(9);
+
+    let rv = cache.set(key.clone(), value.clone());
+    assert!(rv.is_ok());
+
+    let rv = cache.get(&key);
+    assert_rv_eq(rv, CacheError::KeyNotFound);
 }
