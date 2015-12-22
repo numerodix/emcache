@@ -2,7 +2,6 @@
 
 
 // key!(1, 2, 3) => Key { item: Vec<u8> = [1, 2, 3] }
-#[macro_export]
 macro_rules! key {
     ( $( $x:expr ),* ) => {
         {
@@ -16,7 +15,6 @@ macro_rules! key {
 }
 
 // value!(1, 2, 3) => Value { item: Vec<u8> = [1, 2, 3] }
-#[macro_export]
 macro_rules! value {
     ( $( $x:expr ),* ) => {
         {
