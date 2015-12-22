@@ -106,7 +106,7 @@ impl Cache {
 
     fn contains_key(&self, key: &Key) -> CacheResult<bool> {
         // Check key size
-        if (!self.check_key_len(key)) {
+        if !self.check_key_len(key) {
             return Err(CacheError::KeyTooLong);
         }
 
@@ -115,7 +115,7 @@ impl Cache {
 
     fn get(&self, key: &Key) -> CacheResult<&Value> {
         // Check key size
-        if (!self.check_key_len(key)) {
+        if !self.check_key_len(key) {
             return Err(CacheError::KeyTooLong);
         }
 
@@ -127,16 +127,16 @@ impl Cache {
 
     fn set(&mut self, key: Key, value: Value) -> CacheResult<()> {
         // Check key & value sizes
-        if (!self.check_key_len(&key)) {
+        if !self.check_key_len(&key) {
             return Err(CacheError::KeyTooLong);
         }
-        if (!self.check_value_len(&value)) {
+        if !self.check_value_len(&value) {
             return Err(CacheError::ValueTooLong);
         }
 
         // Check capacity if adding new key
-        if (!self.storage.contains_key(&key)) {
-            if (self.storage.len() as u64 == self.capacity) {
+        if !self.storage.contains_key(&key) {
+            if self.storage.len() as u64 == self.capacity {
                 return Err(CacheError::CapacityExceeded);
             }
         }
@@ -172,7 +172,8 @@ mod tests {
         let value = value!(4, 5, 6);
 
         // First set it
-        cache.set(key.clone(), value.clone());
+        let rv = cache.set(key.clone(), value.clone());
+        assert!(rv.is_ok());
 
         // Then test for it
         let rv = cache.contains_key(&key);
@@ -192,10 +193,12 @@ mod tests {
     fn test_key_not_found() {
         let mut cache = Cache::with_defaults(1);
 
-        // Retrieve a different key to the one set
-        cache.set(key!(1), value!(9));
-        let rv = cache.get(&key!(2));
+        // Set a key
+        let rv = cache.set(key!(1), value!(9));
+        assert!(rv.is_ok());
 
+        // Retrieve a different key
+        let rv = cache.get(&key!(2));
         assert_rv_eq(rv, CacheError::KeyNotFound);
     }
 
