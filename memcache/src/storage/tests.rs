@@ -1,8 +1,8 @@
-use super::cache::Cache;
-use super::errors::CacheError;
-use super::key::Key;
-use super::typedefs::CacheResult;
-use super::value::Value;
+use super::Cache;
+use super::CacheError;
+use super::Key;
+use super::CacheResult;
+use super::Value;
 
 
 // helper func since assert_eq!(rv.unwrap(), err) does not work
