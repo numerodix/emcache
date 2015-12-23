@@ -1,10 +1,10 @@
 use super::utils::time_now_utc;
 
 
-#[derive(Eq, Debug, Clone)]
+#[derive(Debug, Clone)]
 pub struct Value {
     pub item: Vec<u8>,
-    pub atime: i64,
+    pub atime: f64,
 }
 
 impl PartialEq for Value {
@@ -18,7 +18,7 @@ impl Value {
     pub fn new(item: Vec<u8>) -> Value {
         Value {
             item: item,
-            atime: -1,
+            atime: -1.0,
         }
     }
 

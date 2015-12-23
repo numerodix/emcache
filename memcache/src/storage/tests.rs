@@ -78,7 +78,7 @@ fn test_store_beyond_capacity() {
 
 #[test]
 fn test_exceed_item_size_limits() {
-    let mut cache = Cache::new(1, -1, 1, 1);
+    let mut cache = Cache::new(1, -1.0, 1, 1);
 
     // set: use a key that is too long
     {
@@ -108,7 +108,7 @@ fn test_exceed_item_size_limits() {
 #[test]
 fn test_expired_key() {
     // our cache has a lifetime of 0 secs - all keys are dead on store
-    let mut cache = Cache::new(1, 0, 1, 1);
+    let mut cache = Cache::new(1, 0.0, 1, 1);
 
     let key = key!(1);
     let value = value!(9);
@@ -125,7 +125,7 @@ fn test_expired_key() {
 #[test]
 fn test_key_kept_alive_on_access() {
     // our cache has a lifetime of 5 secs
-    let mut cache = Cache::new(1, 5, 1, 1);
+    let mut cache = Cache::new(1, 5.0, 1, 1);
 
     let key = key!(1);
     let value = value!(9);

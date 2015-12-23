@@ -9,7 +9,7 @@ use super::value::Value;
 
 pub struct Cache {
     capacity: u64,
-    item_lifetime: i64, // in seconds, -1 for unlimited
+    item_lifetime: f64, // in seconds, <0 for unlimited
     key_maxlen: u64, // in bytes
     value_maxlen: u64, // in bytes
     storage: HashMap<Key, Value>,
@@ -17,7 +17,7 @@ pub struct Cache {
 
 impl Cache {
     pub fn new(capacity: u64,
-               item_lifetime: i64,
+               item_lifetime: f64,
                key_maxlen: u64,
                value_maxlen: u64)
                -> Cache {
@@ -32,7 +32,7 @@ impl Cache {
 
     pub fn with_defaults(capacity: u64) -> Cache {
         Cache::new(capacity,
-                   -1, // item_lifetime = -1
+                   -1.0, // item_lifetime = -1.0
                    250, // key_maxlen = 250b
                    1048576 /* value_maxlen = 1mb */)
     }
@@ -47,7 +47,7 @@ impl Cache {
     }
 
     fn value_is_alive(&self, value: &Value) -> bool {
-        if self.item_lifetime < 0 {
+        if self.item_lifetime < 0.0 {
             return true;
         }
 

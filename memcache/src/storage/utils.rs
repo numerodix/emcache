@@ -4,9 +4,9 @@ use std::time::Duration;
 use time;
 
 
-pub fn time_now_utc() -> i64 {
+pub fn time_now_utc() -> f64 {
     let ts = time::get_time();
-    ts.sec
+    ts.sec as f64 + (ts.nsec as f64 / 1_000_000_000f64)
 }
 
 fn convert_secs_to_duration(duration: f64) -> Duration {
