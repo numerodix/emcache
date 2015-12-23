@@ -5,11 +5,28 @@ pub struct Get {
     pub key: String,
 }
 
+impl Get {
+    pub fn new(key: &str) -> Get {
+        Get { key: key.to_string() }
+    }
+}
+
+
 #[derive(Debug, PartialEq, Clone)]
 pub struct Set {
     pub key: String,
     pub exptime: u64,
     pub data: Vec<u8>,
+}
+
+impl Set {
+    pub fn new(key: &str, exptime: u64, data: Vec<u8>) -> Set {
+        Set {
+            key: key.to_string(),
+            exptime: exptime,
+            data: data,
+        }
+    }
 }
 
 
