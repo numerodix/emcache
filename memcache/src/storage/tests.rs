@@ -4,6 +4,8 @@ use super::Key;
 use super::CacheResult;
 use super::Value;
 
+use super::utils::sleep_secs;
+
 
 // helper func since assert_eq!(rv.unwrap(), err) does not work
 fn assert_rv_eq<T>(rv: CacheResult<T>, err: CacheError) {
@@ -41,7 +43,6 @@ fn test_set_one_key() {
 
     // Now fetch it
     let value_found = cache.get(&key).unwrap();
-
     assert_eq!(value, *value_found);
 }
 
@@ -106,7 +107,25 @@ fn test_exceed_item_size_limits() {
 
 #[test]
 fn test_expired_key() {
+    // our cache has a lifetime of 0 secs - all keys are dead on store
     let mut cache = Cache::new(1, 0, 1, 1);
+
+    let key = key!(1);
+    let value = value!(9);
+
+    // set a key
+    let rv = cache.set(key.clone(), value.clone());
+    assert!(rv.is_ok());
+
+    // try to retrieve it - it has expired
+    let rv = cache.get(&key);
+    assert_rv_eq(rv, CacheError::KeyNotFound);
+}
+
+#[test]
+fn test_key_kept_alive_on_access() {
+    // our cache has a lifetime of 2 secs
+    let mut cache = Cache::new(1, 2, 1, 1);
 
     let key = key!(1);
     let value = value!(9);
@@ -114,6 +133,21 @@ fn test_expired_key() {
     let rv = cache.set(key.clone(), value.clone());
     assert!(rv.is_ok());
 
-    let rv = cache.get(&key);
-    assert_rv_eq(rv, CacheError::KeyNotFound);
+    // sleep 1 sec
+    sleep_secs(1);
+
+    // access key
+    assert!(cache.get(&key).is_ok());
+
+    // sleep 1.5 secs
+    sleep_secs(1);
+
+    // access key -> still alive
+    assert!(cache.get(&key).is_ok());
+
+    // sleep 3 sec
+    sleep_secs(3);
+
+    // access key -> gone
+    assert!(cache.get(&key).is_err());
 }

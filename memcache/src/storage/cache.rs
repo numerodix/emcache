@@ -51,7 +51,7 @@ impl Cache {
             return true;
         }
 
-        value.atime + self.item_lifetime < time_now_utc()
+        value.atime + self.item_lifetime > time_now_utc()
     }
 
     fn remove(&mut self, key: &Key) -> CacheResult<()> {
