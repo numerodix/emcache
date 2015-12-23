@@ -1,6 +1,9 @@
 extern crate time;
 
+mod protocol;
 mod storage;
+
+use protocol::Driver;
 
 use storage::Cache;
 use storage::Key;

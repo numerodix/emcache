@@ -57,6 +57,11 @@ class Client(object):
         value = rest[:bytelen]
         return value
 
+    def send_malformed_cmd(self):
+        self.sock.send('set 0 0\r\n')
+        buf = self.sock.recv(4096)
+        return buf.strip()
+
 
 if __name__ == '__main__':
     client = Client('127.0.0.1', 11211)
@@ -67,3 +72,6 @@ if __name__ == '__main__':
 
     value = client.get('x')
     print("Retrieved 'x' -> '%s'" % value)
+
+    resp = client.send_malformed_cmd()
+    print("Sent malformed command, got '%s'" % resp)

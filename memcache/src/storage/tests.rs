@@ -106,6 +106,7 @@ fn test_expired_key() {
     assert_eq!(rv.unwrap_err(), CacheError::KeyNotFound);
 }
 
+// this is a slow test that relies on sleeps
 #[ignore]
 #[test]
 fn test_key_kept_alive_on_access() {
