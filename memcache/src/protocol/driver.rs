@@ -6,6 +6,7 @@ use super::cmd::Cmd;
 use super::cmd::Get;
 use super::cmd::Resp;
 use super::cmd::Set;
+use super::cmd::Stat;
 use super::cmd::Value as CmdValue;
 
 
@@ -50,12 +51,19 @@ impl Driver {
         }
     }
 
+    fn do_stats(&self) -> Resp {
+        let curr_items = self.cache.len();
+
+        let stat = Stat::new("curr_items", curr_items.to_string());
+        Resp::Stats(vec![stat])
+    }
+
 
     pub fn run(&mut self, cmd: Cmd) -> Resp {
         match cmd {
             Cmd::Get(get) => self.do_get(get),
             Cmd::Set(set) => self.do_set(set),
-            Cmd::Stats => Resp::Error,
+            Cmd::Stats => self.do_stats(),
         }
     }
 }

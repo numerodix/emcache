@@ -5,6 +5,7 @@ use super::cmd::Cmd;
 use super::cmd::Get;
 use super::cmd::Resp;
 use super::cmd::Set;
+use super::cmd::Stat;
 use super::cmd::Value;
 
 
@@ -48,9 +49,16 @@ fn test_cmd_stats() {
     let mut cache = Cache::with_defaults(100);
     let mut driver = Driver::new(cache);
 
+    // Set a key
+    let cmd = Cmd::Set(Set::new("x", 0, vec![9]));
+    let resp = driver.run(cmd);
+    assert_eq!(resp, Resp::Stored);
+
+    // Run stats
     let cmd = Cmd::Stats;
     let resp = driver.run(cmd);
-    assert_eq!(resp, Resp::Error);
+    let stat = Stat::new("curr_items", "1".to_string());
+    assert_eq!(resp, Resp::Stats(vec![stat]));
 }
 
 // XXX add test for exptime

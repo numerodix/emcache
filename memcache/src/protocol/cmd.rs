@@ -40,10 +40,28 @@ pub struct ClientError {
     pub error: String,
 }
 
+
 #[derive(Debug, PartialEq, Clone)]
 pub struct ServerError {
     pub error: String,
 }
+
+
+#[derive(Debug, PartialEq, Clone)]
+pub struct Stat {
+    pub key: String,
+    pub value: String,
+}
+
+impl Stat {
+    pub fn new(key: &str, value: String) -> Stat {
+        Stat {
+            key: key.to_string(),
+            value: value,
+        }
+    }
+}
+
 
 #[derive(Debug, PartialEq, Clone)]
 pub struct Value {
@@ -63,10 +81,11 @@ pub enum Cmd {
 
 #[derive(Debug, PartialEq, Clone)]
 pub enum Resp {
+    Error,
     ClientError(ClientError),
     ServerError(ServerError),
-    Error,
 
+    Stats(Vec<Stat>),
     Stored,
     Value(Value),
 }
