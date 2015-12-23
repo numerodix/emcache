@@ -122,6 +122,7 @@ fn test_expired_key() {
     assert_rv_eq(rv, CacheError::KeyNotFound);
 }
 
+#[ignore]
 #[test]
 fn test_key_kept_alive_on_access() {
     // our cache has a lifetime of 2 secs
