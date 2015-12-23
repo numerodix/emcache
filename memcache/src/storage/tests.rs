@@ -124,8 +124,8 @@ fn test_expired_key() {
 
 #[test]
 fn test_key_kept_alive_on_access() {
-    // our cache has a lifetime of 5 secs
-    let mut cache = Cache::new(1, 5.0, 1, 1);
+    // our cache has a lifetime of 2 secs
+    let mut cache = Cache::new(1, 2.0, 1, 1);
 
     let key = key!(1);
     let value = value!(9);
@@ -133,20 +133,21 @@ fn test_key_kept_alive_on_access() {
     let rv = cache.set(key.clone(), value.clone());
     assert!(rv.is_ok());
 
-    // sleep 3.5 sec - not long enough to expire key
-    sleep_secs(3.5);
+    // sleep 1.5 secs - not long enough to expire key
+    sleep_secs(1.5);
 
     // access key - it's there
     assert!(cache.get(&key).is_ok());
 
-    // sleep 4 secs - not long enough to expire key
-    sleep_secs(4.0);
+    // sleep 1 secs - not long enough to expire key
+    sleep_secs(1.0);
 
-    // access key - it's now been 7.5s since it was set, but it's been accessed
+    // access key - it's now been 2.5s since it was set, but it's been accessed
+    // so we've kept it alive
     assert!(cache.get(&key).is_ok());
 
-    // sleep 7 sec - long enough to expire key
-    sleep_secs(7.0);
+    // sleep 2.5 secs - long enough to expire key
+    sleep_secs(2.5);
 
     // access key - it's gone
     assert!(cache.get(&key).is_err());
