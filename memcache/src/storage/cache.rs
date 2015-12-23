@@ -69,7 +69,7 @@ impl Cache {
 
         match result {
             // We know how to interpret found and not found
-            Ok(value) => Ok(true),
+            Ok(_) => Ok(true),
             Err(CacheError::KeyNotFound) => Ok(false),
 
             // Some other error
@@ -102,7 +102,7 @@ impl Cache {
 
         // If the key is dead we evict it and return an error
         if !is_alive {
-            self.remove(key);
+            self.remove(key).unwrap();
             return Err(CacheError::KeyNotFound);
         }
 

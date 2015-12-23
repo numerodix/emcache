@@ -1,25 +1,9 @@
 use super::Cache;
 use super::CacheError;
 use super::Key;
-use super::CacheResult;
 use super::Value;
 
 use super::utils::sleep_secs;
-
-
-// helper func since assert_eq!(rv.unwrap(), err) does not work
-fn assert_rv_eq<T>(rv: CacheResult<T>, err: CacheError) {
-    // First of all it's supposed to be an error
-    assert!(rv.is_err());
-
-    // Now check if the error constructor is the right one
-    match rv {
-        Ok(_) => (),
-        Err(e) => {
-            assert_eq!(e, err);
-        }
-    };
-}
 
 
 #[test]
@@ -56,7 +40,7 @@ fn test_key_not_found() {
 
     // Retrieve a different key
     let rv = cache.get(&key!(2));
-    assert_rv_eq(rv, CacheError::KeyNotFound);
+    assert_eq!(rv.unwrap_err(), CacheError::KeyNotFound);
 }
 
 #[test]
@@ -73,7 +57,7 @@ fn test_store_beyond_capacity() {
 
     // but we cannot store a new key
     let rv = cache.set(key!(2), value!(9));
-    assert_rv_eq(rv, CacheError::CapacityExceeded);
+    assert_eq!(rv.unwrap_err(), CacheError::CapacityExceeded);
 }
 
 #[test]
@@ -83,25 +67,25 @@ fn test_exceed_item_size_limits() {
     // set: use a key that is too long
     {
         let rv = cache.set(key!(1, 2), value!(9));
-        assert_rv_eq(rv, CacheError::KeyTooLong);
+        assert_eq!(rv.unwrap_err(), CacheError::KeyTooLong);
     }
 
     // set: use a value that is too long
     {
         let rv = cache.set(key!(1), value!(9, 8));
-        assert_rv_eq(rv, CacheError::ValueTooLong);
+        assert_eq!(rv.unwrap_err(), CacheError::ValueTooLong);
     }
 
     // get: use a key that is too long
     {
         let rv = cache.get(&key!(1, 2));
-        assert_rv_eq(rv, CacheError::KeyTooLong);
+        assert_eq!(rv.unwrap_err(), CacheError::KeyTooLong);
     }
 
     // contains_key: use a key that is too long
     {
         let rv = cache.contains_key(&key!(1, 2));
-        assert_rv_eq(rv, CacheError::KeyTooLong);
+        assert_eq!(rv.unwrap_err(), CacheError::KeyTooLong);
     }
 }
 
@@ -119,7 +103,7 @@ fn test_expired_key() {
 
     // try to retrieve it - it has expired
     let rv = cache.get(&key);
-    assert_rv_eq(rv, CacheError::KeyNotFound);
+    assert_eq!(rv.unwrap_err(), CacheError::KeyNotFound);
 }
 
 #[ignore]
