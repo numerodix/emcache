@@ -16,7 +16,10 @@ impl PartialEq for Value {
 
 impl Value {
     pub fn new(item: Vec<u8>) -> Value {
-        Value { item: item, atime: -1 }
+        Value {
+            item: item,
+            atime: -1,
+        }
     }
 
     pub fn len(&self) -> usize {

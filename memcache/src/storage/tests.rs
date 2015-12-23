@@ -80,22 +80,28 @@ fn test_exceed_item_size_limits() {
     let mut cache = Cache::new(1, -1, 1, 1);
 
     // set: use a key that is too long
-    let rv = cache.set(key!(1, 2), value!(9));
-    assert_rv_eq(rv, CacheError::KeyTooLong);
+    {
+        let rv = cache.set(key!(1, 2), value!(9));
+        assert_rv_eq(rv, CacheError::KeyTooLong);
+    }
 
     // set: use a value that is too long
-    let rv = cache.set(key!(1), value!(9, 8));
-    assert_rv_eq(rv, CacheError::ValueTooLong);
+    {
+        let rv = cache.set(key!(1), value!(9, 8));
+        assert_rv_eq(rv, CacheError::ValueTooLong);
+    }
 
     // get: use a key that is too long
-    { // borrowing cache  // XXX
+    {
         let rv = cache.get(&key!(1, 2));
         assert_rv_eq(rv, CacheError::KeyTooLong);
     }
 
     // contains_key: use a key that is too long
-    let rv = cache.contains_key(&key!(1, 2));
-    assert_rv_eq(rv, CacheError::KeyTooLong);
+    {
+        let rv = cache.contains_key(&key!(1, 2));
+        assert_rv_eq(rv, CacheError::KeyTooLong);
+    }
 }
 
 #[test]
