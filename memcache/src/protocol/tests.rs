@@ -34,18 +34,18 @@ fn test_set_and_get_a_key() {
         data: blob.clone(),
     };
     let cmd = Cmd::Set(set);
-    let resp = driver.run(cmd.clone());
-
-    println!("Ran: {:?}", cmd);
-    println!("Got: {:?}", resp);
+    let resp = driver.run(cmd);
+    assert_eq!(resp, Resp::Stored);
 
     // Retrieve it
     let get = Get { key: key_name.to_string() };
     let cmd = Cmd::Get(get);
-    let resp = driver.run(cmd.clone());
-
-    println!("Ran: {:?}", cmd);
-    println!("Got: {:?}", resp);
-
+    let resp = driver.run(cmd);
     assert_eq!(blob, get_resp_value(resp).data);
+
+    // Try to retrieve a key not set
+    let get = Get { key: "y".to_string() };
+    let cmd = Cmd::Get(get);
+    let resp = driver.run(cmd);
+    assert_eq!(resp, Resp::Error);
 }

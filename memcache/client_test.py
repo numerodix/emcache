@@ -51,11 +51,14 @@ class Client(object):
 
         # parse response
         header, rest = buf.split('\r\n', 1)
-        _, bytelen = self.rx_get_resp.findall(header)[0]
-        bytelen = int(bytelen)
+        try:
+            _, bytelen = self.rx_get_resp.findall(header)[0]
+            bytelen = int(bytelen)
 
-        value = rest[:bytelen]
-        return value
+            value = rest[:bytelen]
+            return value
+        except IndexError:
+            return buf.strip()
 
     def send_malformed_cmd(self):
         self.sock.send('set 0 0\r\n')
@@ -72,6 +75,9 @@ if __name__ == '__main__':
 
     value = client.get('x')
     print("Retrieved 'x' -> '%s'" % value)
+
+    value = client.get('y')
+    print("Retrieved 'y' -> '%s'" % value)
 
     resp = client.send_malformed_cmd()
     print("Sent malformed command, got '%s'" % resp)
