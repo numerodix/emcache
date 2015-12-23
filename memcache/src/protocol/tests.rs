@@ -1,10 +1,10 @@
 use storage::Cache;
 
 use super::Driver;
-use super::cmd::Set;
-use super::cmd::Get;
 use super::cmd::Cmd;
+use super::cmd::Get;
 use super::cmd::Resp;
+use super::cmd::Set;
 use super::cmd::Value;
 
 
@@ -20,7 +20,7 @@ fn get_resp_value(resp: Resp) -> Value {
 
 
 #[test]
-fn test_set_and_get_a_key() {
+fn test_cmd_set_and_get_a_key() {
     let mut cache = Cache::with_defaults(100);
     let mut driver = Driver::new(cache);
 
@@ -42,3 +42,15 @@ fn test_set_and_get_a_key() {
     let resp = driver.run(cmd);
     assert_eq!(resp, Resp::Error);
 }
+
+#[test]
+fn test_cmd_stats() {
+    let mut cache = Cache::with_defaults(100);
+    let mut driver = Driver::new(cache);
+
+    let cmd = Cmd::Stats;
+    let resp = driver.run(cmd);
+    assert_eq!(resp, Resp::Error);
+}
+
+// XXX add test for exptime

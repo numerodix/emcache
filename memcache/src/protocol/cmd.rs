@@ -1,3 +1,6 @@
+// ref: https://github.com/memcached/memcached/blob/master/doc/protocol.txt
+
+
 // Request structs
 
 #[derive(Debug, PartialEq, Clone)]
