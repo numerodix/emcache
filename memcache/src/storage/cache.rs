@@ -116,6 +116,10 @@ impl Cache {
         Ok(value)
     }
 
+    pub fn len(&self) -> usize {
+        self.storage.len()
+    }
+
     pub fn set(&mut self, key: Key, mut value: Value) -> CacheResult<()> {
         // Check key & value sizes
         if !self.check_key_len(&key) {

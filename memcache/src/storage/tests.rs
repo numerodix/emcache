@@ -21,6 +21,9 @@ fn test_set_one_key() {
     let rv = cache.contains_key(&key);
     assert_eq!(rv.unwrap(), true);
 
+    // Check the size of the cache
+    assert_eq!(1, cache.len());
+
     // Test for a key that was not set
     let rv = cache.contains_key(&key!(9, 8));
     assert_eq!(rv.unwrap(), false);
