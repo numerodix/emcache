@@ -83,25 +83,37 @@ impl Cache {
             return Err(CacheError::KeyTooLong);
         }
 
-        // Retrieve the key
-        let opt = self.storage.get(key);
+        let mut is_alive = false;
+        {
+            // Retrieve the key
+            let opt = self.storage.get(key);
 
-        // We didn't find it
-        if opt.is_none() {
+            // We didn't find it
+            if opt.is_none() {
+                return Err(CacheError::KeyNotFound);
+            }
+
+            // From here on we can assume we did find it
+            let value: &Value = opt.unwrap();
+            if self.value_is_alive(value) {
+                is_alive = true;
+            }
+        }
+
+        // If the key is dead we evict it and return an error
+        if !is_alive {
+            self.remove(key);
             return Err(CacheError::KeyNotFound);
         }
 
-        // We found it
-        let value: &Value = opt.unwrap();
+        // Otherwise we retrieve the key again, this time mutable
+        let value = self.storage.get_mut(key).unwrap();
 
-        if !self.value_is_alive(value) {
-            //self.remove(key); // XXX
-            return Err(CacheError::KeyNotFound);
-        }
+        // Update the value to mark that it's been accessed just now
+        value.touch();
 
-        // All good, update it and return it
-        //value.touch(); // XXX
-        return Ok(value);
+        // Return success
+        Ok(value)
     }
 
     pub fn set(&mut self, key: Key, mut value: Value) -> CacheResult<()> {
