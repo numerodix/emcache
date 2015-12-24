@@ -78,6 +78,7 @@ impl<T: Read + Write> TcpTransport<T> {
         for i in 0..bytes.len() {
             // We're looking for a space
             if bytes[i] == 32 {
+                // TODO avoid cloning the whole thing
                 let mut copy = bytes.clone();
                 copy.truncate(i);
                 return Ok(copy);
