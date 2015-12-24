@@ -16,25 +16,29 @@ pub struct Cache {
 }
 
 impl Cache {
-    pub fn new(capacity: u64,
-               item_lifetime: f64,
-               key_maxlen: u64,
-               value_maxlen: u64)
-               -> Cache {
+    pub fn new(capacity: u64) -> Cache {
         Cache {
             capacity: capacity,
-            item_lifetime: item_lifetime,
-            key_maxlen: key_maxlen,
-            value_maxlen: value_maxlen,
+            item_lifetime: -1.0,
+            key_maxlen: 250, // 250b
+            value_maxlen: 1048576, // 1mb
             storage: HashMap::new(),
         }
     }
 
-    pub fn with_defaults(capacity: u64) -> Cache {
-        Cache::new(capacity,
-                   -1.0, // item_lifetime = -1.0
-                   250, // key_maxlen = 250b
-                   1048576 /* value_maxlen = 1mb */)
+    pub fn with_item_lifetime(&mut self, item_lifetime: f64) -> &mut Cache {
+        self.item_lifetime = item_lifetime;
+        self
+    }
+
+    pub fn with_key_maxlen(&mut self, key_maxlen: u64) -> &mut Cache {
+        self.key_maxlen = key_maxlen;
+        self
+    }
+
+    pub fn with_value_maxlen(&mut self, value_maxlen: u64) -> &mut Cache {
+        self.value_maxlen = value_maxlen;
+        self
     }
 
 

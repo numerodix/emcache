@@ -9,7 +9,7 @@ use super::utils::time_now_utc;
 
 #[test]
 fn test_set_one_key() {
-    let mut cache = Cache::with_defaults(1);
+    let mut cache = Cache::new(1);
 
     let key = key!(1, 2, 3);
     let value = value!(4, 5, 6);
@@ -36,7 +36,7 @@ fn test_set_one_key() {
 
 #[test]
 fn test_key_not_found() {
-    let mut cache = Cache::with_defaults(1);
+    let mut cache = Cache::new(1);
 
     // Set a key
     let rv = cache.set(key!(1), value!(9));
@@ -49,7 +49,7 @@ fn test_key_not_found() {
 
 #[test]
 fn test_store_beyond_capacity() {
-    let mut cache = Cache::with_defaults(1);
+    let mut cache = Cache::new(1);
 
     // we've now reached capacity
     let rv = cache.set(key!(1), value!(9));
@@ -66,7 +66,10 @@ fn test_store_beyond_capacity() {
 
 #[test]
 fn test_exceed_item_size_limits() {
-    let mut cache = Cache::new(1, -1.0, 1, 1);
+    let mut cache = Cache::new(1);
+    cache
+        .with_key_maxlen(1)
+        .with_value_maxlen(1);
 
     // set: use a key that is too long
     {
@@ -96,7 +99,8 @@ fn test_exceed_item_size_limits() {
 #[test]
 fn test_key_expired_lifetime() {
     // our cache has a lifetime of 0 secs - all keys are dead on store
-    let mut cache = Cache::new(1, 0.0, 1, 1);
+    let mut cache = Cache::new(1);
+    cache.with_item_lifetime(0.0);
 
     let key = key!(1);
     let value = value!(9);
@@ -113,7 +117,7 @@ fn test_key_expired_lifetime() {
 #[test]
 fn test_key_explicit_exptime() {
     // our cache has infinite lifetime
-    let mut cache = Cache::with_defaults(1);
+    let mut cache = Cache::new(1);
 
     let key = key!(1);
     let mut value = value!(9);
@@ -134,7 +138,8 @@ fn test_key_explicit_exptime() {
 #[test]
 fn test_key_kept_alive_on_access() {
     // our cache has a lifetime of 2 secs
-    let mut cache = Cache::new(1, 2.0, 1, 1);
+    let mut cache = Cache::new(1);
+    cache.with_item_lifetime(2.0);
 
     let key = key!(1);
     let value = value!(9);

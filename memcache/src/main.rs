@@ -15,7 +15,7 @@ use tcp_server::listen;
 
 
 fn main() {
-    let mut cache = Cache::with_defaults(1024);
+    let mut cache = Cache::new(1024);
 
     let key = Key::new(vec![1]);
     let value = Value::new(vec![9]);
