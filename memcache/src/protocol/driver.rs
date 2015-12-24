@@ -1,6 +1,7 @@
 use storage::Cache;
 use storage::Key;
 use storage::Value;
+use storage::utils::time_now_utc;
 
 use super::cmd::Cmd;
 use super::cmd::Get;
@@ -40,8 +41,23 @@ impl Driver {
 
     fn do_set(&mut self, set: Set) -> Resp {
         let key = Key::new(set.key.into_bytes());
-        let value = Value::new(set.data);
-        // XXX handle set.exptime
+        let mut value = Value::new(set.data);
+
+        // If exptime is greater than zero we need to set it on the value
+        if set.exptime > 0 {
+            let mut tm = 0.0;
+
+            // Is it an interval greater than 30 days? Then it's a timestamp
+            if set.exptime > 60 * 60 * 24 * 30 {
+                tm = set.exptime as f64;
+
+                // Otherwise it's relative from now
+            } else {
+                tm = time_now_utc() + set.exptime as f64;
+            }
+
+            value.set_exptime(tm);
+        }
 
         let rv = self.cache.set(key, value);
 

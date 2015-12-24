@@ -1,4 +1,6 @@
 use storage::Cache;
+use storage::utils::sleep_secs;
+use storage::utils::time_now_utc;
 
 use super::Driver;
 use super::cmd::Cmd;
@@ -61,4 +63,61 @@ fn test_cmd_stats() {
     assert_eq!(resp, Resp::Stats(vec![stat]));
 }
 
-// XXX add test for exptime
+// this is a slow test that relies on sleeps
+#[ignore]
+#[test]
+fn test_cmd_relative_exptime() {
+    let mut cache = Cache::with_defaults(100);
+    let mut driver = Driver::new(cache);
+
+    let key_name = "x";
+    let blob = vec![1, 2, 3];
+
+    // Set a key with exptime of 1 second
+    let cmd = Cmd::Set(Set::new(key_name, 1, blob.clone()));
+    let resp = driver.run(cmd);
+    assert_eq!(resp, Resp::Stored);
+
+    // Retrieve it right away - succeeds
+    let cmd = Cmd::Get(Get::new(key_name));
+    let resp = driver.run(cmd);
+    assert_eq!(blob, get_resp_value(resp).data);
+
+    // sleep 1.5 secs - long enough to expire key
+    sleep_secs(1.5);
+
+    // Retrieve the key again - it's gone
+    let cmd = Cmd::Get(Get::new(key_name));
+    let resp = driver.run(cmd);
+    assert_eq!(resp, Resp::Error);
+}
+
+// this is a slow test that relies on sleeps
+#[ignore]
+#[test]
+fn test_cmd_absolute_exptime() {
+    let mut cache = Cache::with_defaults(100);
+    let mut driver = Driver::new(cache);
+
+    let key_name = "x";
+    let blob = vec![1, 2, 3];
+    let exptime = time_now_utc().round() as u32 + 1;
+
+    // Set a key with exptime of 1 second
+    let cmd = Cmd::Set(Set::new(key_name, exptime, blob.clone()));
+    let resp = driver.run(cmd);
+    assert_eq!(resp, Resp::Stored);
+
+    // Retrieve it right away - succeeds
+    let cmd = Cmd::Get(Get::new(key_name));
+    let resp = driver.run(cmd);
+    assert_eq!(blob, get_resp_value(resp).data);
+
+    // sleep 2.5 secs - long enough to expire key
+    sleep_secs(2.5);
+
+    // Retrieve the key again - it's gone
+    let cmd = Cmd::Get(Get::new(key_name));
+    let resp = driver.run(cmd);
+    assert_eq!(resp, Resp::Error);
+}

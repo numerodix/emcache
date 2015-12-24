@@ -1,4 +1,6 @@
 #!/bin/bash
 
-cargo test -- --ignored $@ && \
-./fasttests.sh
+set -e
+
+cargo test -- --ignored $@
+./fasttests.sh $@

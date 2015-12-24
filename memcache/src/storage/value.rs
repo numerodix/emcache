@@ -9,7 +9,7 @@ pub struct Value {
 }
 
 impl PartialEq for Value {
-    // Overload eq to make sure we don't compare atime's
+    // Overload eq to make sure we only compare the payloads
     fn eq(&self, other: &Value) -> bool {
         self.item == other.item
     }

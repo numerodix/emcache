@@ -18,12 +18,12 @@ impl Get {
 #[derive(Debug, PartialEq, Clone)]
 pub struct Set {
     pub key: String,
-    pub exptime: u64,
+    pub exptime: u32,
     pub data: Vec<u8>,
 }
 
 impl Set {
-    pub fn new(key: &str, exptime: u64, data: Vec<u8>) -> Set {
+    pub fn new(key: &str, exptime: u32, data: Vec<u8>) -> Set {
         Set {
             key: key.to_string(),
             exptime: exptime,

@@ -5,11 +5,11 @@ pub mod cache;
 pub mod errors;
 pub mod key;
 pub mod typedefs;
+pub mod utils;
 pub mod value;
 
 // internal stuff
 mod tests;  // needed to be part of the compilation unit in test mode
-mod utils;
 
 
 // Export our public api
