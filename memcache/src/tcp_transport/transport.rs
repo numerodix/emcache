@@ -10,11 +10,22 @@ use super::typedefs::TcpTransportResult;
 
 pub struct TcpTransport<T> {
     stream: T,
+    key_maxlen: u64,
 }
 
 impl<T: Read + Write> TcpTransport<T> {
     pub fn new(mut stream: T) -> TcpTransport<T> {
-        TcpTransport { stream: stream }
+        TcpTransport {
+            stream: stream,
+            key_maxlen: 250, // memcached standard
+        }
+    }
+
+    pub fn with_key_maxlen(&mut self,
+                           key_maxlen: u64)
+                           -> &mut TcpTransport<T> {
+        self.key_maxlen = key_maxlen;
+        self
     }
 
 
@@ -65,7 +76,11 @@ impl<T: Read + Write> TcpTransport<T> {
 
 
     pub fn read_cmd(&mut self) -> TcpTransportResult<Cmd> {
-        let fst_line = try!(self.read_line(255));
+        // This needs to be the length of the longest command line, not
+        // including data values for which the length is given upfront
+        let line_len = self.key_maxlen as usize + 100;
+
+        let fst_line = try!(self.read_line(line_len));
         let fst_line_str = String::from_utf8(fst_line).unwrap(); // XXX errors
 
         if fst_line_str == "stats" {

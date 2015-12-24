@@ -67,9 +67,8 @@ fn test_store_beyond_capacity() {
 #[test]
 fn test_exceed_item_size_limits() {
     let mut cache = Cache::new(1);
-    cache
-        .with_key_maxlen(1)
-        .with_value_maxlen(1);
+    cache.with_key_maxlen(1)
+         .with_value_maxlen(1);
 
     // set: use a key that is too long
     {
