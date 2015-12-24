@@ -4,8 +4,8 @@ use super::utils::time_now_utc;
 #[derive(Debug, Clone)]
 pub struct Value {
     pub item: Vec<u8>,
-    pub atime: f64,
-    pub exptime: f64, // unixtime, <0 for unset
+    pub atime: f64, // last access time (unixtime)
+    pub exptime: f64, // expiry time (unixtime), <0 for unset
 }
 
 impl PartialEq for Value {

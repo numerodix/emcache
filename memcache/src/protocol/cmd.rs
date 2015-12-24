@@ -18,7 +18,7 @@ impl Get {
 #[derive(Debug, PartialEq, Clone)]
 pub struct Set {
     pub key: String,
-    pub exptime: u32,
+    pub exptime: u32, // relative (secs) or absolute (unixtime) expiry time
     pub data: Vec<u8>,
 }
 
