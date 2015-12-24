@@ -4,6 +4,26 @@ use std::net::TcpListener;
 use std::net::TcpStream;
 use std::thread;
 
+use tcp_transport::TcpTransport;
+
+
+fn handle_client_playground(mut stream: TcpStream) {
+    let mut transport = TcpTransport::new(stream);
+
+    loop {
+        let rv = transport.read_byte();
+        match rv {
+            Ok(byte) => {
+                println!("Read byte: {:?}", byte);
+            }
+            Err(err) => {
+                println!("Error: {:?}", err);
+                break;
+            }
+        }
+    }
+}
+
 
 fn handle_client(mut stream: TcpStream) {
     let mut buf = [0; 1];
@@ -25,7 +45,7 @@ pub fn listen() {
     for stream in listener.incoming() {
         match stream {
             Ok(stream) => {
-                thread::spawn(move || handle_client(stream));
+                thread::spawn(move || handle_client_playground(stream));
             }
             Err(e) => {
                 println!("Connection failed :(");

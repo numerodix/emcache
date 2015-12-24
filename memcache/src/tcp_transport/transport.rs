@@ -1,6 +1,5 @@
 use std::io::Read;
 use std::io::Write;
-use std::net::TcpStream;
 
 use protocol::cmd::Cmd;
 use protocol::cmd::Resp;
@@ -9,17 +8,26 @@ use super::errors::TcpTransportError;
 use super::typedefs::TcpTransportResult;
 
 
-pub struct TcpTransport {
-    stream: TcpStream,
+pub struct TcpTransport<T> {
+    stream: T,
 }
 
-impl TcpTransport {
-    pub fn new(mut stream: TcpStream) -> TcpTransport {
+impl<T: Read + Write> TcpTransport<T> {
+    pub fn new(mut stream: T) -> TcpTransport<T> {
         TcpTransport { stream: stream }
     }
 
 
-    fn read_line(&mut self) -> TcpTransportResult<Vec<u8>> {
+    pub fn read_byte(&mut self) -> TcpTransportResult<u8> {
+        let mut bytes = [0; 1];
+
+        match self.stream.read(&mut bytes) {
+            Ok(1) => Ok(bytes[0]),
+            _ => Err(TcpTransportError::SocketReadError),
+        }
+    }
+
+    pub fn read_line(&mut self) -> TcpTransportResult<Vec<u8>> {
         // TODO take a limit argument, don't read forever
         let mut byte = [0; 1];
         let mut line = vec![];
