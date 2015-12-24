@@ -11,10 +11,10 @@ fn handle_client_playground(mut stream: TcpStream) {
     let mut transport = TcpTransport::new(stream);
 
     loop {
-        let rv = transport.read_byte();
+        let rv = transport.read_cmd();
         match rv {
-            Ok(byte) => {
-                println!("Read byte: {:?}", byte);
+            Ok(cmd) => {
+                println!("Read cmd: {:?}", cmd);
             }
             Err(err) => {
                 println!("Error: {:?}", err);

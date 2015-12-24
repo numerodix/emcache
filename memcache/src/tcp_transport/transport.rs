@@ -28,54 +28,51 @@ impl<T: Read + Write> TcpTransport<T> {
     }
 
     pub fn read_bytes(&mut self, len: u64) -> TcpTransportResult<Vec<u8>> {
-        let mut vec = vec![];
+        let mut bytes = vec![];
 
         for _ in 0..len {
             let byte = try!(self.read_byte());
-            vec.push(byte);
+            bytes.push(byte);
         }
 
-        Ok(vec)
+        Ok(bytes)
     }
 
-    pub fn read_line(&mut self) -> TcpTransportResult<Vec<u8>> {
-        // TODO take a limit argument, don't read forever
-        let mut byte = [0; 1];
-        let mut line = vec![];
+    pub fn read_line(&mut self, maxlen: usize) -> TcpTransportResult<Vec<u8>> {
+        let mut bytes = vec![];
+        let mut found_line_end = false;
 
-        loop {
-            match self.stream.read(&mut byte) {
-                Ok(_) => {
-                    line.push(byte[0]);
+        for _ in 0..maxlen {
+            let byte = try!(self.read_byte());
+            bytes.push(byte);
 
-                    // Did we find \r\n? Then we've read a whole line
-                    if line.ends_with(&[13, 10]) {
-                        // pop off the last two chars
-                        line.pop();
-                        line.pop();
-
-                        break;
-                    }
-                }
-                Err(_) => {
-                    return Err(TcpTransportError::SocketReadError);
-                }
+            // Look for \r\n
+            if bytes.ends_with(&[13, 10]) {
+                found_line_end = true;
+                break;
             }
         }
 
-        Ok(line)
+        if found_line_end {
+            // Pop off \r\n
+            bytes.pop();
+            bytes.pop();
+            Ok(bytes)
+        } else {
+            Err(TcpTransportError::LineReadError)
+        }
     }
 
 
     pub fn read_cmd(&mut self) -> TcpTransportResult<Cmd> {
-        let fst_line = self.read_line().unwrap();  // XXX error handling
+        let fst_line = try!(self.read_line(255));
         let fst_line_str = String::from_utf8(fst_line).unwrap(); // XXX errors
 
         if fst_line_str == "stats" {
             return Ok(Cmd::Stats);
         }
 
-        Ok(Cmd::Stats)
+        Err(TcpTransportError::InvalidCmd)
     }
 
     pub fn write_resp(&mut self, resp: &Resp) -> TcpTransportResult<()> {
