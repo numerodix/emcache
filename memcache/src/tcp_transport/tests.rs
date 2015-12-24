@@ -51,7 +51,7 @@ fn test_read_line_too_long() {
 }
 
 #[test]
-fn test_parse_word_ok() {
+fn test_parse_word_split() {
     let mut ts = TestStream::new(vec![1, 2, 32, 3, 4, 11]);
     let mut transport = TcpTransport::new(ts);
 
@@ -61,7 +61,7 @@ fn test_parse_word_ok() {
 }
 
 #[test]
-fn test_parse_word_failed() {
+fn test_parse_word_whole() {
     let mut ts = TestStream::new(vec![1, 2, 3, 3, 4, 11]);
     let mut transport = TcpTransport::new(ts);
 

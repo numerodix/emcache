@@ -75,6 +75,9 @@ impl<T: Read + Write> TcpTransport<T> {
     }
 
     pub fn parse_word(&self, bytes: Vec<u8>) -> TcpTransportResult<Vec<u8>> {
+        // TODO: return a pair of vectors, one being the word, the other being
+        // the rest of the line
+
         for i in 0..bytes.len() {
             // We're looking for a space
             if bytes[i] == 32 {
