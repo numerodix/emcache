@@ -67,7 +67,20 @@ class Client(object):
 
 
 if __name__ == '__main__':
-    client = Client('127.0.0.1', 11211)
+    from optparse import OptionParser
+    parser = OptionParser()
+    parser.add_option('-n', '', action='store', dest='host',
+                      help='Host to connect to')
+    parser.add_option('-p', '', action='store', type='int', dest='port',
+                      help='Port to connect to')
+    (options, args) = parser.parse_args()
+
+
+    host = options.host is not None and options.host or '127.0.0.1'
+    port = options.port is not None and int(options.port) or 11211
+
+
+    client = Client(host, port)
     client.print_stats()
 
     print("Setting 'x' to 'abc'")

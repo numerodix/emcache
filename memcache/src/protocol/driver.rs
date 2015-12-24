@@ -30,8 +30,8 @@ impl Driver {
             if exptime > 60 * 60 * 24 * 30 {
                 tm = exptime as f64;
 
-                // Otherwise it's relative from now
             } else {
+                // Otherwise it's relative from now
                 tm = time_now_utc() + exptime as f64;
             }
 
