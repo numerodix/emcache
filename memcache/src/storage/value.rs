@@ -5,6 +5,7 @@ use super::utils::time_now_utc;
 pub struct Value {
     pub item: Vec<u8>,
     pub atime: f64,
+    pub exptime: f64, // unixtime, <0 for unset
 }
 
 impl PartialEq for Value {
@@ -19,6 +20,7 @@ impl Value {
         Value {
             item: item,
             atime: -1.0,
+            exptime: -1.0,
         }
     }
 
@@ -28,5 +30,9 @@ impl Value {
 
     pub fn touch(&mut self) {
         self.atime = time_now_utc();
+    }
+
+    pub fn set_exptime(&mut self, exptime: f64) {
+        self.exptime = exptime;
     }
 }

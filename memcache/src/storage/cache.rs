@@ -47,10 +47,21 @@ impl Cache {
     }
 
     fn value_is_alive(&self, value: &Value) -> bool {
+        // if the value has an exptime set, that takes precedence
+        if value.exptime > 0.0 {
+            if value.exptime > time_now_utc() {
+                return true;
+            } else {
+                return false;
+            }
+        }
+
+        // if we have no lifetime setting then values are always live
         if self.item_lifetime < 0.0 {
             return true;
         }
 
+        // otherwise use lifetime to determine liveness
         value.atime + self.item_lifetime > time_now_utc()
     }
 

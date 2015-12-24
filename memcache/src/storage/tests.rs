@@ -4,6 +4,7 @@ use super::Key;
 use super::Value;
 
 use super::utils::sleep_secs;
+use super::utils::time_now_utc;
 
 
 #[test]
@@ -93,7 +94,7 @@ fn test_exceed_item_size_limits() {
 }
 
 #[test]
-fn test_expired_key() {
+fn test_key_expired_lifetime() {
     // our cache has a lifetime of 0 secs - all keys are dead on store
     let mut cache = Cache::new(1, 0.0, 1, 1);
 
@@ -101,7 +102,26 @@ fn test_expired_key() {
     let value = value!(9);
 
     // set a key
-    let rv = cache.set(key.clone(), value.clone());
+    let rv = cache.set(key.clone(), value);
+    assert!(rv.is_ok());
+
+    // try to retrieve it - it has expired
+    let rv = cache.get(&key);
+    assert_eq!(rv.unwrap_err(), CacheError::KeyNotFound);
+}
+
+#[test]
+fn test_key_explicit_exptime() {
+    // our cache has infinite lifetime
+    let mut cache = Cache::with_defaults(1);
+
+    let key = key!(1);
+    let mut value = value!(9);
+    // set exptime in the past
+    value.set_exptime(time_now_utc() - 1.0);
+
+    // set a key
+    let rv = cache.set(key.clone(), value);
     assert!(rv.is_ok());
 
     // try to retrieve it - it has expired
