@@ -1,6 +1,6 @@
-use std::net::TcpStream;
 use std::io::Read;
 use std::io::Write;
+use std::net::TcpStream;
 
 use protocol::cmd::Cmd;
 use protocol::cmd::Resp;
@@ -9,7 +9,7 @@ use super::errors::TcpTransportError;
 use super::typedefs::TcpTransportResult;
 
 
-struct TcpTransport {
+pub struct TcpTransport {
     stream: TcpStream,
 }
 
