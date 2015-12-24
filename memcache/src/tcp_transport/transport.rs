@@ -74,6 +74,21 @@ impl<T: Read + Write> TcpTransport<T> {
         }
     }
 
+    pub fn parse_word(&self, bytes: Vec<u8>) -> TcpTransportResult<Vec<u8>> {
+        for i in 0..bytes.len() {
+            // We're looking for a space
+            if bytes[i] == 32 {
+                let mut copy = bytes.clone();
+                copy.truncate(i);
+                return Ok(copy);
+            }
+        }
+
+        // If we've reached the end of the buffer without seeing a space that
+        // makes the whole buffer a word
+        Ok(bytes)
+    }
+
 
     pub fn read_cmd(&mut self) -> TcpTransportResult<Cmd> {
         // This needs to be the length of the longest command line, not
@@ -81,9 +96,10 @@ impl<T: Read + Write> TcpTransport<T> {
         let line_len = self.key_maxlen as usize + 100;
 
         let fst_line = try!(self.read_line(line_len));
-        let fst_line_str = String::from_utf8(fst_line).unwrap(); // XXX errors
+        let fst_word = try!(self.parse_word(fst_line));
+        let fst_word_str = String::from_utf8(fst_word).unwrap(); // XXX errors
 
-        if fst_line_str == "stats" {
+        if fst_word_str == "stats" {
             return Ok(Cmd::Stats);
         }
 

@@ -50,6 +50,26 @@ fn test_read_line_too_long() {
     assert_eq!(err, TcpTransportError::LineReadError);
 }
 
+#[test]
+fn test_parse_word_ok() {
+    let mut ts = TestStream::new(vec![1, 2, 32, 3, 4, 11]);
+    let mut transport = TcpTransport::new(ts);
+
+    let bytes = transport.read_bytes(6).unwrap();
+    let word = transport.parse_word(bytes).unwrap();
+    assert_eq!(word, [1, 2]);
+}
+
+#[test]
+fn test_parse_word_failed() {
+    let mut ts = TestStream::new(vec![1, 2, 3, 3, 4, 11]);
+    let mut transport = TcpTransport::new(ts);
+
+    let bytes = transport.read_bytes(6).unwrap();
+    let word = transport.parse_word(bytes).unwrap();
+    assert_eq!(word, [1, 2, 3, 3, 4, 11]);
+}
+
 
 #[test]
 fn test_read_cmd_invalid() {

@@ -3,4 +3,5 @@ pub enum TcpTransportError {
     InvalidCmd,
     LineReadError,
     SocketReadError,
+    WordReadError,
 }
