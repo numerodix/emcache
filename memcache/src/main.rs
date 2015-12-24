@@ -2,12 +2,15 @@ extern crate time;
 
 mod protocol;
 mod storage;
+mod tcp_server;
 
 use protocol::Driver;
 
 use storage::Cache;
 use storage::Key;
 use storage::Value;
+
+use tcp_server::listen;
 
 
 fn main() {
@@ -21,4 +24,8 @@ fn main() {
 
     let loaded = cache.get(&key).unwrap();
     println!("Loaded key {:?}, got value {:?}", key.item, loaded.item);
+
+
+    println!("Launching tcp server...");
+    listen();
 }
