@@ -52,6 +52,26 @@ fn test_read_line_too_long() {
 
 
 #[test]
+fn test_read_cmd_invalid() {
+    let cmd_str = "invalid key 0 0 3\r\n".to_string();
+    let mut ts = TestStream::new(cmd_str.into_bytes());
+    let mut transport = TcpTransport::new(ts);
+
+    let err = transport.read_cmd().unwrap_err();
+    assert_eq!(err, TcpTransportError::InvalidCmd);
+}
+
+#[test]
+fn test_read_cmd_malterminated() {
+    let cmd_str = "stats\n".to_string();
+    let mut ts = TestStream::new(cmd_str.into_bytes());
+    let mut transport = TcpTransport::new(ts);
+
+    let err = transport.read_cmd().unwrap_err();
+    assert_eq!(err, TcpTransportError::SocketReadError);
+}
+
+#[test]
 fn test_read_cmd_stats() {
     let cmd_str = "stats\r\n".to_string();
     let mut ts = TestStream::new(cmd_str.into_bytes());
