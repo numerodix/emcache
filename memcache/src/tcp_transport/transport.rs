@@ -27,6 +27,17 @@ impl<T: Read + Write> TcpTransport<T> {
         }
     }
 
+    pub fn read_bytes(&mut self, len: u64) -> TcpTransportResult<Vec<u8>> {
+        let mut vec = vec![];
+
+        for _ in 0..len {
+            let byte = try!(self.read_byte());
+            vec.push(byte);
+        }
+
+        Ok(vec)
+    }
+
     pub fn read_line(&mut self) -> TcpTransportResult<Vec<u8>> {
         // TODO take a limit argument, don't read forever
         let mut byte = [0; 1];
