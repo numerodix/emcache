@@ -9,11 +9,11 @@ fn handle_client(mut stream: TcpStream) {
     let mut buf = [0; 1];
 
     loop {
-        let rv = stream.read(&mut buf).unwrap();
+        let bytelen = stream.read(&mut buf).unwrap();
         println!("Client sent    : {:?}", buf);
 
         println!("Responding with: {:?}", buf);
-        let rv = stream.write(&buf);
+        let bytelen = stream.write(&buf);
 
         println!("");
     }

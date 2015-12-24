@@ -2,6 +2,7 @@ extern crate time;
 
 mod protocol;
 mod storage;
+mod tcp_transport;
 mod tcp_server;
 
 use protocol::Driver;
