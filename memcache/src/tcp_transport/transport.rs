@@ -13,6 +13,9 @@ use super::typedefs::TcpTransportResult;
 
 pub struct TcpTransport<T> {
     stream: T,
+    // queue up response data before writing to the stream
+    outgoing_buffer: Vec<u8>,
+
     key_maxlen: u64,
 }
 
@@ -20,6 +23,7 @@ impl<T: Read + Write> TcpTransport<T> {
     pub fn new(mut stream: T) -> TcpTransport<T> {
         TcpTransport {
             stream: stream,
+            outgoing_buffer: vec![],
             key_maxlen: 250, // memcached standard
         }
     }
@@ -40,6 +44,10 @@ impl<T: Read + Write> TcpTransport<T> {
 
     pub fn get_stream(&self) -> &T {
         &self.stream
+    }
+
+    pub fn get_outgoing_buffer(&self) -> &Vec<u8> {
+        &self.outgoing_buffer
     }
 
     // Basic bytes manipulation and reading from the stream
@@ -145,17 +153,38 @@ impl<T: Read + Write> TcpTransport<T> {
 
     // Writing to the stream
 
-    pub fn write_bytes(&mut self, bytes: &Vec<u8>) -> TcpTransportResult<usize> {
-        let rv = self.stream.write(bytes);
-        match rv {
-            Ok(bytelen) => Ok(bytelen),
-            Err(_) => Err(TcpTransportError::StreamWriteError),
+    pub fn write_bytes(&mut self,
+                       bytes: &Vec<u8>)
+                       -> TcpTransportResult<usize> {
+        for i in 0..bytes.len() {
+            let byte = bytes[i];
+            self.outgoing_buffer.push(byte);
         }
+
+        Ok(bytes.len())
     }
 
     pub fn write_string(&mut self, string: &str) -> TcpTransportResult<usize> {
         let bytes = string.to_string().into_bytes();
         Ok(try!(self.write_bytes(&bytes)))
+    }
+
+    pub fn flush_writes(&mut self) -> TcpTransportResult<()> {
+        let rv = self.stream.write(&self.outgoing_buffer);
+        self.outgoing_buffer.clear();
+
+        if !rv.is_ok() {
+            return Err(TcpTransportError::StreamWriteError);
+        }
+
+        let rv = self.stream.flush();
+
+        match rv {
+            Ok(_) => Ok(()),
+            Err(e) => {
+                Err(TcpTransportError::StreamWriteError)
+            }
+        }
     }
 
     // Parse individual commands
@@ -255,12 +284,6 @@ impl<T: Read + Write> TcpTransport<T> {
         }
 
         // Make sure all bytes were actually sent
-        match self.stream.flush() {
-            Ok(_) => Ok(()),
-            Err(e) => {
-                println!("Could not flush stream: {:?}", e);
-                Err(TcpTransportError::StreamWriteError)
-            }
-        }
+        self.flush_writes()
     }
 }
