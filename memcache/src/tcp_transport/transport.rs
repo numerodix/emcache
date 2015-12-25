@@ -286,7 +286,7 @@ impl<T: Read + Write> TcpTransport<T> {
                 try!(self.write_string(&"\r\n".to_string())); // newline
             }
             _ => {
-                return Err(TcpTransportError::StreamWriteError); // XXX
+                return Err(TcpTransportError::StreamWriteError);
             }
         }
 
