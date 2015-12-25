@@ -110,6 +110,9 @@ if __name__ == '__main__':
     val2 = client.get(key)
     print("Retrieved key: %r -> %r" % (key, val2))
 
+    assert val == val2
+
+
     #value = client.get('y')
     #print("Retrieved 'y' -> '%s'" % value)
 
