@@ -1,7 +1,25 @@
 #!/usr/bin/env python
 
+import random
 import re
 import socket
+
+
+def generate_random_data(length):
+    with open('/dev/urandom', 'rb') as f:
+        return f.read(length)
+
+def generate_random_key(length):
+    data = ''
+    while len(data) < length:
+        bytes = generate_random_data(length)
+        # filter out non printable chars
+        bytes = [b for b in bytes
+                 if 65 <= ord(b) <= 90 or 97 <= ord(b) <= 122]
+        bytes = ''.join(bytes)
+        data += bytes
+    data = data[:length]
+    return data
 
 
 def connected(func):
@@ -83,14 +101,17 @@ if __name__ == '__main__':
     client = Client(host, port)
     client.print_stats()
 
-    print("Setting 'x' to 'abc'")
-    client.set('x', 'abc')
+    key = generate_random_key(4)
+    val = generate_random_data(8)
 
-    value = client.get('x')
-    print("Retrieved 'x' -> '%s'" % value)
+    print("Setting key:   %r -> %r" % (key, val))
+    client.set(key, val)
 
-    value = client.get('y')
-    print("Retrieved 'y' -> '%s'" % value)
+    val2 = client.get(key)
+    print("Retrieved key: %r -> %r" % (key, val2))
+
+    #value = client.get('y')
+    #print("Retrieved 'y' -> '%s'" % value)
 
     #resp = client.send_malformed_cmd()
     #print("Sent malformed command, got '%s'" % resp)
