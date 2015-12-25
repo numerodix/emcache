@@ -254,6 +254,13 @@ impl<T: Read + Write> TcpTransport<T> {
             }
         }
 
-        Ok(())
+        // Make sure all bytes were actually sent
+        match self.stream.flush() {
+            Ok(_) => Ok(()),
+            Err(e) => {
+                println!("Could not flush stream: {:?}", e);
+                Err(TcpTransportError::StreamWriteError)
+            }
+        }
     }
 }

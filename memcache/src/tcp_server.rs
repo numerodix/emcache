@@ -4,7 +4,41 @@ use std::net::TcpListener;
 use std::net::TcpStream;
 use std::thread;
 
+use protocol::Driver;
+use protocol::cmd::Resp;
+use storage::Cache;
 use tcp_transport::TcpTransport;
+
+
+fn simple_memcache(mut stream: TcpStream) {
+    let mut cache = Cache::new(1024);
+    let mut driver = Driver::new(cache);
+
+    let mut transport = TcpTransport::new(stream);
+
+
+    loop {
+        let rv = transport.read_cmd();
+
+        // If we couldn't parse the command return an error
+        if !rv.is_ok() {
+            transport.write_resp(&Resp::Error);
+            continue;
+        }
+
+        // Execute the command
+        let cmd = rv.unwrap();
+        println!("Received command  : {:?}", cmd);
+        let resp = driver.run(cmd);
+        println!("Returning response: {:?}", resp);
+
+        // Return a response
+        let rv = transport.write_resp(&resp);
+        if !rv.is_ok() {
+            println!("Failed to write response :(");
+        }
+    }
+}
 
 
 fn handle_client_playground(mut stream: TcpStream) {
@@ -45,7 +79,7 @@ pub fn listen() {
     for stream in listener.incoming() {
         match stream {
             Ok(stream) => {
-                thread::spawn(move || handle_client_playground(stream));
+                thread::spawn(move || simple_memcache(stream));
             }
             Err(e) => {
                 println!("Connection failed :(");
