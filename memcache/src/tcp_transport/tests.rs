@@ -6,6 +6,7 @@ use protocol::cmd::Cmd;
 use protocol::cmd::Get;
 use protocol::cmd::Resp;
 use protocol::cmd::Set;
+use protocol::cmd::Stat;
 use protocol::cmd::Value;
 
 
@@ -259,6 +260,21 @@ fn test_write_resp_error() {
     let resp = Resp::Error;
     transport.write_resp(&resp);
     let expected = "ERROR\r\n".to_string().into_bytes();
+    assert_eq!(transport.get_stream().outgoing, expected);
+}
+
+
+// Response writing: Stats
+
+#[test]
+fn test_write_resp_stats() {
+    let mut ts = TestStream::new(vec![]);
+    let mut transport = TcpTransport::new(ts);
+
+    let stat = Stat::new("curr_items", "0".to_string());
+    let resp = Resp::Stats(vec![stat]);
+    transport.write_resp(&resp);
+    let expected = "curr_items 0\r\nEND\r\n".to_string().into_bytes();
     assert_eq!(transport.get_stream().outgoing, expected);
 }
 

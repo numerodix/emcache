@@ -92,5 +92,5 @@ if __name__ == '__main__':
     value = client.get('y')
     print("Retrieved 'y' -> '%s'" % value)
 
-    resp = client.send_malformed_cmd()
-    print("Sent malformed command, got '%s'" % resp)
+    #resp = client.send_malformed_cmd()
+    #print("Sent malformed command, got '%s'" % resp)

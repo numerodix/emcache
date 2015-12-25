@@ -181,9 +181,7 @@ impl<T: Read + Write> TcpTransport<T> {
 
         match rv {
             Ok(_) => Ok(()),
-            Err(e) => {
-                Err(TcpTransportError::StreamWriteError)
-            }
+            Err(e) => Err(TcpTransportError::StreamWriteError),
         }
     }
 
@@ -265,6 +263,15 @@ impl<T: Read + Write> TcpTransport<T> {
         match *resp {
             Resp::Error => {
                 try!(self.write_string("ERROR\r\n"));
+            }
+            Resp::Stats(ref stats) => {
+                for stat in stats {
+                    try!(self.write_string(&stat.key));
+                    try!(self.write_string(" "));
+                    try!(self.write_string(&stat.value));
+                    try!(self.write_string("\r\n"));
+                }
+                try!(self.write_string("END\r\n"));
             }
             Resp::Stored => {
                 try!(self.write_string("STORED\r\n"));
