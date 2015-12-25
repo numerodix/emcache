@@ -36,6 +36,15 @@ impl<T: Read + Write> TcpTransport<T> {
         self.key_maxlen as usize + 100
     }
 
+    // Basic bytes manipulation
+
+    pub fn as_string(&self, bytes: Vec<u8>) -> TcpTransportResult<String> {
+        match String::from_utf8(bytes) {
+            Ok(string) => Ok(string),
+            Err(_) => Err(TcpTransportError::Utf8Error)
+        }
+    }
+
     pub fn read_byte(&mut self) -> TcpTransportResult<u8> {
         let mut bytes = [0; 1];
 
@@ -104,8 +113,6 @@ impl<T: Read + Write> TcpTransport<T> {
                 let byte = bytes[i];
                 if i < space_idx {
                     word.push(byte);
-                } else if i == space_idx {
-                    // we exclude the space from either slice
                 } else {
                     rest.push(byte);
                 }
@@ -120,25 +127,29 @@ impl<T: Read + Write> TcpTransport<T> {
         }
     }
 
-    pub fn parse_cmd_get(&self, rest: Vec<u8>) -> TcpTransportResult<Cmd> {
+    // Parse individual commands
+
+    pub fn parse_cmd_get(&self, mut rest: Vec<u8>) -> TcpTransportResult<Cmd> {
+        rest.remove(0); // remove leading space XXX errors
         let (key, rest) = try!(self.parse_word(rest));
 
         // We expect to find the end of the line now
         if rest.is_empty() {
-            let key_str = String::from_utf8(key).unwrap(); // XXX errors
+            let key_str = try!(self.as_string(key));
             Ok(Cmd::Get(Get { key: key_str }))
         } else {
             Err(TcpTransportError::CommandParseError)
         }
     }
 
+    // High level functions
 
     pub fn read_cmd(&mut self) -> TcpTransportResult<Cmd> {
         let line_len = self.get_max_line_len();
 
         let fst_line = try!(self.read_line(line_len));
         let (keyword, rest) = try!(self.parse_word(fst_line));
-        let keyword_str = String::from_utf8(keyword).unwrap(); // XXX errors
+        let keyword_str = try!(self.as_string(keyword));
 
         if keyword_str == "get" {
             return self.parse_cmd_get(rest);

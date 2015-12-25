@@ -9,6 +9,25 @@ use protocol::cmd::Get;
 // Basic methods to consume the stream
 
 #[test]
+fn test_as_string_ok() {
+    let mut ts = TestStream::new(vec![]);
+    let mut transport = TcpTransport::new(ts);
+
+    let string = transport.as_string(vec![97, 32, 65]).unwrap();
+    assert_eq!(string, "a A".to_string());
+}
+
+#[test]
+fn test_as_string_invalid() {
+    let mut ts = TestStream::new(vec![]);
+    let mut transport = TcpTransport::new(ts);
+
+    // Invalid utf8 bytes
+    let err = transport.as_string(vec![97, 254, 255]).unwrap_err();
+    assert_eq!(err, TcpTransportError::Utf8Error);
+}
+
+#[test]
 fn test_read_byte() {
     let mut ts = TestStream::new(vec![93]);
     let mut transport = TcpTransport::new(ts);
@@ -61,7 +80,7 @@ fn test_parse_word_split() {
     let bytes = transport.read_bytes(7).unwrap();
     let (word, rest) = transport.parse_word(bytes).unwrap();
     assert_eq!(word, [1, 2]);
-    assert_eq!(rest, [3, 4, 11, 32]);
+    assert_eq!(rest, [32, 3, 4, 11, 32]);
 }
 
 #[test]
@@ -113,7 +132,7 @@ fn test_read_cmd_get_ok() {
 
 #[test]
 fn test_read_cmd_get_malformed() {
-    let cmd_str = "get x x\r\n".to_string();
+    let cmd_str = "get x \r\n".to_string();
     let mut ts = TestStream::new(cmd_str.into_bytes());
     let mut transport = TcpTransport::new(ts);
 
