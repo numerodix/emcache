@@ -74,23 +74,42 @@ impl<T: Read + Write> TcpTransport<T> {
         }
     }
 
-    pub fn parse_word(&self, bytes: Vec<u8>) -> TcpTransportResult<Vec<u8>> {
-        // TODO: return a pair of vectors, one being the word, the other being
-        // the rest of the line
+    pub fn parse_word(&self,
+                      bytes: Vec<u8>)
+                      -> TcpTransportResult<(Vec<u8>, Vec<u8>)> {
+        let mut space_idx = -1;
 
         for i in 0..bytes.len() {
             // We're looking for a space
             if bytes[i] == 32 {
-                // TODO avoid cloning the whole thing
-                let mut copy = bytes.clone();
-                copy.truncate(i);
-                return Ok(copy);
+                space_idx = i;
             }
         }
 
-        // If we've reached the end of the buffer without seeing a space that
-        // makes the whole buffer a word
-        Ok(bytes)
+        if space_idx as i64 > -1 {
+            let mut word = vec![];
+            let mut rest = vec![];
+
+            // TODO figure out how to return a modified vector instead of
+            // copying the whole rest of it
+            for i in 0..bytes.len() {
+                let byte = bytes[i];
+                if i < space_idx {
+                    word.push(byte);
+                } else if i == space_idx {
+                    // we exclude the space from either slice
+                } else {
+                    rest.push(byte);
+                }
+            }
+
+            Ok((word, rest))
+
+        } else {
+            // If we've reached the end of the buffer without seeing a space
+            // that makes the whole buffer a word
+            Ok((bytes, vec![]))
+        }
     }
 
 
@@ -100,7 +119,7 @@ impl<T: Read + Write> TcpTransport<T> {
         let line_len = self.key_maxlen as usize + 100;
 
         let fst_line = try!(self.read_line(line_len));
-        let fst_word = try!(self.parse_word(fst_line));
+        let (fst_word, rest) = try!(self.parse_word(fst_line));
         let fst_word_str = String::from_utf8(fst_word).unwrap(); // XXX errors
 
         if fst_word_str == "stats" {

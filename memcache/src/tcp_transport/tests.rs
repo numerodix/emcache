@@ -56,8 +56,9 @@ fn test_parse_word_split() {
     let mut transport = TcpTransport::new(ts);
 
     let bytes = transport.read_bytes(6).unwrap();
-    let word = transport.parse_word(bytes).unwrap();
+    let (word, rest) = transport.parse_word(bytes).unwrap();
     assert_eq!(word, [1, 2]);
+    assert_eq!(rest, [3, 4, 11]);
 }
 
 #[test]
@@ -66,8 +67,9 @@ fn test_parse_word_whole() {
     let mut transport = TcpTransport::new(ts);
 
     let bytes = transport.read_bytes(6).unwrap();
-    let word = transport.parse_word(bytes).unwrap();
+    let (word, rest) = transport.parse_word(bytes).unwrap();
     assert_eq!(word, [1, 2, 3, 3, 4, 11]);
+    assert_eq!(rest, []);
 }
 
 
