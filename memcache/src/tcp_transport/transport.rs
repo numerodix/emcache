@@ -62,7 +62,7 @@ impl<T: Read + Write> TcpTransport<T> {
 
         match self.stream.read(&mut bytes) {
             Ok(1) => Ok(bytes[0]),
-            _ => Err(TcpTransportError::SocketReadError),
+            _ => Err(TcpTransportError::StreamReadError),
         }
     }
 

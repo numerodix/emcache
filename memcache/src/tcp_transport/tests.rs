@@ -135,7 +135,7 @@ fn test_read_cmd_malterminated() {
     let mut transport = TcpTransport::new(ts);
 
     let err = transport.read_cmd().unwrap_err();
-    assert_eq!(err, TcpTransportError::SocketReadError);
+    assert_eq!(err, TcpTransportError::StreamReadError);
 }
 
 
@@ -202,7 +202,7 @@ fn test_read_cmd_set_over_size() {
     let mut transport = TcpTransport::new(ts);
 
     let err = transport.read_cmd().unwrap_err();
-    assert_eq!(err, TcpTransportError::SocketReadError);
+    assert_eq!(err, TcpTransportError::StreamReadError);
 }
 
 
