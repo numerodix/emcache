@@ -3,4 +3,4 @@
 set -e
 
 cargo test -- --ignored $@
-./fasttests.sh $@
+./fast_unit_tests.sh $@

@@ -1,2 +1,2 @@
 *.rs.bk
-memcache/target/
+target/
