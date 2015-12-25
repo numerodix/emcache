@@ -4,6 +4,7 @@ use super::test_stream::TestStream;
 
 use protocol::cmd::Cmd;
 use protocol::cmd::Get;
+use protocol::cmd::Set;
 
 
 // Basic methods to consume the stream
@@ -25,6 +26,26 @@ fn test_as_string_invalid() {
     // Invalid utf8 bytes
     let err = transport.as_string(vec![97, 254, 255]).unwrap_err();
     assert_eq!(err, TcpTransportError::Utf8Error);
+}
+
+#[test]
+fn test_as_number_ok() {
+    let mut ts = TestStream::new(vec![]);
+    let mut transport = TcpTransport::new(ts);
+
+    let bytes = "123".to_string().into_bytes();
+    let num = transport.as_number::<u32>(bytes).unwrap();
+    assert_eq!(num, 123);
+}
+
+#[test]
+fn test_as_number_invalid() {
+    let mut ts = TestStream::new(vec![]);
+    let mut transport = TcpTransport::new(ts);
+
+    let bytes = "12 3".to_string().into_bytes();
+    let err = transport.as_number::<u32>(bytes).unwrap_err();
+    assert_eq!(err, TcpTransportError::NumberParseError);
 }
 
 #[test]
@@ -138,6 +159,50 @@ fn test_read_cmd_get_malformed() {
 
     let err = transport.read_cmd().unwrap_err();
     assert_eq!(err, TcpTransportError::CommandParseError);
+}
+
+#[test]
+fn test_read_cmd_get_non_utf8() {
+    // get XX\r\n
+    let cmd_bytes = (vec![103, 101, 116, 32, 254, 13, 10]);
+    let mut ts = TestStream::new(cmd_bytes);
+    let mut transport = TcpTransport::new(ts);
+
+    let err = transport.read_cmd().unwrap_err();
+    assert_eq!(err, TcpTransportError::Utf8Error);
+}
+
+
+// Command parsing: Set
+
+#[test]
+fn test_read_cmd_set_ok() {
+    let cmd_str = "set x 0 0 3\r\nabc\r\n".to_string();
+    let mut ts = TestStream::new(cmd_str.into_bytes());
+    let mut transport = TcpTransport::new(ts);
+
+    let cmd = transport.read_cmd().unwrap();
+    assert_eq!(cmd, Cmd::Set(Set::new("x", 0, vec![97, 98, 99])));
+}
+
+#[test]
+fn test_read_cmd_set_under_size() {
+    let cmd_str = "set x 0 0 2\r\nabc\r\n".to_string();
+    let mut ts = TestStream::new(cmd_str.into_bytes());
+    let mut transport = TcpTransport::new(ts);
+
+    let err = transport.read_cmd().unwrap_err();
+    assert_eq!(err, TcpTransportError::CommandParseError);
+}
+
+#[test]
+fn test_read_cmd_set_over_size() {
+    let cmd_str = "set x 0 0 4\r\nabc\r\n".to_string();
+    let mut ts = TestStream::new(cmd_str.into_bytes());
+    let mut transport = TcpTransport::new(ts);
+
+    let err = transport.read_cmd().unwrap_err();
+    assert_eq!(err, TcpTransportError::SocketReadError);
 }
 
 

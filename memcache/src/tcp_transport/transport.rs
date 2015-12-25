@@ -1,9 +1,11 @@
 use std::io::Read;
 use std::io::Write;
+use std::str::FromStr;
 
 use protocol::cmd::Cmd;
 use protocol::cmd::Get;
 use protocol::cmd::Resp;
+use protocol::cmd::Set;
 
 use super::errors::TcpTransportError;
 use super::typedefs::TcpTransportResult;
@@ -41,7 +43,17 @@ impl<T: Read + Write> TcpTransport<T> {
     pub fn as_string(&self, bytes: Vec<u8>) -> TcpTransportResult<String> {
         match String::from_utf8(bytes) {
             Ok(string) => Ok(string),
-            Err(_) => Err(TcpTransportError::Utf8Error)
+            Err(_) => Err(TcpTransportError::Utf8Error),
+        }
+    }
+
+    pub fn as_number<N: FromStr>(&self,
+                                 bytes: Vec<u8>)
+                                 -> TcpTransportResult<N> {
+        let string = try!(self.as_string(bytes));
+        match string.parse::<N>() {
+            Ok(num) => Ok(num),
+            Err(_) => Err(TcpTransportError::NumberParseError),
         }
     }
 
@@ -142,6 +154,45 @@ impl<T: Read + Write> TcpTransport<T> {
         }
     }
 
+    pub fn parse_cmd_set(&mut self,
+                         mut rest: Vec<u8>)
+                         -> TcpTransportResult<Cmd> {
+        rest.remove(0); // remove leading space XXX errors
+        let (key, mut rest) = try!(self.parse_word(rest));
+
+        rest.remove(0); // remove leading space XXX errors
+        let (flags, mut rest) = try!(self.parse_word(rest));
+
+        rest.remove(0); // remove leading space XXX errors
+        let (exptime, mut rest) = try!(self.parse_word(rest));
+
+        rest.remove(0); // remove leading space XXX errors
+        let (bytelen, rest) = try!(self.parse_word(rest));
+
+        let key_str = try!(self.as_string(key));
+        let flags_num = try!(self.as_number::<u16>(flags));
+        let exptime_num = try!(self.as_number::<u32>(exptime));
+        let bytelen_num = try!(self.as_number::<u64>(bytelen));
+
+        // We know the byte length, so now read the value
+        let value = try!(self.read_bytes(bytelen_num));
+
+        // Read the line termination marker
+        let line_len = self.get_max_line_len();
+        let rest = try!(self.read_line(line_len));
+
+        // We got all the values we expected and there is nothing left
+        if rest.is_empty() {
+            return Ok(Cmd::Set(Set {
+                key: key_str,
+                exptime: exptime_num,
+                data: value,
+            }));
+        }
+
+        Err(TcpTransportError::CommandParseError)
+    }
+
     // High level functions
 
     pub fn read_cmd(&mut self) -> TcpTransportResult<Cmd> {
@@ -153,6 +204,8 @@ impl<T: Read + Write> TcpTransport<T> {
 
         if keyword_str == "get" {
             return self.parse_cmd_get(rest);
+        } else if keyword_str == "set" {
+            return self.parse_cmd_set(rest);
         } else if keyword_str == "stats" {
             return Ok(Cmd::Stats);
         }
