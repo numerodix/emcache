@@ -24,7 +24,7 @@ fn get_resp_value(resp: Resp) -> Value {
 
 #[test]
 fn test_cmd_set_and_get_a_key() {
-    let mut cache = Cache::new(100);
+    let cache = Cache::new(100);
     let mut driver = Driver::new(cache);
 
     let key_name = "x";
@@ -48,7 +48,7 @@ fn test_cmd_set_and_get_a_key() {
 
 #[test]
 fn test_cmd_stats() {
-    let mut cache = Cache::new(100);
+    let cache = Cache::new(100);
     let mut driver = Driver::new(cache);
 
     // Set a key
@@ -67,7 +67,7 @@ fn test_cmd_stats() {
 #[ignore]
 #[test]
 fn test_cmd_relative_exptime() {
-    let mut cache = Cache::new(100);
+    let cache = Cache::new(100);
     let mut driver = Driver::new(cache);
 
     let key_name = "x";
@@ -96,7 +96,7 @@ fn test_cmd_relative_exptime() {
 #[ignore]
 #[test]
 fn test_cmd_absolute_exptime() {
-    let mut cache = Cache::new(100);
+    let cache = Cache::new(100);
     let mut driver = Driver::new(cache);
 
     let key_name = "x";

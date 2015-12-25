@@ -3,8 +3,6 @@ use std::io::Read;
 use std::io::Write;
 use std::io::Result;
 
-use super::TcpTransport;
-
 
 // A stream that is seeded with incoming data which can be consumed and
 // records data written to it (like a socket)

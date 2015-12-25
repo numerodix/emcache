@@ -20,7 +20,7 @@ pub struct TcpTransport<T> {
 }
 
 impl<T: Read + Write> TcpTransport<T> {
-    pub fn new(mut stream: T) -> TcpTransport<T> {
+    pub fn new(stream: T) -> TcpTransport<T> {
         TcpTransport {
             stream: stream,
             outgoing_buffer: vec![],
@@ -117,17 +117,17 @@ impl<T: Read + Write> TcpTransport<T> {
     pub fn parse_word(&self,
                       bytes: Vec<u8>)
                       -> TcpTransportResult<(Vec<u8>, Vec<u8>)> {
-        let mut space_idx = -1;
+        let mut space_idx: i64 = -1;
 
         for i in 0..bytes.len() {
             // We're looking for a space
             if bytes[i] == 32 {
-                space_idx = i;
+                space_idx = i as i64;
                 break;
             }
         }
 
-        if space_idx as i64 > -1 {
+        if space_idx > -1 {
             let mut word = vec![];
             let mut rest = vec![];
 
@@ -135,7 +135,7 @@ impl<T: Read + Write> TcpTransport<T> {
             // copying the whole rest of it
             for i in 0..bytes.len() {
                 let byte = bytes[i];
-                if i < space_idx {
+                if (i as i64) < space_idx {
                     word.push(byte);
                 } else {
                     rest.push(byte);
@@ -181,7 +181,7 @@ impl<T: Read + Write> TcpTransport<T> {
 
         match rv {
             Ok(_) => Ok(()),
-            Err(e) => Err(TcpTransportError::StreamWriteError),
+            Err(_) => Err(TcpTransportError::StreamWriteError),
         }
     }
 
@@ -213,7 +213,7 @@ impl<T: Read + Write> TcpTransport<T> {
         let (exptime, mut rest) = try!(self.parse_word(rest));
 
         rest.remove(0); // remove leading space XXX errors
-        let (bytelen, rest) = try!(self.parse_word(rest));
+        let (bytelen, _) = try!(self.parse_word(rest));
 
         let key_str = try!(self.as_string(key));
         let flags_num = try!(self.as_number::<u16>(flags));

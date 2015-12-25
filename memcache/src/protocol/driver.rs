@@ -24,7 +24,7 @@ impl Driver {
     fn set_exptime(&self, value: &mut Value, exptime: u32) {
         // If exptime is greater than zero we need to set it on the value
         if exptime > 0 {
-            let mut tm = -1.0;
+            let tm;
 
             // Is it an interval greater than 30 days? Then it's a timestamp
             if exptime > 60 * 60 * 24 * 30 {

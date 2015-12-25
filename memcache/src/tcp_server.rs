@@ -10,8 +10,8 @@ use storage::Cache;
 use tcp_transport::TcpTransport;
 
 
-fn simple_memcache(mut stream: TcpStream) {
-    let mut cache = Cache::new(1024);
+fn simple_memcache(stream: TcpStream) {
+    let cache = Cache::new(1024);
     let mut driver = Driver::new(cache);
 
     let mut transport = TcpTransport::new(stream);
@@ -22,7 +22,7 @@ fn simple_memcache(mut stream: TcpStream) {
 
         // If we couldn't parse the command return an error
         if !rv.is_ok() {
-            transport.write_resp(&Resp::Error);
+            transport.write_resp(&Resp::Error).unwrap();
             continue;
         }
 
@@ -41,7 +41,7 @@ fn simple_memcache(mut stream: TcpStream) {
 }
 
 
-fn handle_client_playground(mut stream: TcpStream) {
+fn handle_client_playground(stream: TcpStream) {
     let mut transport = TcpTransport::new(stream);
 
     loop {
@@ -81,7 +81,7 @@ pub fn listen() {
             Ok(stream) => {
                 thread::spawn(move || simple_memcache(stream));
             }
-            Err(e) => {
+            Err(_) => {
                 println!("Connection failed :(");
             }
         }
