@@ -3,7 +3,10 @@ use super::TcpTransportError;
 use super::test_stream::TestStream;
 
 use protocol::cmd::Cmd;
+use protocol::cmd::Get;
 
+
+// Basic methods to consume the stream
 
 #[test]
 fn test_read_byte() {
@@ -52,13 +55,13 @@ fn test_read_line_too_long() {
 
 #[test]
 fn test_parse_word_split() {
-    let mut ts = TestStream::new(vec![1, 2, 32, 3, 4, 11]);
+    let mut ts = TestStream::new(vec![1, 2, 32, 3, 4, 11, 32]);
     let mut transport = TcpTransport::new(ts);
 
-    let bytes = transport.read_bytes(6).unwrap();
+    let bytes = transport.read_bytes(7).unwrap();
     let (word, rest) = transport.parse_word(bytes).unwrap();
     assert_eq!(word, [1, 2]);
-    assert_eq!(rest, [3, 4, 11]);
+    assert_eq!(rest, [3, 4, 11, 32]);
 }
 
 #[test]
@@ -72,6 +75,8 @@ fn test_parse_word_whole() {
     assert_eq!(rest, []);
 }
 
+
+// Command parsing: malformed examples
 
 #[test]
 fn test_read_cmd_invalid() {
@@ -92,6 +97,32 @@ fn test_read_cmd_malterminated() {
     let err = transport.read_cmd().unwrap_err();
     assert_eq!(err, TcpTransportError::SocketReadError);
 }
+
+
+// Command parsing: Get
+
+#[test]
+fn test_read_cmd_get_ok() {
+    let cmd_str = "get x\r\n".to_string();
+    let mut ts = TestStream::new(cmd_str.into_bytes());
+    let mut transport = TcpTransport::new(ts);
+
+    let cmd = transport.read_cmd().unwrap();
+    assert_eq!(cmd, Cmd::Get(Get::new("x")));
+}
+
+#[test]
+fn test_read_cmd_get_malformed() {
+    let cmd_str = "get x x\r\n".to_string();
+    let mut ts = TestStream::new(cmd_str.into_bytes());
+    let mut transport = TcpTransport::new(ts);
+
+    let err = transport.read_cmd().unwrap_err();
+    assert_eq!(err, TcpTransportError::CommandParseError);
+}
+
+
+// Command parsing: Stats
 
 #[test]
 fn test_read_cmd_stats() {

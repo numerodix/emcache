@@ -2,6 +2,7 @@ use std::io::Read;
 use std::io::Write;
 
 use protocol::cmd::Cmd;
+use protocol::cmd::Get;
 use protocol::cmd::Resp;
 
 use super::errors::TcpTransportError;
@@ -28,6 +29,12 @@ impl<T: Read + Write> TcpTransport<T> {
         self
     }
 
+
+    pub fn get_max_line_len(&self) -> usize {
+        // This needs to be the length of the longest command line, not
+        // including data values for which the length is given upfront
+        self.key_maxlen as usize + 100
+    }
 
     pub fn read_byte(&mut self) -> TcpTransportResult<u8> {
         let mut bytes = [0; 1];
@@ -83,6 +90,7 @@ impl<T: Read + Write> TcpTransport<T> {
             // We're looking for a space
             if bytes[i] == 32 {
                 space_idx = i;
+                break;
             }
         }
 
@@ -112,17 +120,29 @@ impl<T: Read + Write> TcpTransport<T> {
         }
     }
 
+    pub fn parse_cmd_get(&self, rest: Vec<u8>) -> TcpTransportResult<Cmd> {
+        let (key, rest) = try!(self.parse_word(rest));
+
+        // We expect to find the end of the line now
+        if rest.is_empty() {
+            let key_str = String::from_utf8(key).unwrap(); // XXX errors
+            Ok(Cmd::Get(Get { key: key_str }))
+        } else {
+            Err(TcpTransportError::CommandParseError)
+        }
+    }
+
 
     pub fn read_cmd(&mut self) -> TcpTransportResult<Cmd> {
-        // This needs to be the length of the longest command line, not
-        // including data values for which the length is given upfront
-        let line_len = self.key_maxlen as usize + 100;
+        let line_len = self.get_max_line_len();
 
         let fst_line = try!(self.read_line(line_len));
-        let (fst_word, rest) = try!(self.parse_word(fst_line));
-        let fst_word_str = String::from_utf8(fst_word).unwrap(); // XXX errors
+        let (keyword, rest) = try!(self.parse_word(fst_line));
+        let keyword_str = String::from_utf8(keyword).unwrap(); // XXX errors
 
-        if fst_word_str == "stats" {
+        if keyword_str == "get" {
+            return self.parse_cmd_get(rest);
+        } else if keyword_str == "stats" {
             return Ok(Cmd::Stats);
         }
 
