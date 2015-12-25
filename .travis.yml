@@ -3,4 +3,4 @@ rust:
     - stable
     - beta
     - nightly
-script: ./all_unit_tests.sh && ./client_test.py -p 11311
+script: ./all_unit_tests.sh
