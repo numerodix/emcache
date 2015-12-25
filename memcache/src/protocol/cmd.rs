@@ -69,6 +69,15 @@ pub struct Value {
     pub data: Vec<u8>,
 }
 
+impl Value {
+    pub fn new(key: &str, data: Vec<u8>) -> Value {
+        Value {
+            key: key.to_string(),
+            data: data,
+        }
+    }
+}
+
 
 // High level groupings
 

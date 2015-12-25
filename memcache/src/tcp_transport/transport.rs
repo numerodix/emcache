@@ -38,7 +38,11 @@ impl<T: Read + Write> TcpTransport<T> {
         self.key_maxlen as usize + 100
     }
 
-    // Basic bytes manipulation
+    pub fn get_stream(&self) -> &T {
+        &self.stream
+    }
+
+    // Basic bytes manipulation and reading from the stream
 
     pub fn as_string(&self, bytes: Vec<u8>) -> TcpTransportResult<String> {
         match String::from_utf8(bytes) {
@@ -139,6 +143,21 @@ impl<T: Read + Write> TcpTransport<T> {
         }
     }
 
+    // Writing to the stream
+
+    pub fn write_bytes(&mut self, bytes: &Vec<u8>) -> TcpTransportResult<usize> {
+        let rv = self.stream.write(bytes);
+        match rv {
+            Ok(bytelen) => Ok(bytelen),
+            Err(_) => Err(TcpTransportError::StreamWriteError),
+        }
+    }
+
+    pub fn write_string(&mut self, string: &str) -> TcpTransportResult<usize> {
+        let bytes = string.to_string().into_bytes();
+        Ok(try!(self.write_bytes(&bytes)))
+    }
+
     // Parse individual commands
 
     pub fn parse_cmd_get(&self, mut rest: Vec<u8>) -> TcpTransportResult<Cmd> {
@@ -214,6 +233,27 @@ impl<T: Read + Write> TcpTransport<T> {
     }
 
     pub fn write_resp(&mut self, resp: &Resp) -> TcpTransportResult<()> {
+        match *resp {
+            Resp::Error => {
+                try!(self.write_string("ERROR\r\n"));
+            }
+            Resp::Stored => {
+                try!(self.write_string("STORED\r\n"));
+            }
+            Resp::Value(ref value) => {
+                try!(self.write_string("VALUE ")); // keyword
+                try!(self.write_string(&value.key)); // key
+                try!(self.write_string(" 0 ")); // flags
+                try!(self.write_string(&value.data.len().to_string())); // bytelen
+                try!(self.write_string(&"\r\n".to_string())); // newline
+                try!(self.write_bytes(&value.data)); // data block
+                try!(self.write_string(&"\r\n".to_string())); // newline
+            }
+            _ => {
+                return Err(TcpTransportError::StreamWriteError); // XXX
+            }
+        }
+
         Ok(())
     }
 }

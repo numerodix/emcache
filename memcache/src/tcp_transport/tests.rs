@@ -4,7 +4,9 @@ use super::test_stream::TestStream;
 
 use protocol::cmd::Cmd;
 use protocol::cmd::Get;
+use protocol::cmd::Resp;
 use protocol::cmd::Set;
+use protocol::cmd::Value;
 
 
 // Basic methods to consume the stream
@@ -116,6 +118,29 @@ fn test_parse_word_whole() {
 }
 
 
+// Basic methods to produce the stream
+
+#[test]
+fn test_write_bytes() {
+    let mut ts = TestStream::new(vec![]);
+    let mut transport = TcpTransport::new(ts);
+
+    let bytelen = transport.write_bytes(&vec![97, 98, 99]).unwrap();
+    assert_eq!(bytelen, 3);
+    assert_eq!(transport.get_stream().outgoing, [97, 98, 99]);
+}
+
+#[test]
+fn test_write_string() {
+    let mut ts = TestStream::new(vec![]);
+    let mut transport = TcpTransport::new(ts);
+
+    let bytelen = transport.write_string("abc").unwrap();
+    assert_eq!(bytelen, 3);
+    assert_eq!(transport.get_stream().outgoing, [97, 98, 99]);
+}
+
+
 // Command parsing: malformed examples
 
 #[test]
@@ -216,4 +241,46 @@ fn test_read_cmd_stats() {
 
     let cmd = transport.read_cmd().unwrap();
     assert_eq!(cmd, Cmd::Stats);
+}
+
+
+// Response writing: Error
+
+#[test]
+fn test_write_resp_error() {
+    let mut ts = TestStream::new(vec![]);
+    let mut transport = TcpTransport::new(ts);
+
+    let resp = Resp::Error;
+    transport.write_resp(&resp);
+    let expected = "ERROR\r\n".to_string().into_bytes();
+    assert_eq!(transport.get_stream().outgoing, expected);
+}
+
+
+// Response writing: Stored
+
+#[test]
+fn test_write_resp_stored() {
+    let mut ts = TestStream::new(vec![]);
+    let mut transport = TcpTransport::new(ts);
+
+    let resp = Resp::Stored;
+    transport.write_resp(&resp);
+    let expected = "STORED\r\n".to_string().into_bytes();
+    assert_eq!(transport.get_stream().outgoing, expected);
+}
+
+
+// Response writing: Value
+
+#[test]
+fn test_write_resp_value() {
+    let mut ts = TestStream::new(vec![]);
+    let mut transport = TcpTransport::new(ts);
+
+    let resp = Resp::Value(Value::new("x", "abc".to_string().into_bytes()));
+    transport.write_resp(&resp);
+    let expected = "VALUE x 0 3\r\nabc\r\n".to_string().into_bytes();
+    assert_eq!(transport.get_stream().outgoing, expected);
 }
