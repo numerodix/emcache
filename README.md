@@ -1,20 +1,29 @@
-Datastructures:
-    Hashtable HT
-        - stores: Item { key -> (value, atime) }
+# memcache.rs
 
-    Access list AL (doubly linked list)
-        - stores (atime, ptr-to-Item)
+This is a toy implementation of memcached.
 
 
-InsertNewItem
-    - insert into HT - O(1)
-    - prepend to AL - O(1)
+## Features and todo list
 
-InsertNewItemWhenFull
-    - pop last item in AL - O(1)
-    - pop that item from HT - O(1)
-    - goto InsertNewItem
+* Minimalistic implementation of GET, SET and STATS commands.
+* Cache item lifetime can be controlled both globally and a on per-item basis.
+* No concurrent execution mode (one client at a time).
+* Bounded cache (no LRU yet).
+* Modular architecture. Transport layer is separate from storage and can be configured in a N:1 topology with communication using immutable Cmd/Resp values.
+* Numerous opportunities for optimization by eliminating data copying.
+* Fairly good test coverage.
 
-UpdateExistingItem / AccessItem:
-    - locate item in AL - O(n)  XXX <======
-    - lookup / write in HT - O(1)
+
+## Development
+
+To build:
+
+    $ cargo build
+
+To run unit tests:
+
+    $ ./all_unit_tests.sh
+
+To run the server:
+    
+    $ ./run_server.sh
