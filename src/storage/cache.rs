@@ -98,36 +98,26 @@ impl Cache {
             return Err(CacheError::KeyTooLong);
         }
 
-        // Phase one: check if the key exists and is still alive
-        {
-            // Retrieve the key
-            let opt = self.storage.get(key);
+        // Pop the value first
+        let mut opt = self.storage.remove(key);
 
-            // We didn't find it
-            if opt.is_none() {
-                return Err(CacheError::KeyNotFound);
-            }
-
-            // From here on we can assume we did find it
-            // Now check if the value is still alive
-            let value: &Value = opt.unwrap();
-            if !self.value_is_alive(value) {
-                return Err(CacheError::KeyNotFound);
-            }
+        // We didn't find it
+        if opt.is_none() {
+            return Err(CacheError::KeyNotFound);
         }
 
-        // Phase two: Load then store to update the position in the list
-        // (refresh the key)
-        {
-            // Pop the value first
-            let mut value = self.storage.remove(key).unwrap();
-
-            // Update the value to mark that it's been accessed just now
-            value.touch();
-
-            // Now we reinsert the key to refresh it
-            self.storage.insert(key.clone(), value);
+        // From here on we can assume we did find it
+        // Now check if the value is still alive
+        let mut value = opt.unwrap();
+        if !self.value_is_alive(&value) {
+            return Err(CacheError::KeyNotFound);
         }
+
+        // Update the value to mark that it's been accessed just now
+        value.touch();
+
+        // Now we reinsert the key to refresh it
+        self.storage.insert(key.clone(), value);
 
         // Load since we need to return it
         let value = self.storage.get(key).unwrap();
