@@ -1,5 +1,4 @@
-use linked_hash_map::LinkedHashMap;
-
+use super::accounting_hash_map::AccountingHashMap;
 use super::errors::CacheError;
 use super::key::Key;
 use super::typedefs::CacheResult;
@@ -12,7 +11,7 @@ pub struct Cache {
     item_lifetime: f64, // in seconds, <0 for unlimited
     key_maxlen: u64, // in bytes
     value_maxlen: u64, // in bytes
-    storage: LinkedHashMap<Key, Value>,
+    storage: AccountingHashMap,
 }
 
 impl Cache {
@@ -22,7 +21,7 @@ impl Cache {
             item_lifetime: -1.0,
             key_maxlen: 250, // 250b
             value_maxlen: 1048576, // 1mb
-            storage: LinkedHashMap::new(),
+            storage: AccountingHashMap::new(),
         }
     }
 
