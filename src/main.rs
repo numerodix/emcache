@@ -8,10 +8,17 @@ mod storage;
 mod tcp_transport;
 mod tcp_server;
 
+mod try;
+
+use try::run_it;
 use tcp_server::serve_forever;
 
 
 fn main() {
+    run_it();
+    return;
+
+
     println!("Launching tcp server...");
     serve_forever();
 }
