@@ -52,15 +52,16 @@ fn test_cmd_stats() {
     let mut driver = Driver::new(cache);
 
     // Set a key
-    let cmd = Cmd::Set(Set::new("x", 0, vec![9]));
+    let cmd = Cmd::Set(Set::new("x", 0, vec![8, 9]));
     let resp = driver.run(cmd);
     assert_eq!(resp, Resp::Stored);
 
     // Run stats
     let cmd = Cmd::Stats;
     let resp = driver.run(cmd);
-    let stat = Stat::new("curr_items", "1".to_string());
-    assert_eq!(resp, Resp::Stats(vec![stat]));
+    let st_bytes = Stat::new("bytes", "3".to_string());
+    let st_curr_items = Stat::new("curr_items", "1".to_string());
+    assert_eq!(resp, Resp::Stats(vec![st_bytes, st_curr_items]));
 }
 
 // this is a slow test that relies on sleeps

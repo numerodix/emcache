@@ -1,4 +1,5 @@
 use super::accounting_hash_map::AccountingHashMap;
+use super::accounting_hash_map::Stats;
 use super::errors::CacheError;
 use super::key::Key;
 use super::typedefs::CacheResult;
@@ -38,6 +39,11 @@ impl Cache {
     pub fn with_value_maxlen(&mut self, value_maxlen: u64) -> &mut Cache {
         self.value_maxlen = value_maxlen;
         self
+    }
+
+
+    pub fn get_stats(&self) -> &Stats {
+        self.storage.get_stats()
     }
 
 

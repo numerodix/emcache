@@ -72,10 +72,14 @@ impl Driver {
     }
 
     fn do_stats(&self) -> Resp {
-        let curr_items = self.cache.len();
+        let stats = self.cache.get_stats();
+        let bytes = stats.bytes.to_string();
+        let curr_items = self.cache.len().to_string();
 
-        let stat = Stat::new("curr_items", curr_items.to_string());
-        Resp::Stats(vec![stat])
+        let st_bytes = Stat::new("bytes", bytes);
+        let st_curr_items = Stat::new("curr_items", curr_items);
+
+        Resp::Stats(vec![st_bytes, st_curr_items])
     }
 
 
