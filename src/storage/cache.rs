@@ -1,4 +1,4 @@
-use std::collections::HashMap;
+use linked_hash_map::LinkedHashMap;
 
 use super::errors::CacheError;
 use super::key::Key;
@@ -12,7 +12,7 @@ pub struct Cache {
     item_lifetime: f64, // in seconds, <0 for unlimited
     key_maxlen: u64, // in bytes
     value_maxlen: u64, // in bytes
-    storage: HashMap<Key, Value>,
+    storage: LinkedHashMap<Key, Value>,
 }
 
 impl Cache {
@@ -22,7 +22,7 @@ impl Cache {
             item_lifetime: -1.0,
             key_maxlen: 250, // 250b
             value_maxlen: 1048576, // 1mb
-            storage: HashMap::new(),
+            storage: LinkedHashMap::new(),
         }
     }
 

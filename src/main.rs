@@ -1,3 +1,4 @@
+extern crate linked_hash_map;
 extern crate time;
 
 mod protocol;
