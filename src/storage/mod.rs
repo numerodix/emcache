@@ -9,6 +9,7 @@ pub mod utils;
 pub mod value;
 
 // internal stuff
+mod accounting_hash_map;
 mod tests;  // needed to be part of the compilation unit in test mode
 
 
