@@ -1,3 +1,4 @@
+use platform::process::get_pid;
 use platform::time::sleep_secs;
 use platform::time::time_now;
 use storage::Cache;
@@ -59,11 +60,21 @@ fn test_cmd_stats() {
     // Run stats
     let cmd = Cmd::Stats;
     let resp = driver.run(cmd);
+
+    let st_pid = Stat::new("pid", get_pid().to_string());
     let st_bytes = Stat::new("bytes", "3".to_string());
+    let st_uptime = Stat::new("uptime", "0".to_string());
+    let st_time = Stat::new("time", (time_now() as u64).to_string());
     let st_curr_items = Stat::new("curr_items", "1".to_string());
     let st_total_items = Stat::new("total_items", "1".to_string());
+
     assert_eq!(resp,
-               Resp::Stats(vec![st_bytes, st_curr_items, st_total_items]));
+               Resp::Stats(vec![st_pid,
+                                st_uptime,
+                                st_time,
+                                st_bytes,
+                                st_curr_items,
+                                st_total_items]));
 }
 
 // this is a slow test that relies on sleeps
