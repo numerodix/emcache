@@ -48,20 +48,30 @@ fn test_key_not_found() {
 }
 
 #[test]
-fn test_store_beyond_capacity() {
+fn test_store_beyond_capacity_lru() {
     let mut cache = Cache::new(1);
 
     // we've now reached capacity
-    let rv = cache.set(key!(1), value!(9));
+    let rv = cache.set(key!(1), value!(8));
     assert!(rv.is_ok());
+    assert_eq!(cache.len(), 1);
 
-    // overwriting is ok
-    let rv = cache.set(key!(1), value!(9));
-    assert!(rv.is_ok());
-
-    // but we cannot store a new key
+    // write another key
     let rv = cache.set(key!(2), value!(9));
-    assert_eq!(rv.unwrap_err(), CacheError::CapacityExceeded);
+    assert!(rv.is_ok());
+    assert_eq!(cache.len(), 1);
+
+    // the first key is gone
+    {
+        let rv = cache.get(&key!(1));
+        assert!(rv.is_err());
+    }
+
+    // the second key is present
+    {
+        let rv = cache.get(&key!(2));
+        assert!(rv.is_ok());
+    }
 }
 
 #[test]

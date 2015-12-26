@@ -98,7 +98,7 @@ impl Cache {
             return Err(CacheError::KeyTooLong);
         }
 
-        let mut is_alive = false;
+        // Phase one: check if the key exists and is still alive
         {
             // Retrieve the key
             let opt = self.storage.get(key);
@@ -109,23 +109,28 @@ impl Cache {
             }
 
             // From here on we can assume we did find it
+            // Now check if the value is still alive
             let value: &Value = opt.unwrap();
-            if self.value_is_alive(value) {
-                is_alive = true;
+            if !self.value_is_alive(value) {
+                return Err(CacheError::KeyNotFound);
             }
         }
 
-        // If the key is dead we evict it and return an error
-        if !is_alive {
-            self.remove(key).unwrap();
-            return Err(CacheError::KeyNotFound);
+        // Phase two: Load then store to update the position in the list
+        // (refresh the key)
+        {
+            // Pop the value first
+            let mut value = self.storage.remove(key).unwrap();
+
+            // Update the value to mark that it's been accessed just now
+            value.touch();
+
+            // Now we reinsert the key to refresh it
+            self.storage.insert(key.clone(), value);
         }
 
-        // Otherwise we retrieve the key again, this time mutable
-        let value = self.storage.get_mut(key).unwrap();
-
-        // Update the value to mark that it's been accessed just now
-        value.touch();
+        // Load since we need to return it
+        let value = self.storage.get(key).unwrap();
 
         // Return success
         Ok(value)
@@ -147,7 +152,8 @@ impl Cache {
         // Check capacity if adding new key
         if !self.storage.contains_key(&key) {
             if self.storage.len() as u64 == self.capacity {
-                return Err(CacheError::CapacityExceeded);
+                // Remove the oldest item to make space
+                self.storage.pop_back();
             }
         }
 
