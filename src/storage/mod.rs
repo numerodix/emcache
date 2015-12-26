@@ -9,6 +9,7 @@ pub mod utils;
 pub mod value;
 
 // internal stuff
+mod linked_list;
 mod tests;  // needed to be part of the compilation unit in test mode
 
 
