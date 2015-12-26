@@ -75,11 +75,13 @@ impl Driver {
         let stats = self.cache.get_stats();
         let bytes = stats.bytes.to_string();
         let curr_items = self.cache.len().to_string();
+        let total_items = stats.total_items.to_string();
 
         let st_bytes = Stat::new("bytes", bytes);
         let st_curr_items = Stat::new("curr_items", curr_items);
+        let st_total_items = Stat::new("total_items", total_items);
 
-        Resp::Stats(vec![st_bytes, st_curr_items])
+        Resp::Stats(vec![st_bytes, st_curr_items, st_total_items])
     }
 
 

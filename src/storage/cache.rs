@@ -12,7 +12,7 @@ pub struct Cache {
     item_lifetime: f64, // in seconds, <0 for unlimited
     key_maxlen: u64, // in bytes
     value_maxlen: u64, // in bytes
-    storage: AccountingHashMap,
+    pub storage: AccountingHashMap,
 }
 
 impl Cache {
@@ -157,6 +157,9 @@ impl Cache {
 
         // Store the value
         self.storage.insert(key, value);
+
+        // Update stats
+        self.storage.stats.total_items += 1;
 
         // Return success
         Ok(())

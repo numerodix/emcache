@@ -5,13 +5,15 @@ use super::value::Value;
 
 
 pub struct Stats {
-    pub bytes: u64,
+    pub bytes: u64, // Bytes currently stored
+    pub total_items: u64, // Total items stored since server started
 }
 
 impl Stats {
     pub fn new() -> Stats {
         Stats {
             bytes: 0,
+            total_items: 0,
         }
     }
 }
@@ -21,7 +23,7 @@ impl Stats {
 // underlying LinkedHashMap, all the while recording stats on operations that
 // mutate the hashmap.
 pub struct AccountingHashMap {
-    stats: Stats,
+    pub stats: Stats,
     storage: LinkedHashMap<Key, Value>,
 }
 
@@ -63,7 +65,7 @@ impl AccountingHashMap {
         match opt {
             Some((ref key, ref value)) => {
                 self.stats.bytes -= (key.len() as u64 + value.len() as u64);
-            },
+            }
             None => (),
         }
 
@@ -76,7 +78,7 @@ impl AccountingHashMap {
         match opt {
             Some(ref value) => {
                 self.stats.bytes -= (key.len() as u64 + value.len() as u64);
-            },
+            }
             None => (),
         }
 
