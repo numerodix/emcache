@@ -1,6 +1,6 @@
+use platform::time::sleep_secs;
+use platform::time::time_now;
 use storage::Cache;
-use storage::utils::sleep_secs;
-use storage::utils::time_now_utc;
 
 use super::Driver;
 use super::cmd::Cmd;
@@ -104,7 +104,7 @@ fn test_cmd_absolute_exptime() {
 
     let key_name = "x";
     let blob = vec![1, 2, 3];
-    let exptime = time_now_utc().round() as u32 + 1;
+    let exptime = time_now().round() as u32 + 1;
 
     // Set a key with exptime of 1 second
     let cmd = Cmd::Set(Set::new(key_name, exptime, blob.clone()));

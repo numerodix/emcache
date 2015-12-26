@@ -1,4 +1,4 @@
-use super::utils::time_now_utc;
+use platform::time::time_now;
 
 
 #[derive(Debug, Clone)]
@@ -29,7 +29,7 @@ impl Value {
     }
 
     pub fn touch(&mut self) {
-        self.atime = time_now_utc();
+        self.atime = time_now();
     }
 
     pub fn set_exptime(&mut self, exptime: f64) {

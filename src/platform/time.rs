@@ -19,7 +19,7 @@ fn convert_timespec_to_secs(ts: time::Timespec) -> f64 {
     ts.sec as f64 + (ts.nsec as f64 / 1_000_000_000f64)
 }
 
-pub fn time_now_utc() -> f64 {
+pub fn time_now() -> f64 {
     let ts = time::get_time();
     convert_timespec_to_secs(ts)
 }

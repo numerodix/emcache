@@ -1,7 +1,8 @@
+use platform::process::get_pid;
+use platform::time::time_now;
 use storage::Cache;
 use storage::Key;
 use storage::Value;
-use storage::utils::time_now_utc;
 
 use super::cmd::Cmd;
 use super::cmd::Get;
@@ -13,11 +14,15 @@ use super::cmd::Value as CmdValue;
 
 pub struct Driver {
     cache: Cache,
+    time_start: f64,
 }
 
 impl Driver {
     pub fn new(cache: Cache) -> Driver {
-        Driver { cache: cache }
+        Driver {
+            cache: cache,
+            time_start: time_now(),
+        }
     }
 
 
@@ -32,7 +37,7 @@ impl Driver {
 
             } else {
                 // Otherwise it's relative from now
-                tm = time_now_utc() + exptime as f64;
+                tm = time_now() + exptime as f64;
             }
 
             value.set_exptime(tm);
@@ -73,15 +78,27 @@ impl Driver {
 
     fn do_stats(&self) -> Resp {
         let stats = self.cache.get_stats();
+
+        let pid = get_pid().to_string();
+        let uptime = ((time_now() - self.time_start) as u64).to_string();
+        let time = (time_now() as u64).to_string();
         let bytes = stats.bytes.to_string();
         let curr_items = self.cache.len().to_string();
         let total_items = stats.total_items.to_string();
 
+        let st_pid = Stat::new("pid", pid);
+        let st_uptime = Stat::new("uptime", uptime);
+        let st_time = Stat::new("time", time);
         let st_bytes = Stat::new("bytes", bytes);
         let st_curr_items = Stat::new("curr_items", curr_items);
         let st_total_items = Stat::new("total_items", total_items);
 
-        Resp::Stats(vec![st_bytes, st_curr_items, st_total_items])
+        Resp::Stats(vec![st_pid,
+                         st_uptime,
+                         st_time,
+                         st_bytes,
+                         st_curr_items,
+                         st_total_items])
     }
 
 

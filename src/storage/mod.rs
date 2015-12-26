@@ -5,7 +5,6 @@ pub mod cache;
 pub mod errors;
 pub mod key;
 pub mod typedefs;
-pub mod utils;
 pub mod value;
 
 // internal stuff

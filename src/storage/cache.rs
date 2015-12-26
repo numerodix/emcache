@@ -1,9 +1,10 @@
+use platform::time::time_now;
+
 use super::accounting_hash_map::AccountingHashMap;
 use super::accounting_hash_map::Stats;
 use super::errors::CacheError;
 use super::key::Key;
 use super::typedefs::CacheResult;
-use super::utils::time_now_utc;
 use super::value::Value;
 
 
@@ -58,7 +59,7 @@ impl Cache {
     fn value_is_alive(&self, value: &Value) -> bool {
         // if the value has an exptime set, that takes precedence
         if value.exptime > 0.0 {
-            if value.exptime > time_now_utc() {
+            if value.exptime > time_now() {
                 return true;
             } else {
                 return false;
@@ -71,7 +72,7 @@ impl Cache {
         }
 
         // otherwise use lifetime to determine liveness
-        value.atime + self.item_lifetime > time_now_utc()
+        value.atime + self.item_lifetime > time_now()
     }
 
     fn remove(&mut self, key: &Key) -> CacheResult<()> {
