@@ -63,11 +63,19 @@ fn test_store_beyond_capacity_lru() {
 
     // the first key is gone
     {
+        let rv = cache.contains_key(&key!(1));
+        assert_eq!(rv.unwrap(), false);
+    }
+    {
         let rv = cache.get(&key!(1));
         assert!(rv.is_err());
     }
 
     // the second key is present
+    {
+        let rv = cache.contains_key(&key!(2));
+        assert_eq!(rv.unwrap(), true);
+    }
     {
         let rv = cache.get(&key!(2));
         assert!(rv.is_ok());
