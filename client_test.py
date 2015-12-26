@@ -5,7 +5,11 @@ import re
 import socket
 
 
-def generate_random_data(length):
+def generate_random_data(length_from, length_to=None):
+    length = length_from
+    if length_to is not None:
+        length = random.randint(length_from, length_to)
+
     with open('/dev/urandom', 'rb') as f:
         return f.read(length)
 
@@ -102,7 +106,7 @@ if __name__ == '__main__':
     client.print_stats()
 
     key = generate_random_key(4)
-    val = generate_random_data(8)
+    val = generate_random_data(5, 8)
 
     print("Setting key:   %r -> %r" % (key, val))
     client.set(key, val)
