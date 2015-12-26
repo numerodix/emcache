@@ -7,7 +7,6 @@ cargo build
 
 # Launch the server, give it 2sec to start up
 ./run_server.sh &
-pid=$!
 sleep 2
 
 # Run the client tests
@@ -15,6 +14,6 @@ sleep 2
 exit_code=$?
 
 # Kill the server
-kill -9 $pid
+ps axf | grep target/*/memcache | awk '{print $1}' | xargs kill
 
 exit $exit_code
