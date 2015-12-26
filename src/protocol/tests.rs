@@ -1,6 +1,7 @@
+use platform::process::get_pid;
+use platform::time::sleep_secs;
+use platform::time::time_now;
 use storage::Cache;
-use storage::utils::sleep_secs;
-use storage::utils::time_now_utc;
 
 use super::Driver;
 use super::cmd::Cmd;
@@ -52,15 +53,28 @@ fn test_cmd_stats() {
     let mut driver = Driver::new(cache);
 
     // Set a key
-    let cmd = Cmd::Set(Set::new("x", 0, vec![9]));
+    let cmd = Cmd::Set(Set::new("x", 0, vec![8, 9]));
     let resp = driver.run(cmd);
     assert_eq!(resp, Resp::Stored);
 
     // Run stats
     let cmd = Cmd::Stats;
     let resp = driver.run(cmd);
-    let stat = Stat::new("curr_items", "1".to_string());
-    assert_eq!(resp, Resp::Stats(vec![stat]));
+
+    let st_pid = Stat::new("pid", get_pid().to_string());
+    let st_bytes = Stat::new("bytes", "3".to_string());
+    let st_uptime = Stat::new("uptime", "0".to_string());
+    let st_time = Stat::new("time", (time_now() as u64).to_string());
+    let st_curr_items = Stat::new("curr_items", "1".to_string());
+    let st_total_items = Stat::new("total_items", "1".to_string());
+
+    assert_eq!(resp,
+               Resp::Stats(vec![st_pid,
+                                st_uptime,
+                                st_time,
+                                st_bytes,
+                                st_curr_items,
+                                st_total_items]));
 }
 
 // this is a slow test that relies on sleeps
@@ -101,7 +115,7 @@ fn test_cmd_absolute_exptime() {
 
     let key_name = "x";
     let blob = vec![1, 2, 3];
-    let exptime = time_now_utc().round() as u32 + 1;
+    let exptime = time_now().round() as u32 + 1;
 
     // Set a key with exptime of 1 second
     let cmd = Cmd::Set(Set::new(key_name, exptime, blob.clone()));

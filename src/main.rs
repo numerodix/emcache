@@ -1,6 +1,8 @@
 extern crate linked_hash_map;
+extern crate libc;
 extern crate time;
 
+mod platform;
 mod protocol;
 mod storage;
 mod tcp_transport;

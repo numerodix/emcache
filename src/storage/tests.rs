@@ -1,10 +1,10 @@
+use platform::time::sleep_secs;
+use platform::time::time_now;
+
 use super::Cache;
 use super::CacheError;
 use super::Key;
 use super::Value;
-
-use super::utils::sleep_secs;
-use super::utils::time_now_utc;
 
 
 #[test]
@@ -139,7 +139,7 @@ fn test_key_explicit_exptime() {
     let key = key!(1);
     let mut value = value!(9);
     // set exptime in the past
-    value.set_exptime(time_now_utc() - 1.0);
+    value.set_exptime(time_now() - 1.0);
 
     // set a key
     let rv = cache.set(key.clone(), value);

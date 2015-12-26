@@ -1,9 +1,10 @@
-use linked_hash_map::LinkedHashMap;
+use platform::time::time_now;
 
+use super::accounting_hash_map::AccountingHashMap;
+use super::accounting_hash_map::Stats;
 use super::errors::CacheError;
 use super::key::Key;
 use super::typedefs::CacheResult;
-use super::utils::time_now_utc;
 use super::value::Value;
 
 
@@ -12,7 +13,7 @@ pub struct Cache {
     item_lifetime: f64, // in seconds, <0 for unlimited
     key_maxlen: u64, // in bytes
     value_maxlen: u64, // in bytes
-    storage: LinkedHashMap<Key, Value>,
+    pub storage: AccountingHashMap,
 }
 
 impl Cache {
@@ -22,7 +23,7 @@ impl Cache {
             item_lifetime: -1.0,
             key_maxlen: 250, // 250b
             value_maxlen: 1048576, // 1mb
-            storage: LinkedHashMap::new(),
+            storage: AccountingHashMap::new(),
         }
     }
 
@@ -42,6 +43,11 @@ impl Cache {
     }
 
 
+    pub fn get_stats(&self) -> &Stats {
+        self.storage.get_stats()
+    }
+
+
     fn check_key_len(&self, key: &Key) -> bool {
         key.len() as u64 <= self.key_maxlen
     }
@@ -53,7 +59,7 @@ impl Cache {
     fn value_is_alive(&self, value: &Value) -> bool {
         // if the value has an exptime set, that takes precedence
         if value.exptime > 0.0 {
-            if value.exptime > time_now_utc() {
+            if value.exptime > time_now() {
                 return true;
             } else {
                 return false;
@@ -66,7 +72,7 @@ impl Cache {
         }
 
         // otherwise use lifetime to determine liveness
-        value.atime + self.item_lifetime > time_now_utc()
+        value.atime + self.item_lifetime > time_now()
     }
 
     fn remove(&mut self, key: &Key) -> CacheResult<()> {
@@ -152,6 +158,9 @@ impl Cache {
 
         // Store the value
         self.storage.insert(key, value);
+
+        // Update stats
+        self.storage.stats.total_items += 1;
 
         // Return success
         Ok(())

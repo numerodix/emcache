@@ -2,7 +2,7 @@
 
 [![Build Status](https://travis-ci.org/numerodix/memcache.rs.svg?branch=master)](https://travis-ci.org/numerodix/memcache.rs)
 
-This is a toy implementation of memcached.
+A toy implementation of memcached.
 
 
 ## Features and todo list

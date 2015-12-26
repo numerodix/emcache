@@ -4,5 +4,6 @@ version = "0.1.0"
 authors = ["Martin Matusiak"]
 
 [dependencies]
+libc = "0.2"
 linked-hash-map = "0.0.7"
 time = "0.1"
