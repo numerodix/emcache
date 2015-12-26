@@ -14,6 +14,6 @@ sleep 2
 exit_code=$?
 
 # Kill the server
-ps axf | grep target/*/memcache | awk '{print $1}' | xargs kill
+ps axf | grep target/*/memcache | awk '{print $1}' | xargs kill || true
 
 exit $exit_code
