@@ -5,7 +5,9 @@ use std::io::Result;
 
 
 // A stream that is seeded with incoming data which can be consumed and
-// records data written to it (like a socket)
+// records data written to it (like a socket).
+//
+// This allows us to unit test a transport without using sockets. :)
 pub struct TestStream {
     pub incoming: Vec<u8>,
     pub outgoing: Vec<u8>,
