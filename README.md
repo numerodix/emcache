@@ -14,6 +14,7 @@ A toy implementation of memcached in Rust.
 * Modular architecture. Transport layer is separate from storage and is configured in a N:1 topology with communication using immutable Cmd/Resp values over async channels.
 * Numerous opportunities for optimization by eliminating data copying.
 * Fairly good test coverage.
+* No config file, logging or daemonization yet.
 
 
 ## Development
