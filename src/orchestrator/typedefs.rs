@@ -5,6 +5,7 @@ use protocol::cmd::Cmd;
 use protocol::cmd::Resp;
 
 
+// Only used for display purposes
 pub type TransportId = u64;
 
 pub type RespSender = Sender<Resp>;

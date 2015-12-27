@@ -3,8 +3,8 @@ use std::sync::mpsc;
 use std::thread;
 
 use super::DriverTask;
-use super::TransportTask;
 use super::TransportId;
+use super::TransportTask;
 
 
 pub struct ListenerTask {
