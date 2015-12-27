@@ -12,7 +12,7 @@ use orchestrator::ListenerTask;
 
 
 fn main() {
-    let mut listener_task = ListenerTask::new(4096);
+    let mut listener_task = ListenerTask::new();
 
     println!("Launching tcp server...");
     listener_task.run();

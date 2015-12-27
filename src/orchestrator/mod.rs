@@ -12,7 +12,5 @@ pub use self::transport_task::TransportTask;
 pub use self::typedefs::CmdReceiver;
 pub use self::typedefs::CmdSender;
 pub use self::typedefs::RespReceiver;
-pub use self::typedefs::RespReceivers;
 pub use self::typedefs::RespSender;
-pub use self::typedefs::RespSenders;
 pub use self::typedefs::TransportId;

@@ -1,35 +1,34 @@
 use std::net::TcpStream;
+use std::sync::mpsc;
 
-use platform::time::sleep_secs;
 use protocol::cmd::Cmd;
 use protocol::cmd::Resp;
 use tcp_transport::TcpTransport;
 
 use super::CmdSender;
 use super::RespReceiver;
+use super::RespSender;
 use super::TransportId;
 
 
 pub struct TransportTask {
     id: TransportId,
     cmd_tx: CmdSender,
-    resp_rx: RespReceiver,
 }
 
 impl TransportTask {
     pub fn new(id: TransportId,
-               cmd_tx: CmdSender,
-               resp_rx: RespReceiver)
+               cmd_tx: CmdSender)
                -> TransportTask {
         TransportTask {
             id: id,
             cmd_tx: cmd_tx,
-            resp_rx: resp_rx,
         }
     }
 
     pub fn run(&self, stream: TcpStream) {
         let mut transport = TcpTransport::new(stream);
+        let (resp_tx, resp_rx): (RespSender, RespReceiver) = mpsc::channel();
 
         loop {
             println!("Ready to read command...");
@@ -44,8 +43,8 @@ impl TransportTask {
 
             // cmd -> resp
             let cmd = rv.unwrap();
-            self.cmd_tx.send((self.id, cmd)).unwrap();
-            let resp = self.resp_rx.recv().unwrap();
+            self.cmd_tx.send((self.id, resp_tx.clone(), cmd)).unwrap();
+            let resp = resp_rx.recv().unwrap();
 
             // Return a response
             println!("Returning response: {:?}", &resp);
