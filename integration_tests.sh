@@ -13,6 +13,9 @@ sleep 2
 ./client_test.py -p 11311
 exit_code=$?
 
+# Run the stress test
+./client_test.py -p 11311 --stress
+
 # Kill the server
 ps axf | grep target/*/memcache | awk '{print $1}' | xargs kill || true
 

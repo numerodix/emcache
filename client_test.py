@@ -3,6 +3,7 @@
 import random
 import re
 import socket
+import time
 
 
 def generate_random_data(length_from, length_to=None):
@@ -95,6 +96,8 @@ if __name__ == '__main__':
                       help='Host to connect to')
     parser.add_option('-p', '', action='store', type='int', dest='port',
                       help='Port to connect to')
+    parser.add_option('', '--stress', action='store_true', dest='stress_test',
+                      help='Perform a stress test')
     (options, args) = parser.parse_args()
 
 
@@ -103,18 +106,41 @@ if __name__ == '__main__':
 
 
     client = Client(host, port)
-    client.print_stats()
 
-    key = generate_random_key(4)
-    val = generate_random_data(5, 8)
+    if options.stress_test:
+        # establish connection
+        client.get('invalid')
 
-    print("Setting key:   %r -> %r" % (key, val))
-    client.set(key, val)
+        # measure transaction rate
+        start_time = time.time()
+        num = 10000  # should take about 2secs
+        for _ in range(num):
+            client.set('x', '1')
+            val2 = client.get('x')
+        end_time = time.time()
 
-    val2 = client.get(key)
-    print("Retrieved key: %r -> %r" % (key, val2))
+        # print stats afterwards
+        client.print_stats()
 
-    assert val == val2
+        # display results
+        interval = end_time - start_time
+        rate = float(num) / (interval) * 2
+        print("Made %d requests in %.2f seconds = %.2f requests/sec" %
+              (num, interval, rate))
+
+    else:
+        client.print_stats()
+
+        key = generate_random_key(4)
+        val = generate_random_data(5, 8)
+
+        print("Setting key:   %r -> %r" % (key, val))
+        client.set(key, val)
+
+        val2 = client.get(key)
+        print("Retrieved key: %r -> %r" % (key, val2))
+
+        assert val == val2
 
 
     #value = client.get('y')
