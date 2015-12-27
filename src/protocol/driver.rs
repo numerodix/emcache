@@ -119,6 +119,7 @@ impl Driver {
         let curr_items = self.cache.len().to_string();
         let total_items = storage.total_items.to_string();
         let evictions = storage.evictions.to_string();
+        let reclaimed = storage.reclaimed.to_string();
 
         let st_pid = Stat::new("pid", pid);
         let st_uptime = Stat::new("uptime", uptime);
@@ -133,6 +134,7 @@ impl Driver {
         let st_curr_items = Stat::new("curr_items", curr_items);
         let st_total_items = Stat::new("total_items", total_items);
         let st_evictions = Stat::new("evictions", evictions);
+        let st_reclaimed = Stat::new("reclaimed", reclaimed);
 
         Resp::Stats(vec![st_pid,
                          st_uptime,
@@ -146,7 +148,8 @@ impl Driver {
                          st_bytes,
                          st_curr_items,
                          st_total_items,
-                         st_evictions])
+                         st_evictions,
+                         st_reclaimed])
     }
 
 

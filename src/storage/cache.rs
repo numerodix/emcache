@@ -13,6 +13,7 @@ struct CacheMetrics {
     pub evictions: u64, // Number of items removed to make space for new items
     pub get_hits: u64,
     pub get_misses: u64,
+    pub reclaimed: u64, // Number of times an entry was reclaimed to store a new entry
     pub total_items: u64, // Total items stored since server started
 }
 
@@ -23,6 +24,7 @@ impl CacheMetrics {
             evictions: 0,
             get_hits: 0,
             get_misses: 0,
+            reclaimed: 0,
             total_items: 0,
         }
     }
@@ -210,6 +212,9 @@ impl Cache {
             if self.storage.len() as u64 == self.capacity {
                 // Remove the oldest item to make space
                 self.evict_oldest();
+
+                // Update metrics
+                self.metrics.reclaimed += 1;
             }
         }
 

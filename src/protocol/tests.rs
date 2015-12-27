@@ -78,6 +78,7 @@ fn test_cmd_stats() {
     let st_curr_items = Stat::new("curr_items", "1".to_string());
     let st_total_items = Stat::new("total_items", "1".to_string());
     let st_evictions = Stat::new("evictions", "0".to_string());
+    let st_reclaimed = Stat::new("reclaimed", "0".to_string());
 
     assert_eq!(resp,
                Resp::Stats(vec![st_pid,
@@ -92,7 +93,8 @@ fn test_cmd_stats() {
                                 st_bytes,
                                 st_curr_items,
                                 st_total_items,
-                                st_evictions]));
+                                st_evictions,
+                                st_reclaimed]));
 }
 
 // this is a slow test that relies on sleeps
