@@ -7,12 +7,12 @@ use super::TransportTask;
 
 
 pub struct ListenerTask {
-    cnt_transports: u64,
+    cur_transport_id: u64,
 }
 
 impl ListenerTask {
     pub fn new() -> ListenerTask {
-        ListenerTask { cnt_transports: 0 }
+        ListenerTask { cur_transport_id: 0 }
     }
 
     pub fn run(&mut self) {
@@ -31,8 +31,8 @@ impl ListenerTask {
             match stream {
                 Ok(stream) => {
                     // allocate transport id
-                    let id = self.cnt_transports.clone();
-                    self.cnt_transports += 1;
+                    let id = self.cur_transport_id.clone();
+                    self.cur_transport_id += 1;
 
                     let cmd_tx = cmd_tx.clone();
                     let transport_task = TransportTask::new(id, cmd_tx);
