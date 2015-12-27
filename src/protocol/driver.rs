@@ -104,7 +104,7 @@ impl Driver {
     }
 
     fn do_stats(&self) -> Resp {
-        let stats = self.cache.get_stats();
+        let storage = self.cache.get_metrics();
 
         let pid = get_pid().to_string();
         let uptime = ((time_now() - self.time_start) as u64).to_string();
@@ -113,9 +113,10 @@ impl Driver {
         let cmd_set = self.metrics.cmd_set.to_string();
         let cmd_flush = self.metrics.cmd_flush.to_string();
         let cmd_touch = self.metrics.cmd_touch.to_string();
-        let bytes = stats.bytes.to_string();
+        let bytes = storage.bytes.to_string();
         let curr_items = self.cache.len().to_string();
-        let total_items = stats.total_items.to_string();
+        let total_items = storage.total_items.to_string();
+        let evictions = storage.evictions.to_string();
 
         let st_pid = Stat::new("pid", pid);
         let st_uptime = Stat::new("uptime", uptime);
@@ -127,6 +128,7 @@ impl Driver {
         let st_bytes = Stat::new("bytes", bytes);
         let st_curr_items = Stat::new("curr_items", curr_items);
         let st_total_items = Stat::new("total_items", total_items);
+        let st_evictions = Stat::new("evictions", evictions);
 
         Resp::Stats(vec![st_pid,
                          st_uptime,
@@ -137,7 +139,8 @@ impl Driver {
                          st_cmd_touch,
                          st_bytes,
                          st_curr_items,
-                         st_total_items])
+                         st_total_items,
+                         st_evictions])
     }
 
 

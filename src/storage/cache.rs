@@ -1,19 +1,47 @@
+use linked_hash_map::LinkedHashMap;
+
 use platform::time::time_now;
 
-use super::accounting_hash_map::AccountingHashMap;
-use super::accounting_hash_map::Stats;
 use super::errors::CacheError;
 use super::key::Key;
 use super::typedefs::CacheResult;
 use super::value::Value;
 
 
+struct CacheMetrics {
+    pub bytes: u64, // Bytes currently stored
+    pub evictions: u64, // Number of items removed to make space for new items
+    pub total_items: u64, // Total items stored since server started
+}
+
+impl CacheMetrics {
+    pub fn new() -> CacheMetrics {
+        CacheMetrics {
+            bytes: 0,
+            evictions: 0,
+            total_items: 0,
+        }
+    }
+
+    fn bytes_add(&mut self, key: &Key, value: &Value) {
+        self.bytes += key.len() as u64;
+        self.bytes += value.len() as u64;
+    }
+
+    fn bytes_subtract(&mut self, key: &Key, value: &Value) {
+        self.bytes -= key.len() as u64;
+        self.bytes -= value.len() as u64;
+    }
+}
+
+
 pub struct Cache {
     capacity: u64,
     item_lifetime: f64, // in seconds, <0 for unlimited
     key_maxlen: u64, // in bytes
+    metrics: CacheMetrics,
     value_maxlen: u64, // in bytes
-    pub storage: AccountingHashMap,
+    storage: LinkedHashMap<Key, Value>,
 }
 
 impl Cache {
@@ -22,8 +50,9 @@ impl Cache {
             capacity: capacity,
             item_lifetime: -1.0,
             key_maxlen: 250, // 250b
+            metrics: CacheMetrics::new(),
             value_maxlen: 1048576, // 1mb
-            storage: AccountingHashMap::new(),
+            storage: LinkedHashMap::new(),
         }
     }
 
@@ -43,8 +72,8 @@ impl Cache {
     }
 
 
-    pub fn get_stats(&self) -> &Stats {
-        self.storage.get_stats()
+    pub fn get_metrics(&self) -> &CacheMetrics {
+        &self.metrics
     }
 
 
@@ -75,12 +104,29 @@ impl Cache {
         value.atime + self.item_lifetime > time_now()
     }
 
+    // TODO expose as public api
     fn remove(&mut self, key: &Key) -> CacheResult<()> {
         let opt = self.storage.remove(key);
 
         match opt {
             Some(_) => Ok(()),
             None => Err(CacheError::KeyNotFound),
+        }
+    }
+
+
+    fn evict_oldest(&mut self) -> CacheResult<()> {
+        let opt = self.storage.pop_back();
+
+        match opt {
+            Some((key, value)) => {
+                // Update metrics
+                self.metrics.bytes_subtract(&key, &value);
+                self.metrics.evictions += 1;
+
+                Ok(())
+            },
+            None => Err(CacheError::EvictionFailed),
         }
     }
 
@@ -113,14 +159,21 @@ impl Cache {
         }
 
         // From here on we can assume we did find it
-        // Now check if the value is still alive
         let mut value = opt.unwrap();
+
+        // The value has been successfully removed - update metrics
+        self.metrics.bytes_subtract(key, &value);
+
+        // Now check if the value is still alive
         if !self.value_is_alive(&value) {
             return Err(CacheError::KeyNotFound);
         }
 
         // Update the value to mark that it's been accessed just now
         value.touch();
+
+        // We are going to re-instate the key - update metrics
+        self.metrics.bytes_add(key, &value);
 
         // Now we reinsert the key to refresh it
         self.storage.insert(key.clone(), value);
@@ -149,18 +202,19 @@ impl Cache {
         if !self.storage.contains_key(&key) {
             if self.storage.len() as u64 == self.capacity {
                 // Remove the oldest item to make space
-                self.storage.pop_back();
+                self.evict_oldest();
             }
         }
+
+        // Update metrics
+        self.metrics.bytes_add(&key, &value);
+        self.metrics.total_items += 1;
 
         // Update atime for value
         value.touch();
 
         // Store the value
         self.storage.insert(key, value);
-
-        // Update stats
-        self.storage.stats.total_items += 1;
 
         // Return success
         Ok(())

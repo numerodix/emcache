@@ -2,7 +2,6 @@ Low hanging fruit:
 
 * Cache capacity should be set on bytes, not items.
 * Add reclaimed, evicted etc metrics in storage.
-* Get rid of AccountingHashMap - turns out to be of little use.
 * Make transport parser more robust to invalid command strings - less panic prone.
 
 Medium:
