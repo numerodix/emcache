@@ -22,6 +22,30 @@ use super::TransportId;
 use super::TransportTask;
 
 
+
+use std::sync::mpsc::Sender;
+use std::sync::mpsc::Receiver;
+use super::RespSender;
+type CmdSen = Sender<(RespSender, Cmd)>;
+type CmdRec = Receiver<(RespSender, Cmd)>;
+
+fn ok() {
+    // driver to transport
+    let (resp_tx, resp_rx): (RespSender, RespReceiver) = mpsc::channel();
+
+    // transport to driver
+    let (cmd_tx, cmd_rx): (CmdSen, CmdRec) = mpsc::channel();
+
+    cmd_tx.send((resp_tx, Cmd::Stats)).unwrap();
+    let (resp_tx2, cmd2) = cmd_rx.recv().unwrap();
+    println!("got: {:?}", cmd2);
+
+    resp_tx2.send(Resp::Error);
+    let resp = resp_rx.recv().unwrap();
+    println!("got: {:?}", resp);
+}
+
+
 pub struct ListenerTask {
     cnt_transports: u64,
     max_transports: u64,
@@ -81,6 +105,9 @@ impl ListenerTask {
     }
 
     pub fn run(&mut self) {
+        ok();
+        return;
+
         // Init
         let (cmd_tx, cmd_rx) = self.create_cmd_channel();
         let (mut resp_txs, mut resp_rxs) = self.create_resp_channels();
