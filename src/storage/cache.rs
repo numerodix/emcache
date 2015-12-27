@@ -216,6 +216,9 @@ impl Cache {
                 // Update metrics
                 self.metrics.reclaimed += 1;
             }
+        } else {
+            // We're updating the key, possibly with a different size value
+            self.metrics.bytes_subtract(&key, &value);
         }
 
         // Update metrics
