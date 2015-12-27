@@ -11,12 +11,14 @@ mod tcp_server;
 
 mod try;
 
+use orchestrator::ListenerTask;
 use try::run_it;
 use tcp_server::serve_forever;
 
 
 fn main() {
-    run_it();
+    let listener_task = ListenerTask::new(4);
+    listener_task.run();
     return;
 
 

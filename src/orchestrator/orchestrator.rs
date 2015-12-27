@@ -21,43 +21,78 @@ type RespReceiver = Receiver<Resp>;
 
 type TransportId = u64;
 
+type RespSenders = HashMap<TransportId, RespSender>;
+type RespReceivers = HashMap<TransportId, RespReceiver>;
+
 
 struct DriverTask {
     driver: Driver,
 
     cmd_rx: CmdReceiver,
-    resp_chans: HashMap<TransportId, RespSender>,
+    resp_txs: RespSenders,
 }
 
 impl DriverTask {
-    pub fn new(driver: Driver, cmd_rx: CmdReceiver) -> DriverTask {
+    pub fn new(driver: Driver,
+               cmd_rx: CmdReceiver,
+               resp_txs: RespSenders)
+               -> DriverTask {
         DriverTask {
             cmd_rx: cmd_rx,
             driver: driver,
-            resp_chans: HashMap::new(),
+            resp_txs: resp_txs,
         }
-    }
-
-    pub fn add_transport(&mut self, id: u64, chan: RespSender) {
-        self.resp_chans.insert(id, chan);
     }
 
     pub fn run(&self) {
         loop {
             let (id, cmd) = self.cmd_rx.recv().unwrap();
+            println!("Driver received from {:?}: {:?}", id, cmd);
 
-            let resp_tx = self.resp_chans.get(&id).unwrap();
+            let resp_tx = self.resp_txs.get(&id).unwrap();
             resp_tx.send(Resp::Error);
         }
     }
 }
 
 
-struct ListenerTask;
+struct TransportTask {
+    id: TransportId,
+    cmd_tx: CmdSender,
+    resp_rx: RespReceiver,
+}
+
+impl TransportTask {
+    pub fn new(id: TransportId,
+               cmd_tx: CmdSender,
+               resp_rx: RespReceiver)
+               -> TransportTask {
+        TransportTask {
+            id: id,
+            cmd_tx: cmd_tx,
+            resp_rx: resp_rx,
+        }
+    }
+
+    pub fn run(&self) {
+        loop {
+            self.cmd_tx.send((self.id, Cmd::Stats)).unwrap();
+            let val = self.resp_rx.recv().unwrap();
+            println!("Transport {:?} received: {:?}", self.id, val);
+
+            sleep_secs(1.0);
+        }
+    }
+}
+
+
+pub struct ListenerTask {
+    max_transports: u64,
+}
 
 impl ListenerTask {
-    pub fn new() -> ListenerTask {
-        ListenerTask
+    pub fn new(max_transports: u64) -> ListenerTask {
+        ListenerTask { max_transports: max_transports }
     }
 
     pub fn run(&self) {
@@ -66,13 +101,33 @@ impl ListenerTask {
 
         let (cmd_tx, cmd_rx) = mpsc::channel();
 
-        let driver_task = DriverTask::new(driver, cmd_rx);
+        let mut resp_txs = HashMap::new();
+        let mut resp_rxs = HashMap::new();
+
+        for i in 0..self.max_transports {
+            let (resp_tx, resp_rx) = mpsc::channel();
+            resp_txs.insert(i, resp_tx);
+            resp_rxs.insert(i, resp_rx);
+        }
+
+        let driver_task = DriverTask::new(driver, cmd_rx, resp_txs);
         thread::spawn(move || {
             driver_task.run();
         });
 
-        let (resp_tx, resp_rx) = mpsc::channel();
-        driver_task.add_transport(1, resp_tx);
+        for id in 0..2 {
+            let resp_rx = resp_rxs.remove(&id).unwrap();
+            let transport_task = TransportTask::new(id,
+                                                    cmd_tx.clone(),
+                                                    resp_rx);
+
+            thread::spawn(move || {
+                transport_task.run();
+            });
+        }
+
+        loop {
+            sleep_secs(1.0);
+        }
     }
 }
-

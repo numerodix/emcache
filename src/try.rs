@@ -43,19 +43,24 @@ fn driver(receiver: CmdReceiver, sender1: RespSender, sender2: RespSender) {
 
         let mut key = "?".to_string();
         match cmd {
-            Cmd::Get(get) => { key = get.key; },
+            Cmd::Get(get) => {
+                key = get.key;
+            }
             _ => (),
         }
 
-        let val = Resp::Value(Value { key: key, data: vec![1, 2, 3] });
+        let val = Resp::Value(Value {
+            key: key,
+            data: vec![1, 2, 3],
+        });
         println!("[driver]      Sending: {:?}", val.clone());
         match id {
             1 => {
                 sender1.send(val.clone()).unwrap();
-            },
+            }
             2 => {
                 sender2.send(val.clone()).unwrap();
-            },
+            }
             _ => (),
         }
         println!("[driver]      Sent: {:?}", val.clone());
