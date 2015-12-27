@@ -57,10 +57,7 @@ impl ListenerTask {
                          cmd_rx: CmdReceiver,
                          resp_txs: RespSenders)
                          -> DriverTask {
-        let cache = Cache::new(1024);
-        let mut driver = Driver::new(cache);
-
-        DriverTask::new(driver, cmd_rx, resp_txs)
+        DriverTask::new(cmd_rx, resp_txs)
     }
 
     pub fn create_transport(&self,
@@ -79,7 +76,7 @@ impl ListenerTask {
         let transport_task = self.create_transport(id, cmd_tx, resp_rx);
 
         thread::spawn(move || {
-            transport_task.run();
+            transport_task.run(stream);
         });
     }
 

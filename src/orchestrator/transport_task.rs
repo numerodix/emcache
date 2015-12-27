@@ -1,6 +1,9 @@
+use std::net::TcpStream;
+
 use platform::time::sleep_secs;
 use protocol::cmd::Cmd;
 use protocol::cmd::Resp;
+use tcp_transport::TcpTransport;
 
 use super::CmdSender;
 use super::RespReceiver;
@@ -25,13 +28,31 @@ impl TransportTask {
         }
     }
 
-    pub fn run(&self) {
-        loop {
-            self.cmd_tx.send((self.id, Cmd::Stats)).unwrap();
-            let val = self.resp_rx.recv().unwrap();
-            println!("Transport {:?} received: {:?}", self.id, val);
+    pub fn run(&self, stream: TcpStream) {
+        let mut transport = TcpTransport::new(stream);
 
-            sleep_secs(1.0);
+        loop {
+            println!("Ready to read command...");
+            let rv = transport.read_cmd();
+
+            // If we couldn't parse the command return an error
+            if !rv.is_ok() {
+                println!("Failed to read command, returning error");
+                transport.write_resp(&Resp::Error);
+                return; // Here we just drop the connection
+            }
+
+            // cmd -> resp
+            let cmd = rv.unwrap();
+            self.cmd_tx.send((self.id, cmd)).unwrap();
+            let resp = self.resp_rx.recv().unwrap();
+
+            // Return a response
+            println!("Returning response: {:?}", &resp);
+            let rv = transport.write_resp(&resp);
+            if !rv.is_ok() {
+                println!("Failed to write response :(");
+            }
         }
     }
 }
