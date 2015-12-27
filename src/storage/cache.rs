@@ -105,7 +105,7 @@ impl Cache {
         }
 
         // Pop the value first
-        let mut opt = self.storage.remove(key);
+        let opt = self.storage.remove(key);
 
         // We didn't find it
         if opt.is_none() {

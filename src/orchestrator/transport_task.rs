@@ -1,7 +1,6 @@
 use std::net::TcpStream;
 use std::sync::mpsc;
 
-use protocol::cmd::Cmd;
 use protocol::cmd::Resp;
 use tcp_transport::TcpTransport;
 
@@ -17,9 +16,7 @@ pub struct TransportTask {
 }
 
 impl TransportTask {
-    pub fn new(id: TransportId,
-               cmd_tx: CmdSender)
-               -> TransportTask {
+    pub fn new(id: TransportId, cmd_tx: CmdSender) -> TransportTask {
         TransportTask {
             id: id,
             cmd_tx: cmd_tx,

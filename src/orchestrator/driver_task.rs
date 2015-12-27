@@ -10,9 +10,7 @@ pub struct DriverTask {
 
 impl DriverTask {
     pub fn new(cmd_rx: CmdReceiver) -> DriverTask {
-        DriverTask {
-            cmd_rx: cmd_rx,
-        }
+        DriverTask { cmd_rx: cmd_rx }
     }
 
     pub fn run(&self) {
