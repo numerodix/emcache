@@ -57,6 +57,10 @@ fn test_cmd_stats() {
     let resp = driver.run(cmd);
     assert_eq!(resp, Resp::Stored);
 
+    // Retrieve it
+    let cmd = Cmd::Get(Get::new("x"));
+    let resp = driver.run(cmd);
+
     // Run stats
     let cmd = Cmd::Stats;
     let resp = driver.run(cmd);
@@ -64,6 +68,10 @@ fn test_cmd_stats() {
     let st_pid = Stat::new("pid", get_pid().to_string());
     let st_bytes = Stat::new("bytes", "3".to_string());
     let st_uptime = Stat::new("uptime", "0".to_string());
+    let st_cmd_get = Stat::new("cmd_get", "1".to_string());
+    let st_cmd_set = Stat::new("cmd_set", "1".to_string());
+    let st_cmd_flush = Stat::new("cmd_flush", "0".to_string());
+    let st_cmd_touch = Stat::new("cmd_touch", "0".to_string());
     let st_time = Stat::new("time", (time_now() as u64).to_string());
     let st_curr_items = Stat::new("curr_items", "1".to_string());
     let st_total_items = Stat::new("total_items", "1".to_string());
@@ -72,6 +80,10 @@ fn test_cmd_stats() {
                Resp::Stats(vec![st_pid,
                                 st_uptime,
                                 st_time,
+                                st_cmd_get,
+                                st_cmd_set,
+                                st_cmd_flush,
+                                st_cmd_touch,
                                 st_bytes,
                                 st_curr_items,
                                 st_total_items]));

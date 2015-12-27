@@ -12,8 +12,28 @@ use super::cmd::Stat;
 use super::cmd::Value as CmdValue;
 
 
+struct DriverMetrics {
+    cmd_get: u64,
+    cmd_set: u64,
+    cmd_flush: u64,
+    cmd_touch: u64,
+}
+
+impl DriverMetrics {
+    pub fn new() -> DriverMetrics {
+        DriverMetrics {
+            cmd_get: 0,
+            cmd_set: 0,
+            cmd_flush: 0,
+            cmd_touch: 0,
+        }
+    }
+}
+
+
 pub struct Driver {
     cache: Cache,
+    metrics: DriverMetrics,
     time_start: f64,
 }
 
@@ -21,6 +41,7 @@ impl Driver {
     pub fn new(cache: Cache) -> Driver {
         Driver {
             cache: cache,
+            metrics: DriverMetrics::new(),
             time_start: time_now(),
         }
     }
@@ -46,6 +67,9 @@ impl Driver {
 
 
     fn do_get(&mut self, get: Get) -> Resp {
+        // Update metrics
+        self.metrics.cmd_get += 1;
+
         // XXX get rid of all the cloning
         let get_clone = get.clone();
         let key = Key::new(get.key.into_bytes());
@@ -64,6 +88,9 @@ impl Driver {
     }
 
     fn do_set(&mut self, set: Set) -> Resp {
+        // Update metrics
+        self.metrics.cmd_set += 1;
+
         let key = Key::new(set.key.into_bytes());
         let mut value = Value::new(set.data);
         self.set_exptime(&mut value, set.exptime);
@@ -82,6 +109,10 @@ impl Driver {
         let pid = get_pid().to_string();
         let uptime = ((time_now() - self.time_start) as u64).to_string();
         let time = (time_now() as u64).to_string();
+        let cmd_get = self.metrics.cmd_get.to_string();
+        let cmd_set = self.metrics.cmd_set.to_string();
+        let cmd_flush = self.metrics.cmd_flush.to_string();
+        let cmd_touch = self.metrics.cmd_touch.to_string();
         let bytes = stats.bytes.to_string();
         let curr_items = self.cache.len().to_string();
         let total_items = stats.total_items.to_string();
@@ -89,6 +120,10 @@ impl Driver {
         let st_pid = Stat::new("pid", pid);
         let st_uptime = Stat::new("uptime", uptime);
         let st_time = Stat::new("time", time);
+        let st_cmd_get = Stat::new("cmd_get", cmd_get);
+        let st_cmd_set = Stat::new("cmd_set", cmd_set);
+        let st_cmd_flush = Stat::new("cmd_flush", cmd_flush);
+        let st_cmd_touch = Stat::new("cmd_touch", cmd_touch);
         let st_bytes = Stat::new("bytes", bytes);
         let st_curr_items = Stat::new("curr_items", curr_items);
         let st_total_items = Stat::new("total_items", total_items);
@@ -96,6 +131,10 @@ impl Driver {
         Resp::Stats(vec![st_pid,
                          st_uptime,
                          st_time,
+                         st_cmd_get,
+                         st_cmd_set,
+                         st_cmd_flush,
+                         st_cmd_touch,
                          st_bytes,
                          st_curr_items,
                          st_total_items])
