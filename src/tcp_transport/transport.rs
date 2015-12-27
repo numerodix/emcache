@@ -8,6 +8,7 @@ use protocol::cmd::Resp;
 use protocol::cmd::Set;
 
 use super::errors::TcpTransportError;
+use super::metrics::TransportMetrics;
 use super::typedefs::TcpTransportResult;
 
 
@@ -16,15 +17,17 @@ pub struct TcpTransport<T> {
     // queue up response data before writing to the stream
     outgoing_buffer: Vec<u8>,
 
+    metrics: TransportMetrics,
     key_maxlen: u64,
 }
 
 impl<T: Read + Write> TcpTransport<T> {
     pub fn new(stream: T) -> TcpTransport<T> {
         TcpTransport {
-            stream: stream,
-            outgoing_buffer: vec![],
             key_maxlen: 250, // memcached standard
+            metrics: TransportMetrics::new(),
+            outgoing_buffer: vec![],
+            stream: stream,
         }
     }
 
@@ -40,6 +43,10 @@ impl<T: Read + Write> TcpTransport<T> {
         // This needs to be the length of the longest command line, not
         // including data values for which the length is given upfront
         self.key_maxlen as usize + 100
+    }
+
+    pub fn get_metrics_clone(&self) -> TransportMetrics {
+        self.metrics.clone()
     }
 
     pub fn get_stream(&self) -> &T {
@@ -73,7 +80,12 @@ impl<T: Read + Write> TcpTransport<T> {
         let mut bytes = [0; 1];
 
         match self.stream.read(&mut bytes) {
-            Ok(1) => Ok(bytes[0]),
+            Ok(1) => {
+                // Update metrics
+                self.metrics.bytes_read += 1;
+
+                Ok(bytes[0])
+            }
             _ => Err(TcpTransportError::StreamReadError),
         }
     }
@@ -176,6 +188,11 @@ impl<T: Read + Write> TcpTransport<T> {
         if !rv.is_ok() {
             return Err(TcpTransportError::StreamWriteError);
         }
+
+        let cnt_written = rv.unwrap();
+
+        // Update metrics
+        self.metrics.bytes_written += cnt_written as u64;
 
         let rv = self.stream.flush();
 

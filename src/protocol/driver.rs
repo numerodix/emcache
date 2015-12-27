@@ -3,6 +3,7 @@ use platform::time::time_now;
 use storage::Cache;
 use storage::Key;
 use storage::Value;
+use tcp_transport::metrics::TransportMetrics;
 
 use super::cmd::Cmd;
 use super::cmd::Get;
@@ -33,8 +34,10 @@ impl DriverMetrics {
 
 pub struct Driver {
     cache: Cache,
-    metrics: DriverMetrics,
     time_start: f64,
+
+    metrics: DriverMetrics,
+    transport_metrics: TransportMetrics, // this is a global snapshot
 }
 
 impl Driver {
@@ -43,6 +46,7 @@ impl Driver {
             cache: cache,
             metrics: DriverMetrics::new(),
             time_start: time_now(),
+            transport_metrics: TransportMetrics::new(),
         }
     }
 
@@ -115,6 +119,8 @@ impl Driver {
         let cmd_touch = self.metrics.cmd_touch.to_string();
         let get_hits = storage.get_hits.to_string();
         let get_misses = storage.get_misses.to_string();
+        let bytes_read = self.transport_metrics.bytes_read.to_string();
+        let bytes_written = self.transport_metrics.bytes_written.to_string();
         let bytes = storage.bytes.to_string();
         let curr_items = self.cache.len().to_string();
         let total_items = storage.total_items.to_string();
@@ -130,6 +136,8 @@ impl Driver {
         let st_cmd_touch = Stat::new("cmd_touch", cmd_touch);
         let st_get_hits = Stat::new("get_hits", get_hits);
         let st_get_misses = Stat::new("get_misses", get_misses);
+        let st_bytes_read = Stat::new("bytes_read", bytes_read);
+        let st_bytes_written = Stat::new("bytes_written", bytes_written);
         let st_bytes = Stat::new("bytes", bytes);
         let st_curr_items = Stat::new("curr_items", curr_items);
         let st_total_items = Stat::new("total_items", total_items);
@@ -145,6 +153,8 @@ impl Driver {
                          st_cmd_touch,
                          st_get_hits,
                          st_get_misses,
+                         st_bytes_read,
+                         st_bytes_written,
                          st_bytes,
                          st_curr_items,
                          st_total_items,
@@ -159,5 +169,9 @@ impl Driver {
             Cmd::Set(set) => self.do_set(set),
             Cmd::Stats => self.do_stats(),
         }
+    }
+
+    pub fn update_transport_metrics(&mut self, metrics: TransportMetrics) {
+        self.transport_metrics = metrics;
     }
 }

@@ -3,13 +3,16 @@ use std::sync::mpsc::Receiver;
 
 use protocol::cmd::Cmd;
 use protocol::cmd::Resp;
+use tcp_transport::metrics::TransportMetrics;
 
 
-// Only used for display purposes
 pub type TransportId = u64;
 
 pub type RespSender = Sender<Resp>;
 pub type RespReceiver = Receiver<Resp>;
 
-pub type CmdSender = Sender<(TransportId, RespSender, Cmd)>;
-pub type CmdReceiver = Receiver<(TransportId, RespSender, Cmd)>;
+pub type CmdSender = Sender<(TransportId, RespSender, Cmd, TransportMetrics)>;
+pub type CmdReceiver = Receiver<(TransportId,
+                                 RespSender,
+                                 Cmd,
+                                 TransportMetrics)>;

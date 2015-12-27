@@ -1,7 +1,6 @@
 Low hanging fruit:
 
 * Cache capacity should be set on bytes, not items.
-* Add bytes_read, bytes_written metrics to transport and transmit to driver.
 * Make transport parser more robust to invalid command strings - less panic prone.
 
 Medium:
