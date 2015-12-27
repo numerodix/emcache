@@ -2,16 +2,18 @@ extern crate linked_hash_map;
 extern crate libc;
 extern crate time;
 
+mod orchestrator;
 mod platform;
 mod protocol;
 mod storage;
 mod tcp_transport;
-mod tcp_server;
 
-use tcp_server::serve_forever;
+use orchestrator::ListenerTask;
 
 
 fn main() {
+    let mut listener_task = ListenerTask::new();
+
     println!("Launching tcp server...");
-    serve_forever();
+    listener_task.run();
 }
