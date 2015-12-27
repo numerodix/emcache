@@ -17,11 +17,8 @@ use tcp_server::serve_forever;
 
 
 fn main() {
-    let listener_task = ListenerTask::new(4);
-    listener_task.run();
-    return;
-
+    let mut listener_task = ListenerTask::new(4);
 
     println!("Launching tcp server...");
-    serve_forever();
+    listener_task.run();
 }

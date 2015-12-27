@@ -1,4 +1,6 @@
 use std::collections::HashMap;
+use std::net::TcpListener;
+use std::net::TcpStream;
 use std::sync::mpsc;
 use std::thread;
 
@@ -21,12 +23,16 @@ use super::TransportTask;
 
 
 pub struct ListenerTask {
+    cnt_transports: u64,
     max_transports: u64,
 }
 
 impl ListenerTask {
     pub fn new(max_transports: u64) -> ListenerTask {
-        ListenerTask { max_transports: max_transports }
+        ListenerTask {
+            cnt_transports: 0,
+            max_transports: max_transports,
+        }
     }
 
     pub fn create_cmd_channel(&self) -> (CmdSender, CmdReceiver) {
@@ -65,7 +71,20 @@ impl ListenerTask {
         TransportTask::new(id, cmd_tx, resp_rx)
     }
 
-    pub fn run(&self) {
+    pub fn launch_transport(&self,
+                            stream: TcpStream,
+                            id: TransportId,
+                            cmd_tx: CmdSender,
+                            resp_rx: RespReceiver) {
+        let transport_task = self.create_transport(id, cmd_tx, resp_rx);
+
+        thread::spawn(move || {
+            transport_task.run();
+        });
+    }
+
+    pub fn run(&mut self) {
+        // Init
         let (cmd_tx, cmd_rx) = self.create_cmd_channel();
         let (mut resp_txs, mut resp_rxs) = self.create_resp_channels();
 
@@ -74,19 +93,27 @@ impl ListenerTask {
             driver_task.run();
         });
 
-        for id in 0..2 {
-            let resp_rx = resp_rxs.remove(&id).unwrap();
-            let transport_task = self.create_transport(id,
-                                                       cmd_tx.clone(),
-                                                       resp_rx);
+        // Start up a server
+        let tcp_listener = TcpListener::bind("127.0.0.1:11311").unwrap();
 
-            thread::spawn(move || {
-                transport_task.run();
-            });
+        for stream in tcp_listener.incoming() {
+            match stream {
+                Ok(stream) => {
+                    // allocate transport id
+                    let id = self.cnt_transports.clone();
+                    self.cnt_transports += 1;
+
+                    let cmd_tx = cmd_tx.clone();
+                    let resp_rx = resp_rxs.remove(&id).unwrap();
+
+                    self.launch_transport(stream, id, cmd_tx, resp_rx);
+                }
+                Err(_) => {
+                    println!("Connection failed :(");
+                }
+            }
         }
 
-        loop {
-            sleep_secs(1.0);
-        }
+        drop(tcp_listener);
     }
 }
