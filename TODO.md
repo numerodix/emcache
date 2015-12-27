@@ -12,5 +12,5 @@ Medium:
 
 Large:
 
-* Implement the full protocol.
+* Implement the full memcached protocol.
 * Port process model from thread-per-connection w/channels to async with MetalIO.
