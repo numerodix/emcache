@@ -38,7 +38,7 @@ impl TransportTask {
                 return; // Here we just drop the connection
             }
 
-            // cmd -> resp
+            // Send the command to the driver and obtain a response
             let cmd = rv.unwrap();
             self.cmd_tx.send((self.id, resp_tx.clone(), cmd)).unwrap();
             let resp = resp_rx.recv().unwrap();
