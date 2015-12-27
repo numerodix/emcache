@@ -11,6 +11,8 @@ use super::value::Value;
 struct CacheMetrics {
     pub bytes: u64, // Bytes currently stored
     pub evictions: u64, // Number of items removed to make space for new items
+    pub get_hits: u64,
+    pub get_misses: u64,
     pub total_items: u64, // Total items stored since server started
 }
 
@@ -19,6 +21,8 @@ impl CacheMetrics {
         CacheMetrics {
             bytes: 0,
             evictions: 0,
+            get_hits: 0,
+            get_misses: 0,
             total_items: 0,
         }
     }
@@ -85,6 +89,22 @@ impl Cache {
         value.len() as u64 <= self.value_maxlen
     }
 
+
+    fn evict_oldest(&mut self) -> CacheResult<()> {
+        let opt = self.storage.pop_back();
+
+        match opt {
+            Some((key, value)) => {
+                // Update metrics
+                self.metrics.bytes_subtract(&key, &value);
+                self.metrics.evictions += 1;
+
+                Ok(())
+            }
+            None => Err(CacheError::EvictionFailed),
+        }
+    }
+
     fn value_is_alive(&self, value: &Value) -> bool {
         // if the value has an exptime set, that takes precedence
         if value.exptime > 0.0 {
@@ -115,22 +135,6 @@ impl Cache {
     }
 
 
-    fn evict_oldest(&mut self) -> CacheResult<()> {
-        let opt = self.storage.pop_back();
-
-        match opt {
-            Some((key, value)) => {
-                // Update metrics
-                self.metrics.bytes_subtract(&key, &value);
-                self.metrics.evictions += 1;
-
-                Ok(())
-            },
-            None => Err(CacheError::EvictionFailed),
-        }
-    }
-
-
     pub fn contains_key(&mut self, key: &Key) -> CacheResult<bool> {
         let result = self.get(key);
 
@@ -155,6 +159,7 @@ impl Cache {
 
         // We didn't find it
         if opt.is_none() {
+            self.metrics.get_misses += 1;
             return Err(CacheError::KeyNotFound);
         }
 
@@ -166,6 +171,7 @@ impl Cache {
 
         // Now check if the value is still alive
         if !self.value_is_alive(&value) {
+            self.metrics.get_misses += 1;
             return Err(CacheError::KeyNotFound);
         }
 
@@ -174,6 +180,7 @@ impl Cache {
 
         // We are going to re-instate the key - update metrics
         self.metrics.bytes_add(key, &value);
+        self.metrics.get_hits += 1;
 
         // Now we reinsert the key to refresh it
         self.storage.insert(key.clone(), value);

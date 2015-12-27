@@ -72,6 +72,8 @@ fn test_cmd_stats() {
     let st_cmd_set = Stat::new("cmd_set", "1".to_string());
     let st_cmd_flush = Stat::new("cmd_flush", "0".to_string());
     let st_cmd_touch = Stat::new("cmd_touch", "0".to_string());
+    let st_get_hits = Stat::new("get_hits", "1".to_string());
+    let st_get_misses = Stat::new("get_misses", "0".to_string());
     let st_time = Stat::new("time", (time_now() as u64).to_string());
     let st_curr_items = Stat::new("curr_items", "1".to_string());
     let st_total_items = Stat::new("total_items", "1".to_string());
@@ -85,6 +87,8 @@ fn test_cmd_stats() {
                                 st_cmd_set,
                                 st_cmd_flush,
                                 st_cmd_touch,
+                                st_get_hits,
+                                st_get_misses,
                                 st_bytes,
                                 st_curr_items,
                                 st_total_items,

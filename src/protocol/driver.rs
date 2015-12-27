@@ -113,6 +113,8 @@ impl Driver {
         let cmd_set = self.metrics.cmd_set.to_string();
         let cmd_flush = self.metrics.cmd_flush.to_string();
         let cmd_touch = self.metrics.cmd_touch.to_string();
+        let get_hits = storage.get_hits.to_string();
+        let get_misses = storage.get_misses.to_string();
         let bytes = storage.bytes.to_string();
         let curr_items = self.cache.len().to_string();
         let total_items = storage.total_items.to_string();
@@ -125,6 +127,8 @@ impl Driver {
         let st_cmd_set = Stat::new("cmd_set", cmd_set);
         let st_cmd_flush = Stat::new("cmd_flush", cmd_flush);
         let st_cmd_touch = Stat::new("cmd_touch", cmd_touch);
+        let st_get_hits = Stat::new("get_hits", get_hits);
+        let st_get_misses = Stat::new("get_misses", get_misses);
         let st_bytes = Stat::new("bytes", bytes);
         let st_curr_items = Stat::new("curr_items", curr_items);
         let st_total_items = Stat::new("total_items", total_items);
@@ -137,6 +141,8 @@ impl Driver {
                          st_cmd_set,
                          st_cmd_flush,
                          st_cmd_touch,
+                         st_get_hits,
+                         st_get_misses,
                          st_bytes,
                          st_curr_items,
                          st_total_items,
