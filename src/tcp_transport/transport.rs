@@ -126,6 +126,18 @@ impl<T: Read + Write> TcpTransport<T> {
         }
     }
 
+    pub fn remove_first_char(&self,
+                             bytes: &mut Vec<u8>)
+                             -> TcpTransportResult<()> {
+        match bytes.len() > 0 {
+            true => {
+                bytes.remove(0);
+                Ok(())
+            }
+            false => Err(TcpTransportError::StreamReadError),
+        }
+    }
+
     pub fn parse_word(&self,
                       bytes: Vec<u8>)
                       -> TcpTransportResult<(Vec<u8>, Vec<u8>)> {
@@ -205,7 +217,7 @@ impl<T: Read + Write> TcpTransport<T> {
     // Parse individual commands
 
     pub fn parse_cmd_get(&self, mut rest: Vec<u8>) -> TcpTransportResult<Cmd> {
-        rest.remove(0); // remove leading space XXX errors
+        try!(self.remove_first_char(&mut rest)); // remove leading space
         let (key, rest) = try!(self.parse_word(rest));
 
         // We expect to find the end of the line now
@@ -220,16 +232,16 @@ impl<T: Read + Write> TcpTransport<T> {
     pub fn parse_cmd_set(&mut self,
                          mut rest: Vec<u8>)
                          -> TcpTransportResult<Cmd> {
-        rest.remove(0); // remove leading space XXX errors
+        try!(self.remove_first_char(&mut rest)); // remove leading space
         let (key, mut rest) = try!(self.parse_word(rest));
 
-        rest.remove(0); // remove leading space XXX errors
+        try!(self.remove_first_char(&mut rest)); // remove leading space
         let (flags, mut rest) = try!(self.parse_word(rest));
 
-        rest.remove(0); // remove leading space XXX errors
+        try!(self.remove_first_char(&mut rest)); // remove leading space
         let (exptime, mut rest) = try!(self.parse_word(rest));
 
-        rest.remove(0); // remove leading space XXX errors
+        try!(self.remove_first_char(&mut rest)); // remove leading space
         let (bytelen, _) = try!(self.parse_word(rest));
 
         let key_str = try!(self.as_string(key));

@@ -143,8 +143,8 @@ if __name__ == '__main__':
         assert val == val2
 
 
-    #value = client.get('y')
-    #print("Retrieved 'y' -> '%s'" % value)
+        value = client.get('y')
+        print("Retrieved 'y' -> '%s'" % value)
 
-    #resp = client.send_malformed_cmd()
-    #print("Sent malformed command, got '%s'" % resp)
+        resp = client.send_malformed_cmd()
+        print("Sent malformed command, got '%s'" % resp)

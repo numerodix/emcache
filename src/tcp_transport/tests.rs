@@ -97,6 +97,20 @@ fn test_read_line_too_long() {
 }
 
 #[test]
+fn test_remove_first_char() {
+    let ts = TestStream::new(vec![]);
+    let mut transport = TcpTransport::new(ts);
+
+    let mut bytes = vec![1];
+    let rv = transport.remove_first_char(&mut bytes);
+    assert!(rv.is_ok());
+
+    let mut bytes = vec![];
+    let rv = transport.remove_first_char(&mut bytes);
+    assert!(rv.is_err());
+}
+
+#[test]
 fn test_parse_word_split() {
     let ts = TestStream::new(vec![1, 2, 32, 3, 4, 11, 32]);
     let mut transport = TcpTransport::new(ts);
@@ -183,16 +197,6 @@ fn test_read_cmd_get_ok() {
 }
 
 #[test]
-fn test_read_cmd_get_malformed() {
-    let cmd_str = "get x \r\n".to_string();
-    let ts = TestStream::new(cmd_str.into_bytes());
-    let mut transport = TcpTransport::new(ts);
-
-    let err = transport.read_cmd().unwrap_err();
-    assert_eq!(err, TcpTransportError::CommandParseError);
-}
-
-#[test]
 fn test_read_cmd_get_non_utf8() {
     // get X\r\n
     let cmd_bytes = vec![103, 101, 116, 32, 254, 13, 10];
@@ -201,6 +205,24 @@ fn test_read_cmd_get_non_utf8() {
 
     let err = transport.read_cmd().unwrap_err();
     assert_eq!(err, TcpTransportError::Utf8Error);
+}
+
+#[test]
+fn test_read_cmd_get_malformed() {
+    fn try_cmd(cmd: &str) {
+        let cmd_str = cmd.to_string();
+        let ts = TestStream::new(cmd_str.into_bytes());
+        let mut transport = TcpTransport::new(ts);
+
+        let err = transport.read_cmd().unwrap_err();
+        assert_eq!(err, TcpTransportError::StreamReadError);
+    }
+
+    // Test for truncated stream
+    try_cmd("get x\r");
+    try_cmd("get x");
+    try_cmd("get ");
+    try_cmd("get");
 }
 
 
@@ -234,6 +256,35 @@ fn test_read_cmd_set_over_size() {
 
     let err = transport.read_cmd().unwrap_err();
     assert_eq!(err, TcpTransportError::StreamReadError);
+}
+
+#[test]
+fn test_read_cmd_set_malformed() {
+    fn try_cmd(cmd: &str) {
+        let cmd_str = cmd.to_string();
+        let ts = TestStream::new(cmd_str.into_bytes());
+        let mut transport = TcpTransport::new(ts);
+
+        let err = transport.read_cmd().unwrap_err();
+        assert_eq!(err, TcpTransportError::StreamReadError);
+    }
+
+    // Test for truncated stream
+    try_cmd("set x 0 0 3\r\nabc\r");
+    try_cmd("set x 0 0 3\r\nabc");
+    try_cmd("set x 0 0 3\r\nab");
+    try_cmd("set x 0 0 3\r\na");
+    try_cmd("set x 0 0 3\r\n");
+    try_cmd("set x 0 0 3\r");
+    try_cmd("set x 0 0 3");
+    try_cmd("set x 0 0 ");
+    try_cmd("set x 0 0");
+    try_cmd("set x 0 ");
+    try_cmd("set x 0");
+    try_cmd("set x ");
+    try_cmd("set x");
+    try_cmd("set ");
+    try_cmd("set");
 }
 
 

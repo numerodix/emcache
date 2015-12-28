@@ -1,6 +1,6 @@
 Low hanging fruit:
 
-* Make transport parser more robust to invalid command strings - less panic prone.
+* ...
 
 Medium:
 
