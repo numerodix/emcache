@@ -3,6 +3,18 @@ import re
 import socket
 
 
+class MemcacheClientParams(object):
+    def __init__(self, host, port):
+        self.host = host
+        self.port = port
+
+    def create_client(self):
+        return MemcacheClient(
+            host=self.host,
+            port=self.port,
+        )
+
+
 def connected(func):
     def new_func(self, *args, **kwargs):
         if self.sock is None:

@@ -6,6 +6,7 @@ import time
 import sys
 
 from perftest.client import MemcacheClient
+from perftest.client import MemcacheClientParams
 from perftest.loadgen import LoadGenerator
 
 
@@ -27,14 +28,15 @@ if __name__ == '__main__':
     port = options.port is not None and int(options.port) or 11311
 
 
-    client = MemcacheClient(host, port)
+    cli_params = MemcacheClientParams(host, port)
 
     if options.fill_cache:
-        loadgen = LoadGenerator(client)
+        loadgen = LoadGenerator(cli_params)
         pct = float(options.fill_cache)
         loadgen.fill_to_pct(pct)
 
     elif options.stress_test:
+        client = cli_params.create_client()
         # establish connection
         client.get('invalid')
 
@@ -58,6 +60,8 @@ if __name__ == '__main__':
     else:
         from perftest.util import generate_random_key
         from perftest.util import generate_random_data
+
+        client = cli_params.create_client()
 
         key = generate_random_key(4)
         val = generate_random_data(5, 8)
