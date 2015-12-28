@@ -183,3 +183,81 @@ fn test_key_kept_alive_on_access() {
     // access key - it's gone
     assert!(cache.get(&key).is_err());
 }
+
+#[test]
+fn test_metrics() {
+    // NOTE: The most crucial metric is bytes, so make sure to test every data
+    // path that affects it.
+
+    let mut cache = Cache::new(1);
+    assert_eq!(cache.get_metrics().bytes, 0);
+    assert_eq!(cache.get_metrics().total_items, 0);
+
+    // Set a key
+    cache.set(key!(1), value!(2, 3));
+    assert_eq!(cache.get_metrics().bytes, 3);
+    assert_eq!(cache.get_metrics().evictions, 0);
+    assert_eq!(cache.get_metrics().get_hits, 0);
+    assert_eq!(cache.get_metrics().get_misses, 0);
+    assert_eq!(cache.get_metrics().total_items, 1);
+
+    // Set a different key, evicting the first
+    cache.set(key!(5), value!(6, 7));
+    assert_eq!(cache.get_metrics().bytes, 3);
+    assert_eq!(cache.get_metrics().evictions, 1);
+    assert_eq!(cache.get_metrics().get_hits, 0);
+    assert_eq!(cache.get_metrics().get_misses, 0);
+    assert_eq!(cache.get_metrics().total_items, 2);
+
+    // Re-set the key with a different value
+    cache.set(key!(5), value!(6, 7, 8));
+    assert_eq!(cache.get_metrics().bytes, 4);
+    assert_eq!(cache.get_metrics().evictions, 1);
+    assert_eq!(cache.get_metrics().get_hits, 0);
+    assert_eq!(cache.get_metrics().get_misses, 0);
+    assert_eq!(cache.get_metrics().total_items, 3);
+
+    // Retrieve the key successfully
+    cache.get(&key!(5)).unwrap();
+    assert_eq!(cache.get_metrics().bytes, 4);
+    assert_eq!(cache.get_metrics().evictions, 1);
+    assert_eq!(cache.get_metrics().get_hits, 1);
+    assert_eq!(cache.get_metrics().get_misses, 0);
+    assert_eq!(cache.get_metrics().total_items, 3);
+
+    // Test for the key successfully
+    cache.contains_key(&key!(5)).unwrap();
+    assert_eq!(cache.get_metrics().bytes, 4);
+    assert_eq!(cache.get_metrics().evictions, 1);
+    assert_eq!(cache.get_metrics().get_hits, 2);
+    assert_eq!(cache.get_metrics().get_misses, 0);
+    assert_eq!(cache.get_metrics().total_items, 3);
+
+    // Retrieve a key that doesn't exist
+    cache.get(&key!(17)).unwrap_err();
+    assert_eq!(cache.get_metrics().bytes, 4);
+    assert_eq!(cache.get_metrics().evictions, 1);
+    assert_eq!(cache.get_metrics().get_hits, 2);
+    assert_eq!(cache.get_metrics().get_misses, 1);
+    assert_eq!(cache.get_metrics().total_items, 3);
+
+    // Create an expired value
+    let mut value = value!(10, 11, 12);
+    value.set_exptime(time_now() - 1.0);
+
+    // Set a key that expires immediately
+    cache.set(key!(9), value);
+    assert_eq!(cache.get_metrics().bytes, 4);
+    assert_eq!(cache.get_metrics().evictions, 2);
+    assert_eq!(cache.get_metrics().get_hits, 2);
+    assert_eq!(cache.get_metrics().get_misses, 1);
+    assert_eq!(cache.get_metrics().total_items, 4);
+
+    // Retrieve expired key
+    cache.get(&key!(9)).unwrap_err();
+    assert_eq!(cache.get_metrics().bytes, 0);
+    assert_eq!(cache.get_metrics().evictions, 2);
+    assert_eq!(cache.get_metrics().get_hits, 2);
+    assert_eq!(cache.get_metrics().get_misses, 2);
+    assert_eq!(cache.get_metrics().total_items, 4);
+}

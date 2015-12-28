@@ -218,7 +218,8 @@ impl Cache {
             }
         } else {
             // We're updating the key, possibly with a different size value
-            self.metrics.bytes_subtract(&key, &value);
+            let prev_value = self.storage.get(&key).unwrap();
+            self.metrics.bytes_subtract(&key, &prev_value);
         }
 
         // Update metrics
