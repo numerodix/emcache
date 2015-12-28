@@ -1,4 +1,3 @@
-#include <iostream>
 #include <arpa/inet.h>
 #include <assert.h>
 #include <netdb.h>
@@ -8,21 +7,8 @@
 #include <sys/socket.h>
 #include <unistd.h>
 
+#include "tcp_client.h"
 
-using namespace std;
-
-class TcpClient {
-    public:
-        TcpClient(string host, uint16_t port);
-        bool _connect(); // to avoid clashing with imported symbol 'connect'
-        bool transmit(const char* data, uint32_t len);
-        uint32_t receive(char *buf, uint32_t len);
-
-    private:
-        string m_host;
-        uint16_t m_port;
-        int32_t m_sockfd;
-};
 
 TcpClient::TcpClient(string host, uint16_t port) 
     : m_host(host), m_port(port), m_sockfd(-1) {
@@ -74,7 +60,7 @@ bool TcpClient::_connect() {
         return false;
     }
 
-    cout << "Connected\n";
+    cout << "Connected.\n";
     m_sockfd = sockfd;
     return true;
 }
@@ -97,25 +83,9 @@ uint32_t TcpClient::receive(char* data, uint32_t len) {
     ssize_t bytes_cnt = recv(m_sockfd, data, len, 0);
     if (bytes_cnt < 0) {
         perror("recv failed.");
+    } else {
+        cout << "Received data.\n";
     }
 
-    cout << "Received data.\n";
     return (uint32_t) bytes_cnt;
-}
-
-
-int main() {
-    TcpClient cli("127.0.0.1", 11211);
-    assert( true == cli._connect() );
-
-    string cmd("stats\r\n");
-    assert( true == cli.transmit(cmd.c_str(), cmd.length()) );
-
-    char buf[4096];
-    memset(&buf, 0, 4097);
-    assert( 0 < cli.receive(buf, 4096) );
-
-    printf("got: %s\n", buf);
-
-    return 0;
 }
