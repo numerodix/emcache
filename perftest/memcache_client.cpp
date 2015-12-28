@@ -6,15 +6,15 @@
 #include "memcache_client.h"
 
 
-MemcacheClient::MemcacheClient(string host, uint16_t port) : m_client(nullptr) {
+MemcacheClient::MemcacheClient(std::string host, uint16_t port) : m_client(nullptr) {
     m_client = new TcpClient(host, port);
 }
 
-bool MemcacheClient::get(string key, char *data, uint32_t maxlen) {
+bool MemcacheClient::get(std::string key, char *data, uint32_t maxlen) {
     return true;
 }
 
-bool MemcacheClient::_set(string key, const char *data, uint32_t data_len) {
+bool MemcacheClient::_set(std::string key, const char *data, uint32_t data_len) {
     assert( key.length() <= 250 );  // memcache upper limit on key length
     assert( data_len <= 1048576 );  // memcache upper limit on value length
 
@@ -43,7 +43,7 @@ bool MemcacheClient::_set(string key, const char *data, uint32_t data_len) {
     m_client->receive(response, 100);
 
     // Interpret response
-    string resp(response);
+    std::string resp(response);
     if (resp.compare("STORED\r\n") == 0) {
         return true;
     }
@@ -51,15 +51,15 @@ bool MemcacheClient::_set(string key, const char *data, uint32_t data_len) {
     return false;
 }
 
-bool MemcacheClient::set(string key, vector<char> data) {
+bool MemcacheClient::set(std::string key, std::vector<char> data) {
     // Construct request
-    stringstream srequest;
-    string data_str(data.begin(), data.end());
+    std::stringstream srequest;
+    std::string data_str(data.begin(), data.end());
 
     srequest << "set " << key << " 0 0 " << data.size() << "\r\n";
     srequest << data_str << "\r\n";
 
-    string request = srequest.str();
+    std::string request = srequest.str();
 
     // Send request
     m_client->transmit(request.c_str(), request.length());
@@ -69,7 +69,7 @@ bool MemcacheClient::set(string key, vector<char> data) {
     m_client->receive(response_buf, 100);
 
     // Interpret response
-    string response(response_buf);
+    std::string response(response_buf);
     if (response.compare("STORED\r\n") == 0) {
         return true;
     }
@@ -78,12 +78,12 @@ bool MemcacheClient::set(string key, vector<char> data) {
 }
 
 void MemcacheClient::printStats() {
-    string cmd("stats\r\n");
+    std::string cmd("stats\r\n");
     assert( cmd.length() == m_client->transmit(cmd.c_str(), cmd.length()) );
 
     char buf[4096];  // 4k is enough stats for everyone
     memset(&buf, 0, 4096);
     assert( 0 < m_client->receive(buf, 4095) );
 
-    cout << buf;
+    std::cout << buf;
 }

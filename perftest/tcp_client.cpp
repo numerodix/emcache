@@ -10,7 +10,7 @@
 #include "tcp_client.h"
 
 
-TcpClient::TcpClient(string host, uint16_t port) 
+TcpClient::TcpClient(std::string host, uint16_t port) 
     : m_host(host), m_port(port), m_sockfd(-1) {
 }
 
@@ -35,14 +35,15 @@ bool TcpClient::_connect() {
 
         if ((he = gethostbyname(m_host.c_str())) == NULL) {
             perror("gethostbyname() failed");
-            cout << "tcp: failed to resolve hostname " << m_host << "\n";
+            std::cout << "tcp: failed to resolve hostname " << m_host << "\n";
             return false;
         }
 
         addr_list = (struct in_addr**) he->h_addr_list;
         for (int i=0; addr_list[i] != NULL; i++) {
             server_addr.sin_addr = *addr_list[i];
-            cout << m_host << " resolved to " << inet_ntoa(*addr_list[i]) << endl;
+            std::cout << "tcp: " << m_host << " resolved to " 
+                << inet_ntoa(*addr_list[i]) << std::endl;
             break;
         }
 
@@ -60,7 +61,7 @@ bool TcpClient::_connect() {
         return false;
     }
 
-    cout << "tcp: connected to " << m_host << ":" << m_port << "\n";
+    std::cout << "tcp: connected to " << m_host << ":" << m_port << "\n";
     m_sockfd = sockfd;
     return true;
 }
@@ -72,7 +73,7 @@ uint32_t TcpClient::transmit(const char* data, uint32_t len) {
     if (bytes_cnt < 0) {
         perror("send() failed");
     } else {
-        cout << "tcp: sent " << bytes_cnt << " bytes\n";
+        std::cout << "tcp: sent " << bytes_cnt << " bytes\n";
     }
 
     return (uint32_t) bytes_cnt;
@@ -85,7 +86,7 @@ uint32_t TcpClient::receive(char* data, uint32_t len) {
     if (bytes_cnt < 0) {
         perror("recv() failed");
     } else {
-        cout << "tcp: received " << bytes_cnt << " bytes\n";
+        std::cout << "tcp: received " << bytes_cnt << " bytes\n";
     }
 
     return (uint32_t) bytes_cnt;
