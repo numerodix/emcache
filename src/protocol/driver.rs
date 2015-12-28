@@ -121,6 +121,7 @@ impl Driver {
         let get_misses = storage.get_misses.to_string();
         let bytes_read = self.transport_metrics.bytes_read.to_string();
         let bytes_written = self.transport_metrics.bytes_written.to_string();
+        let limit_maxbytes = self.cache.capacity.to_string();
         let bytes = storage.bytes.to_string();
         let curr_items = self.cache.len().to_string();
         let total_items = storage.total_items.to_string();
@@ -138,6 +139,7 @@ impl Driver {
         let st_get_misses = Stat::new("get_misses", get_misses);
         let st_bytes_read = Stat::new("bytes_read", bytes_read);
         let st_bytes_written = Stat::new("bytes_written", bytes_written);
+        let st_limit_maxbytes = Stat::new("limit_maxbytes", limit_maxbytes);
         let st_bytes = Stat::new("bytes", bytes);
         let st_curr_items = Stat::new("curr_items", curr_items);
         let st_total_items = Stat::new("total_items", total_items);
@@ -155,6 +157,7 @@ impl Driver {
                          st_get_misses,
                          st_bytes_read,
                          st_bytes_written,
+                         st_limit_maxbytes,
                          st_bytes,
                          st_curr_items,
                          st_total_items,

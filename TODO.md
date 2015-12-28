@@ -1,6 +1,5 @@
 Low hanging fruit:
 
-* Cache capacity should be set on bytes, not items.
 * Make transport parser more robust to invalid command strings - less panic prone.
 
 Medium:

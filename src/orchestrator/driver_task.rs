@@ -33,7 +33,7 @@ impl DriverTask {
     }
 
     pub fn run(&self) {
-        let cache = Cache::new(1024);
+        let cache = Cache::new(64 * 1024 * 1024); // 64mb
         let mut driver = Driver::new(cache);
 
         // Here we store metrics per transport

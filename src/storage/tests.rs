@@ -9,7 +9,7 @@ use super::Value;
 
 #[test]
 fn test_set_one_key() {
-    let mut cache = Cache::new(1);
+    let mut cache = Cache::new(1024);
 
     let key = key!(1, 2, 3);
     let value = value!(4, 5, 6);
@@ -36,7 +36,7 @@ fn test_set_one_key() {
 
 #[test]
 fn test_key_not_found() {
-    let mut cache = Cache::new(1);
+    let mut cache = Cache::new(1024);
 
     // Set a key
     let rv = cache.set(key!(1), value!(9));
@@ -49,7 +49,7 @@ fn test_key_not_found() {
 
 #[test]
 fn test_store_beyond_capacity_lru() {
-    let mut cache = Cache::new(1);
+    let mut cache = Cache::new(3);
 
     // we've now reached capacity
     let rv = cache.set(key!(1), value!(8));
@@ -80,11 +80,44 @@ fn test_store_beyond_capacity_lru() {
         let rv = cache.get(&key!(2));
         assert!(rv.is_ok());
     }
+
+    // try to set an item that's bigger than the whole cache
+    let rv = cache.set(key!(2, 3), value!(9, 10, 11));
+    assert!(rv.is_err());
+    assert_eq!(cache.len(), 1);
+
+    // make sure the previous set attempt didn't evict anything
+    let rv = cache.contains_key(&key!(2));
+    assert_eq!(rv.unwrap(), true);
+
+}
+
+#[test]
+fn test_multiple_evictions() {
+    let mut cache = Cache::new(4);
+
+    // Set a key
+    let rv = cache.set(key!(1), value!(8));
+    assert!(rv.is_ok());
+    assert_eq!(cache.len(), 1);
+    assert_eq!(cache.get_metrics().evictions, 0);
+
+    // Set another key
+    let rv = cache.set(key!(2), value!(9));
+    assert!(rv.is_ok());
+    assert_eq!(cache.len(), 2);
+    assert_eq!(cache.get_metrics().evictions, 0);
+
+    // Set an item so big it forces everything else to be evicted
+    let rv = cache.set(key!(3), value!(9, 10, 11));
+    assert!(rv.is_ok());
+    assert_eq!(cache.len(), 1);
+    assert_eq!(cache.get_metrics().evictions, 2);
 }
 
 #[test]
 fn test_exceed_item_size_limits() {
-    let mut cache = Cache::new(1);
+    let mut cache = Cache::new(1024);
     cache.with_key_maxlen(1)
          .with_value_maxlen(1);
 
@@ -116,7 +149,7 @@ fn test_exceed_item_size_limits() {
 #[test]
 fn test_key_expired_lifetime() {
     // our cache has a lifetime of 0 secs - all keys are dead on store
-    let mut cache = Cache::new(1);
+    let mut cache = Cache::new(1024);
     cache.with_item_lifetime(0.0);
 
     let key = key!(1);
@@ -134,7 +167,7 @@ fn test_key_expired_lifetime() {
 #[test]
 fn test_key_explicit_exptime() {
     // our cache has infinite lifetime
-    let mut cache = Cache::new(1);
+    let mut cache = Cache::new(1024);
 
     let key = key!(1);
     let mut value = value!(9);
@@ -155,7 +188,7 @@ fn test_key_explicit_exptime() {
 #[test]
 fn test_key_kept_alive_on_access() {
     // our cache has a lifetime of 2 secs
-    let mut cache = Cache::new(1);
+    let mut cache = Cache::new(1024);
     cache.with_item_lifetime(2.0);
 
     let key = key!(1);
@@ -189,7 +222,7 @@ fn test_metrics() {
     // NOTE: The most crucial metric is bytes, so make sure to test every data
     // path that affects it.
 
-    let mut cache = Cache::new(1);
+    let mut cache = Cache::new(4);
     assert_eq!(cache.get_metrics().bytes, 0);
     assert_eq!(cache.get_metrics().total_items, 0);
 

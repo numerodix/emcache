@@ -76,6 +76,7 @@ fn test_cmd_stats() {
     let st_get_misses = Stat::new("get_misses", "0".to_string());
     let st_bytes_read = Stat::new("bytes_read", "0".to_string());
     let st_bytes_written = Stat::new("bytes_written", "0".to_string());
+    let st_limit_maxbytes = Stat::new("limit_maxbytes", "100".to_string());
     let st_time = Stat::new("time", (time_now() as u64).to_string());
     let st_curr_items = Stat::new("curr_items", "1".to_string());
     let st_total_items = Stat::new("total_items", "1".to_string());
@@ -94,6 +95,7 @@ fn test_cmd_stats() {
                                 st_get_misses,
                                 st_bytes_read,
                                 st_bytes_written,
+                                st_limit_maxbytes,
                                 st_bytes,
                                 st_curr_items,
                                 st_total_items,

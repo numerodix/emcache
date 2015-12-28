@@ -42,7 +42,7 @@ impl CacheMetrics {
 
 
 pub struct Cache {
-    capacity: u64,
+    pub capacity: u64, // in bytes
     item_lifetime: f64, // in seconds, <0 for unlimited
     key_maxlen: u64, // in bytes
     metrics: CacheMetrics,
@@ -92,7 +92,7 @@ impl Cache {
     }
 
 
-    fn evict_oldest(&mut self) -> CacheResult<()> {
+    fn evict_oldest(&mut self) -> CacheResult<(Key, Value)> {
         let opt = self.storage.pop_back();
 
         match opt {
@@ -101,7 +101,7 @@ impl Cache {
                 self.metrics.bytes_subtract(&key, &value);
                 self.metrics.evictions += 1;
 
-                Ok(())
+                Ok((key, value))
             }
             None => Err(CacheError::EvictionFailed),
         }
@@ -207,19 +207,53 @@ impl Cache {
             return Err(CacheError::ValueTooLong);
         }
 
-        // Check capacity if adding new key
-        if !self.storage.contains_key(&key) {
-            if self.storage.len() as u64 == self.capacity {
-                // Remove the oldest item to make space
+        // Does this item even fit into our cache at all?
+        if key.len() as u64 + value.len() as u64 > self.capacity {
+            return Err(CacheError::CapacityExceeded);
+        }
+
+        // Do we already store this key?
+        if self.storage.contains_key(&key) {
+            let mut plus_delta = 0u64;
+            {
+                // Load the existing value
+                let prev_value = self.storage.get(&key).unwrap();
+
+                // We're updating the key, possibly with a different size value
+                self.metrics.bytes_subtract(&key, &prev_value);
+
+                // Figure out how much more space we need to store the new value
+                if value.len() > prev_value.len() {
+                    plus_delta = value.len() as u64 - prev_value.len() as u64;
+                }
+            }
+
+            // Would the new value exceed our capacity? Then we need to reclaim
+            loop {
+                if self.metrics.bytes + key.len() as u64 + plus_delta <=
+                   self.capacity {
+                    break;
+                }
+
                 self.evict_oldest();
 
                 // Update metrics
                 self.metrics.reclaimed += 1;
             }
+
         } else {
-            // We're updating the key, possibly with a different size value
-            let prev_value = self.storage.get(&key).unwrap();
-            self.metrics.bytes_subtract(&key, &prev_value);
+            // Do we have space for the new item?
+            loop {
+                if self.metrics.bytes + key.len() as u64 +
+                   value.len() as u64 <= self.capacity {
+                    break;
+                }
+
+                self.evict_oldest();
+
+                // Update metrics
+                self.metrics.reclaimed += 1;
+            }
         }
 
         // Update metrics
