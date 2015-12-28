@@ -3,7 +3,10 @@ rust:
     - stable
     - beta
     - nightly
-script: ./all_unit_tests.sh && ./integration_tests.sh
+install:
+    - sudo apt-get install -qq clang-3.6
+script: 
+    - ./all_unit_tests.sh && ./integration_tests.sh && (cd perftest && make && time ./perftest)
 
 matrix:
     allow_failures:
