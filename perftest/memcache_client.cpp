@@ -10,45 +10,55 @@ MemcacheClient::MemcacheClient(std::string host, uint16_t port) : m_client(nullp
     m_client = new TcpClient(host, port);
 }
 
-bool MemcacheClient::get(std::string key, char *data, uint32_t maxlen) {
-    return true;
-}
-
-bool MemcacheClient::_set(std::string key, const char *data, uint32_t data_len) {
-    assert( key.length() <= 250 );  // memcache upper limit on key length
-    assert( data_len <= 1048576 );  // memcache upper limit on value length
-
+std::vector<char> MemcacheClient::get(std::string key) {
     // Construct request
-    char header[300] = {0};
-    assert( 0 < snprintf(header, 299, "set %s 0 0 %d\r\n", key.c_str(), data_len) );
-    uint32_t header_len = strlen(header);
+    std::stringstream srequest;
 
-    char line_end[10] = {0};
-    assert( 0 < snprintf(line_end, 9, "\r\n") );
-    uint32_t line_end_len = strlen(line_end);
+    srequest << "get " << key << "\r\n";
 
-    uint32_t request_len = header_len + data_len + line_end_len;
-    char request[request_len];
-    assert( NULL != memset(request, 0, request_len) );
-
-    assert( NULL != memcpy(request, header, header_len) );
-    assert( NULL != memcpy(&request[header_len], data, data_len) );
-    assert( NULL != memcpy(&request[header_len + data_len], line_end, line_end_len) );
+    std::string request = srequest.str();
 
     // Send request
-    m_client->transmit(request, request_len);
+    std::cout << "memcache: Loading key '" << key << "'" << std::endl;
+    assert( request.length() == m_client->transmit(request.c_str(), request.length()) );
 
     // Receive response
-    char response[100] = {0};
-    m_client->receive(response, 100);
+    std::vector<char> response;
+    char response_buf[4096] = {0};  // 4k is enough stats for everyone
+    m_client->receive(response_buf, 4096);
+    response.insert(response.end(), &response_buf[0], &response_buf[4096]);
 
     // Interpret response
-    std::string resp(response);
-    if (resp.compare("STORED\r\n") == 0) {
-        return true;
+    // format: VALUE x 0 3\r\nabc\r\n
+    std::string prefix(&response_buf[0], &response_buf[512]);
+    // see if it's a successful response
+    if (prefix.substr(0, 5).compare("VALUE") == 0) {
+        // find the space before the key
+        std::size_t pos = prefix.find(" ", 5);
+
+        // find the space before the flags
+        pos = prefix.find(" ", pos + 1);
+
+        // find the space before the bytecount
+        pos = prefix.find(" ", pos + 1);
+        uint32_t data_len = atoi(&prefix[pos]);
+
+        // find the line ending
+        pos = prefix.find("\r\n", pos + 1);
+
+        // we know the indices of the data now
+        std::vector<char> data(&prefix[pos + 2], &prefix[pos + 2 + data_len]);
+
+        std::string data_str(data.begin(), data.end());
+        std::cout << "memcache: Loaded key '" << key << "' with value <<<"
+            << data_str << ">>>" << std::endl;
+
+        return data;
     }
 
-    return false;
+    std::cout << "memcache: Failed to load key '" << key << "'" << std::endl;
+    std::vector<char> empty;
+    return empty;
 }
 
 bool MemcacheClient::set(std::string key, std::vector<char> data) {
@@ -62,7 +72,9 @@ bool MemcacheClient::set(std::string key, std::vector<char> data) {
     std::string request = srequest.str();
 
     // Send request
-    m_client->transmit(request.c_str(), request.length());
+    std::cout << "memcache: Storing key '" << key << "' with value <<<"
+        << data_str << ">>>" << std::endl;
+    assert( request.length() == m_client->transmit(request.c_str(), request.length()) );
 
     // Receive response
     char response_buf[101] = {0};
@@ -71,19 +83,33 @@ bool MemcacheClient::set(std::string key, std::vector<char> data) {
     // Interpret response
     std::string response(response_buf);
     if (response.compare("STORED\r\n") == 0) {
+        std::cout << "memcache: Stored key '" << key << "'" << std::endl;
         return true;
     }
 
+    std::cout << "memcache: Failed to store key '" << key << "'" << std::endl;
     return false;
 }
 
 void MemcacheClient::printStats() {
+    // Construct request
     std::string cmd("stats\r\n");
+
+    // Send request
+    std::cout << "memcache: Requesting stats" << std::endl;
     assert( cmd.length() == m_client->transmit(cmd.c_str(), cmd.length()) );
 
-    char buf[4096];  // 4k is enough stats for everyone
-    memset(&buf, 0, 4096);
+    // Receive response
+    char buf[4096] = {0};  // 4k is enough stats for everyone
     assert( 0 < m_client->receive(buf, 4095) );
+    std::cout << "memcache: Requested stats" << std::endl;
 
-    std::cout << buf;
+    // Interpret response
+    std::string resp(buf);
+    std::size_t pos = resp.find("\r\nEND"); // find the end marker
+    std::cout << resp.substr(0, pos) << std::endl;
+}
+
+bool MemcacheClient::equal(std::vector<char> data1, std::vector<char> data2) {
+    return std::equal(data1.begin(), data1.end(), data2.begin());
 }
