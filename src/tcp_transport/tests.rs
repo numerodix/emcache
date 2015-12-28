@@ -325,7 +325,7 @@ fn test_write_resp_stats() {
     let stat = Stat::new("curr_items", "0".to_string());
     let resp = Resp::Stats(vec![stat]);
     transport.write_resp(&resp).unwrap();
-    let expected = "curr_items 0\r\nEND\r\n".to_string().into_bytes();
+    let expected = "STAT curr_items 0\r\nEND\r\n".to_string().into_bytes();
     assert_eq!(transport.get_stream().outgoing, expected);
 }
 
