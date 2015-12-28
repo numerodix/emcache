@@ -13,7 +13,8 @@ int main(int argc, char *argv[]) {
     MemcacheClient cli("127.0.0.1", 11311);
 //    cli.printStats();
 
-    assert( true == cli.set("x", "abc", 3) );
+    vector<char> val = {'a', 'b', 'c'};
+    assert( true == cli.set("x", val) );
 
     return 0;
 }

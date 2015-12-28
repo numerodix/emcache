@@ -1,5 +1,6 @@
 #include <assert.h>
 #include <stdio.h>
+#include <sstream>
 #include <string.h>
 
 #include "memcache_client.h"
@@ -13,7 +14,7 @@ bool MemcacheClient::get(string key, char *data, uint32_t maxlen) {
     return true;
 }
 
-bool MemcacheClient::set(string key, const char *data, uint32_t data_len) {
+bool MemcacheClient::_set(string key, const char *data, uint32_t data_len) {
     assert( key.length() <= 250 );  // memcache upper limit on key length
     assert( data_len <= 1048576 );  // memcache upper limit on value length
 
@@ -44,6 +45,32 @@ bool MemcacheClient::set(string key, const char *data, uint32_t data_len) {
     // Interpret response
     string resp(response);
     if (resp.compare("STORED\r\n") == 0) {
+        return true;
+    }
+
+    return false;
+}
+
+bool MemcacheClient::set(string key, vector<char> data) {
+    // Construct request
+    stringstream srequest;
+    string data_str(data.begin(), data.end());
+
+    srequest << "set " << key << " 0 0 " << data.size() << "\r\n";
+    srequest << data_str << "\r\n";
+
+    string request = srequest.str();
+
+    // Send request
+    m_client->transmit(request.c_str(), request.length());
+
+    // Receive response
+    char response_buf[101] = {0};
+    m_client->receive(response_buf, 100);
+
+    // Interpret response
+    string response(response_buf);
+    if (response.compare("STORED\r\n") == 0) {
         return true;
     }
 
