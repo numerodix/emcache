@@ -295,6 +295,7 @@ impl<T: Read + Write> TcpTransport<T> {
             }
             Resp::Stats(ref stats) => {
                 for stat in stats {
+                    try!(self.write_string("STAT "));
                     try!(self.write_string(&stat.key));
                     try!(self.write_string(" "));
                     try!(self.write_string(&stat.value));
