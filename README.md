@@ -15,6 +15,7 @@ A toy implementation of memcached in Rust.
 * Numerous opportunities for optimization by eliminating data copying.
 * Fairly good test coverage.
 * No config file, logging or daemonization yet.
+* Currently (Dec 2015) only builds against rust-nightly due to linked-hash-map dependency.
 
 
 ## Development
