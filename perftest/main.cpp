@@ -3,23 +3,17 @@
 #include <stdio.h>
 #include <string.h>
 
+#include "memcache_client.h"
 #include "tcp_client.h"
 
 
 using namespace std;
 
 int main(int argc, char *argv[]) {
-    TcpClient cli("127.0.0.1", 11211);
-    assert( true == cli._connect() );
+    MemcacheClient cli("127.0.0.1", 11311);
+//    cli.printStats();
 
-    string cmd("stats\r\n");
-    assert( true == cli.transmit(cmd.c_str(), cmd.length()) );
-
-    char buf[4096];
-    memset(&buf, 0, 4097);
-    assert( 0 < cli.receive(buf, 4096) );
-
-    printf("got: %s\n", buf);
+    assert( true == cli.set("x", "abc", 3) );
 
     return 0;
 }
