@@ -4,35 +4,38 @@ use platform::time::time_now;
 
 
 pub struct MetricsRecorder {
-    timers: HashMap<String, f64>,
-
-    cur_timer: Option<String>,
-    start_time: f64,
+    // name, start_time
+    live_timers: HashMap<String, f64>,
+    // name, duration
+    done_timers: HashMap<String, f64>,
 }
 
 impl MetricsRecorder {
     pub fn new() -> MetricsRecorder {
         MetricsRecorder {
-            timers: HashMap::new(),
-
-            cur_timer: None,
-            start_time: -1.0,
+            live_timers: HashMap::new(),
+            done_timers: HashMap::new(),
         }
     }
 
     pub fn start_timer(&mut self, name: &str) {
-        self.cur_timer = Some(name.to_string());
-        self.start_time = time_now();
+        //println!("Timed starting: {:?}", name);
+        self.live_timers.insert(name.to_string(), time_now());
     }
 
     pub fn stop_timer(&mut self, name: &str) {
-        assert_eq!(self.cur_timer.as_ref().unwrap(), name);
+        //println!("Timed stopping: {:?}", name);
+        let stop_time = time_now();
 
-        let duration = time_now() - self.start_time;
-        self.start_time = -1.0;
+        let opt = self.live_timers.remove(name);
+        if opt.is_none() {
+            panic!("Tried to stop non-live timer: {:?}", name);
+        }
 
-        self.timers.insert(name.to_string(), duration);
-        println!("Timed {:13}: {:?}s", name, duration);
+        let start_time = opt.unwrap();
+        let duration = stop_time - start_time;
+
+        self.done_timers.insert(name.to_string(), duration);
+        println!("Timed {:20}: {:?}s", name, duration);
     }
 }
-

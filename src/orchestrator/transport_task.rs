@@ -26,14 +26,14 @@ impl TransportTask {
     }
 
     pub fn run(&self, stream: TcpStream) {
-        let mut recorder = MetricsRecorder::new();
+        let mut rec = MetricsRecorder::new();
         let mut transport = TcpTransport::new(stream);
         let (resp_tx, resp_rx): (RespSender, RespReceiver) = mpsc::channel();
 
         loop {
             println!("Ready to read command...");
             let rv = {
-                Timer::new(&mut recorder, "drop_read_cmd");
+                let t = Timer::new(&mut rec, "read_cmd");
                 transport.read_cmd()
             };
 
@@ -48,14 +48,23 @@ impl TransportTask {
             let cmd = rv.unwrap();
             let resp_tx_clone = resp_tx.clone();
             let metrics = transport.get_metrics_clone();
-            self.cmd_tx.send((self.id, resp_tx_clone, cmd, metrics)).unwrap();
+            {
+                let t = Timer::new(&mut rec, "send_cmd");
+                self.cmd_tx.send((self.id, resp_tx_clone, cmd, metrics)).unwrap();
+            }
 
             // Obtain a response
-            let resp = resp_rx.recv().unwrap();
+            let resp = {
+                let t = Timer::new(&mut rec, "recv_resp");
+                resp_rx.recv().unwrap()
+            };
 
             // Return a response
             println!("Returning response: {:?}", &resp);
-            let rv = transport.write_resp(&resp);
+            let rv = {
+                let t = Timer::new(&mut rec, "write_resp");
+                transport.write_resp(&resp)
+            };
             if !rv.is_ok() {
                 println!("Failed to write response :(");
             }
