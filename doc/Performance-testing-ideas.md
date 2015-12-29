@@ -9,6 +9,7 @@ Probable factors that influence performance:
 
 Performance metrics:
 
+* operation latency
 * transactions/s
 * bytes/s
 
