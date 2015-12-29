@@ -2,12 +2,12 @@
 
 import re
 import socket
-import time
 import sys
+import time
 
-from perftest.client import MemcacheClient
-from perftest.client import MemcacheClientParams
-from perftest.task_filler import CacheFillerTask
+from pyperf.client import MemcacheClient
+from pyperf.client import MemcacheClientParams
+from pyperf.task_filler import CacheFillerTask
 
 
 if __name__ == '__main__':
@@ -71,8 +71,8 @@ if __name__ == '__main__':
               (num, get_interval, get_rate))
 
     else:
-        from perftest.util import generate_random_key
-        from perftest.util import generate_random_data
+        from pyperf.util import generate_random_key
+        from pyperf.util import generate_random_data
 
         client = cli_params.create_client()
 

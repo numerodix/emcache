@@ -11,15 +11,15 @@ sleep 2
 
 # Run the fill test
 echo -e "\n=== FILL TEST ===\n"
-python -m perftest.tester -p 11311 --fill 5.0
+python -m pyperf.tester -p 11311 --fill 5.0
 
 # Run the stress test
 echo -e "\n=== STRESS TEST ===\n"
-python -m perftest.tester -p 11311 --stress
+python -m pyperf.tester -p 11311 --stress
 
 # Run the integ tests
 echo -e "\n=== INTEG TEST ===\n"
-python -m perftest.tester -p 11311
+python -m pyperf.tester -p 11311
 exit_code=$?
 
 # Kill the server

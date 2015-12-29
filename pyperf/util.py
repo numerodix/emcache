@@ -76,4 +76,4 @@ if __name__ == '__main__':
 
     gen(100000, 100, generate_random_data, 'byte strings')
     gen(10000, 100, generate_random_key, 'alphanum strings')
-    gen(10000, 100, generate_random_uuid, 'alphanum strings')
+    gen(10000, 100, generate_random_key_uuid, 'uuid strings')

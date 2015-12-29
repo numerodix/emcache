@@ -1,11 +1,11 @@
 import time
 
-from perftest.task_api import Task
-from perftest.task_api import Tasklet
-from perftest.util import generate_random_data
-from perftest.util import generate_random_key
-from perftest.util import generate_random_key_uuid
-from perftest.util import insert_number_commas
+from pyperf.task_api import Task
+from pyperf.task_api import Tasklet
+from pyperf.util import generate_random_data
+from pyperf.util import generate_random_key
+from pyperf.util import generate_random_key_uuid
+from pyperf.util import insert_number_commas
 
 
 class CacheFillerTask(Task):
