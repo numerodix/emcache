@@ -35,4 +35,35 @@ def insert_number_commas(number):
             chunks.append(',')
 
     chunks.reverse()
-    return ''.join(chunks)
+    number = ''.join(chunks)
+    if number.startswith(','):
+        number = number[1:]
+
+    return number
+
+
+if __name__ == '__main__':
+    import time
+
+    def gen(num, num_chars, gen_func, type_name):
+        time_start = time.time()
+
+        for i in xrange(num):
+            gen_func(num_chars)
+
+        time_stop = time.time()
+
+        duration = time_stop - time_start
+        rate_strings = float(num) / duration
+        rate_bytes = rate_strings * num_chars
+        print("Generated %s %s-char %s in %.2fs (rate: %s strings/s - %s bytes/s)" %
+              (insert_number_commas(str(num)),
+               insert_number_commas(str(num_chars)),
+               type_name,
+               duration,
+               insert_number_commas(str(int(rate_strings))),
+               insert_number_commas(str(int(rate_bytes)))
+              ))
+
+    gen(100000, 100, generate_random_data, 'byte strings')
+    gen(10000, 100, generate_random_key, 'alphanum strings')

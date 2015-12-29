@@ -8,7 +8,7 @@ from perftest.util import insert_number_commas
 
 
 class CacheFillerTask(Task):
-    def __init__(self, percentage=0, jobs=5, *args, **kwargs):
+    def __init__(self, percentage=0, jobs=4, *args, **kwargs):
         super(CacheFillerTask, self).__init__(*args, **kwargs)
         self.percentage = percentage
         self.jobs = jobs
@@ -38,13 +38,21 @@ class CacheFillerTask(Task):
         state.time_stop = time.time()
         state.duration = state.time_stop - state.time_start
 
-        items_cum = sum([m.items_cum for m in metrics_list])
         time_cum = sum([m.time_cum for m in metrics_list])
-        rate_cum = float(items_cum) / float(time_cum) if time_cum > 0 else 0
-        rate_cum = rate_cum * len(metrics_list)
 
-        self.write("Done filling, took %.2fs to insert %s items (avg rate: %.2f items/s)" %
-                   (state.duration, items_cum, rate_cum))
+        items_cum = sum([m.items_cum for m in metrics_list])
+        rate_items_cum = float(items_cum) / float(time_cum) if time_cum > 0 else 0
+        rate_items_cum = rate_items_cum * len(metrics_list)
+        rate_items_str = insert_number_commas(str(int(rate_items_cum)))
+
+        bytes_cum = sum([m.bytes_cum for m in metrics_list])
+        rate_bytes_cum = float(bytes_cum) / float(time_cum) if time_cum > 0 else 0
+        rate_bytes_cum = rate_bytes_cum * len(metrics_list)
+        rate_bytes_str = insert_number_commas(str(int(rate_bytes_cum)))
+
+        self.write("Done filling, took %.2fs to insert %s items"
+                   " (avg rate: %s items/s - %s bytes/s)" %
+                   (state.duration, items_cum, rate_items_str, rate_bytes_str))
 
 
 class CacheFillerTasklet(Tasklet):
@@ -66,6 +74,7 @@ class CacheFillerTasklet(Tasklet):
 
         metrics.pct_full = self.get_pct_full(client)
         metrics.batch_size = 50
+        metrics.bytes_cum = 0
         metrics.time_cum = 0
         metrics.items_cum = 0
         rate = -1
@@ -83,6 +92,8 @@ class CacheFillerTasklet(Tasklet):
                 key = generate_random_key(10)
                 value = generate_random_data(100, 1000)
                 client.set(key, value)
+
+                metrics.bytes_cum += len(key) + len(value)
 
             duration = time.time() - time_st
             rate = metrics.batch_size / duration
