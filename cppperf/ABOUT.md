@@ -7,6 +7,10 @@ But during testing perftest runs at a higher cpu utilization than memcached, so
 perftest seems unable to achieve a high enough request rate to measure the peak
 rate for memcached.
 
+Furthermore, the transaction rate measured using pyperf is notably higher for
+the exact same parameters, so the expected performance benefits of C++ are
+called into question.
+
 
 ## Measurements
 

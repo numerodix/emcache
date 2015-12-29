@@ -47,7 +47,7 @@ if __name__ == '__main__':
         start_time = time.time()
         num = 10000  # should take about 2secs
         for _ in range(num):
-            client.set('x', '1')
+            client.set('x', 'abc')
         end_time = time.time()
         set_interval = end_time - start_time
         set_rate = float(num) / (set_interval) * 2
