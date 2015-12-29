@@ -1,4 +1,4 @@
-= Regression analysis
+# Regression analysis
 
 Probable factors that influence performance:
 
