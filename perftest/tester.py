@@ -7,7 +7,7 @@ import sys
 
 from perftest.client import MemcacheClient
 from perftest.client import MemcacheClientParams
-from perftest.loadgen import LoadGenerator
+from perftest.task_filler import CacheFillerTask
 
 
 if __name__ == '__main__':
@@ -31,9 +31,12 @@ if __name__ == '__main__':
     cli_params = MemcacheClientParams(host, port)
 
     if options.fill_cache:
-        loadgen = LoadGenerator(cli_params)
         pct = float(options.fill_cache)
-        loadgen.fill_to_pct(pct)
+        filler = CacheFillerTask(
+            client_params=cli_params,
+            percentage=pct,
+        )
+        filler.launch()
 
     elif options.stress_test:
         client = cli_params.create_client()

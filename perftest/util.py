@@ -1,3 +1,4 @@
+import os
 import random
 
 
@@ -6,8 +7,7 @@ def generate_random_data(length_from, length_to=None):
     if length_to is not None:
         length = random.randint(length_from, length_to)
 
-    with open('/dev/urandom', 'rb') as f:
-        return f.read(length)
+    return os.urandom(length)
 
 def generate_random_key(length):
     data = ''
