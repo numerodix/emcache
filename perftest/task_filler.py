@@ -4,6 +4,7 @@ from perftest.task_api import Task
 from perftest.task_api import Tasklet
 from perftest.util import generate_random_data
 from perftest.util import generate_random_key
+from perftest.util import generate_random_key_uuid
 from perftest.util import insert_number_commas
 
 
@@ -80,8 +81,9 @@ class CacheFillerTasklet(Tasklet):
         rate = -1
 
         while metrics.pct_full < self.percentage:
-            self.write("Cache is %.2f%% full of %s, inserting %s items (rate: %.2f items/s)" %
-                       (metrics.pct_full, capacity_fmt, metrics.batch_size, rate))
+            self.write("Cache is %.2f%% full of %s, inserting %s items (rate: %s items/s)" %
+                       (metrics.pct_full, capacity_fmt, metrics.batch_size,
+                        insert_number_commas(str(int(rate)))))
 
             time_st = time.time()
 
@@ -89,7 +91,7 @@ class CacheFillerTasklet(Tasklet):
                 if not self._runnable:
                     return
 
-                key = generate_random_key(10)
+                key = generate_random_key_uuid(10)
                 value = generate_random_data(100, 1000)
                 client.set(key, value)
 

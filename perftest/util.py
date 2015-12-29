@@ -1,5 +1,6 @@
 import os
 import random
+import uuid
 
 
 def generate_random_data(length_from, length_to=None):
@@ -20,6 +21,14 @@ def generate_random_key(length):
         data += bytes
     data = data[:length]
     return data
+
+def generate_random_key_uuid(length_from, length_to=None):
+    length = length_from
+    if length_to is not None:
+        length = random.randint(length_from, length_to)
+
+    # XXX length will never be >32
+    return uuid.uuid4().hex[:length]
 
 def insert_number_commas(number):
     chunks = []
@@ -67,3 +76,4 @@ if __name__ == '__main__':
 
     gen(100000, 100, generate_random_data, 'byte strings')
     gen(10000, 100, generate_random_key, 'alphanum strings')
+    gen(10000, 100, generate_random_uuid, 'alphanum strings')
