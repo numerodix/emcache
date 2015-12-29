@@ -4,7 +4,7 @@ rust:
     - beta
     - nightly
 script: 
-    - ./all_unit_tests.sh && ./integration_tests.sh && (cd perftest && make CXX=g++ && time ./perftest)
+    - ./all_unit_tests.sh && ./integration_tests.sh && (cd cppperf && make CXX=g++ && time ./perftest)
 
 matrix:
     allow_failures:
