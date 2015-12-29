@@ -6,15 +6,21 @@ set -e
 cargo build
 
 # Launch the server, give it 2sec to start up
-./run_server.sh &
+./run_server.sh >/dev/null &
 sleep 2
 
-# Run the client tests
-./client_test.py -p 11311
-exit_code=$?
+# Run the fill test
+echo -e "\n=== FILL TEST ===\n"
+python -m pyperf.tester -p 11311 --fill 5.0
 
 # Run the stress test
-./client_test.py -p 11311 --stress
+echo -e "\n=== STRESS TEST ===\n"
+python -m pyperf.tester -p 11311 --stress
+
+# Run the integ tests
+echo -e "\n=== INTEG TEST ===\n"
+python -m pyperf.tester -p 11311
+exit_code=$?
 
 # Kill the server
 ps axf | grep target/*/memcache | awk '{print $1}' | xargs kill || true

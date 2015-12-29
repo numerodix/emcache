@@ -1,3 +1,4 @@
+*.pyc
 *.rs.bk
 cppperf/perftest
 cppperf/*.o

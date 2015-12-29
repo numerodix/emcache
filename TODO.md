@@ -6,6 +6,7 @@ Medium:
 
 * Expose hardcoded constants for cache size, port number etc as cmdline args.
 * Add a logging facility and start adding some basic log output.
+* Add fuzzing test to perftest by supplying valid samples of command strings and randomly shuffling characters / shortening/elongating fields.
 
 Large:
 
