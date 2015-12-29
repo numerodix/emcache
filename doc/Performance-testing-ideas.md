@@ -11,3 +11,5 @@ Performance metrics:
 
 * transactions/s
 * bytes/s
+
+Stats to track: avg, p90, p99, p99.9
