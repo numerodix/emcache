@@ -4,9 +4,6 @@ This test suite includes a Task abstraction which allows defining a task as a
 pair of Task (main job) + Tasklet (client run in seperate threads) to enable
 parallelism.
 
-The current bottleneck in pyperf is the inability to generate random keys fast
-enough to push the transaction rate higher than it currently goes.
-
 
 ## Measurements
 
@@ -38,8 +35,8 @@ Using 4 threads.
 
 memcached:
 
-* 10.2k items/s - 6.0mb/s
+* 55k items/s - 31mb/s
 
 memcache.rs:
 
-* 2.2k items/s - 1.2mb/s
+* 3k items/s - 1.7mb/s

@@ -1,3 +1,4 @@
+from itertools import izip
 import time
 
 from pyperf.task_api import Task
@@ -85,14 +86,18 @@ class CacheFillerTasklet(Tasklet):
                        (metrics.pct_full, capacity_fmt, metrics.batch_size,
                         insert_number_commas(str(int(rate)))))
 
+            # Pre-generate keys and values to avoid timing this work
+            keys = [generate_random_key(10)
+                    for _ in xrange(metrics.batch_size)]
+            values = [generate_random_data(100, 1000)
+                      for _ in xrange(metrics.batch_size)]
+
             time_st = time.time()
 
-            for _ in range(metrics.batch_size):
+            for key, value in izip(keys, values):
                 if not self._runnable:
                     return
 
-                key = generate_random_key_uuid(10)
-                value = generate_random_data(100, 1000)
                 client.set(key, value)
 
                 metrics.bytes_cum += len(key) + len(value)
