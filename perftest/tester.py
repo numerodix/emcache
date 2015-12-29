@@ -43,22 +43,32 @@ if __name__ == '__main__':
         # establish connection
         client.get('invalid')
 
-        # measure transaction rate
+        # measure set rate
         start_time = time.time()
         num = 10000  # should take about 2secs
         for _ in range(num):
             client.set('x', '1')
-            val2 = client.get('x')
         end_time = time.time()
+        set_interval = end_time - start_time
+        set_rate = float(num) / (set_interval) * 2
+
+        # measure set rate
+        start_time = time.time()
+        num = 10000  # should take about 2secs
+        for _ in range(num):
+            client.get('x')
+        end_time = time.time()
+        get_interval = end_time - start_time
+        get_rate = float(num) / (get_interval) * 2
 
         # print stats afterwards
         client.print_stats()
 
         # display results
-        interval = end_time - start_time
-        rate = float(num) / (interval) * 2
-        print("Made %d set+get requests in %.2f seconds = %.2f requests/sec" %
-              (num, interval, rate))
+        print("Made %d constant key set requests in %.2f seconds = %.2f requests/sec" %
+              (num, set_interval, set_rate))
+        print("Made %d constant key get requests in %.2f seconds = %.2f requests/sec" %
+              (num, get_interval, get_rate))
 
     else:
         from perftest.util import generate_random_key
