@@ -31,6 +31,8 @@ memcache.rs:
 
 ### Fill cache to a certain percentage
 
+Using 4 threads.
+
 * key: 10 printable chars, random
 * value: 100-1000 bytes, random
 
