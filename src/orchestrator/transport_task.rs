@@ -1,6 +1,8 @@
 use std::net::TcpStream;
 use std::sync::mpsc;
 
+use metrics::MetricsRecorder;
+use metrics::Timer;
 use protocol::cmd::Resp;
 use tcp_transport::TcpTransport;
 
@@ -24,12 +26,16 @@ impl TransportTask {
     }
 
     pub fn run(&self, stream: TcpStream) {
+        let mut recorder = MetricsRecorder::new();
         let mut transport = TcpTransport::new(stream);
         let (resp_tx, resp_rx): (RespSender, RespReceiver) = mpsc::channel();
 
         loop {
             println!("Ready to read command...");
-            let rv = transport.read_cmd();
+            let rv = {
+                Timer::new(&mut recorder, "drop_read_cmd");
+                transport.read_cmd()
+            };
 
             // If we couldn't parse the command return an error
             if !rv.is_ok() {
