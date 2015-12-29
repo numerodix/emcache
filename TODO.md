@@ -12,4 +12,3 @@ Large:
 
 * Implement the full memcached protocol.
 * Port process model from thread-per-connection w/channels to async with MetalIO.
-* Create a test harness to collect performance metrics under concurrent execution.
