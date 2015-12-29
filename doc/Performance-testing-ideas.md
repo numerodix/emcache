@@ -4,8 +4,8 @@ Probable factors that influence performance:
 
 * cache use %
 * size of cache
-* size of items
-* number of clients
+* size of items being written/read
+* number of clients participating in test
 
 Performance metrics:
 
