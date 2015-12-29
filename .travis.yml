@@ -3,7 +3,8 @@ rust:
     - stable
     - beta
     - nightly
-script: ./all_unit_tests.sh && ./integration_tests.sh
+script: 
+    - ./all_unit_tests.sh && ./integration_tests.sh
 
 matrix:
     allow_failures:

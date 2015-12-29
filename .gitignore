@@ -1,2 +1,4 @@
 *.rs.bk
+cppperf/perftest
+cppperf/*.o
 target/
