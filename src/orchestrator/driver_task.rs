@@ -10,6 +10,17 @@ use super::TransportId;
 
 type StatsMap = HashMap<TransportId, TransportStats>;
 
+fn compute_stats_sums(map: &StatsMap) -> TransportStats {
+    let mut total_stats = TransportStats::new();
+
+    for (key, value) in map {
+        total_stats.bytes_read += value.bytes_read;
+        total_stats.bytes_written += value.bytes_written;
+    }
+
+    total_stats
+}
+
 
 pub struct DriverTask {
     cmd_rx: CmdReceiver,
@@ -18,18 +29,6 @@ pub struct DriverTask {
 impl DriverTask {
     pub fn new(cmd_rx: CmdReceiver) -> DriverTask {
         DriverTask { cmd_rx: cmd_rx }
-    }
-
-    // TODO this doesn't seem to belong here
-    fn compute_stats_sums(&self, map: &StatsMap) -> TransportStats {
-        let mut total_stats = TransportStats::new();
-
-        for (key, value) in map {
-            total_stats.bytes_read += value.bytes_read;
-            total_stats.bytes_written += value.bytes_written;
-        }
-
-        total_stats
     }
 
     pub fn run(&self) {
@@ -48,7 +47,7 @@ impl DriverTask {
             transport_stats.insert(id, stats);
 
             // Update the driver's view of all transport metrics
-            let total_stats = self.compute_stats_sums(&transport_stats);
+            let total_stats = compute_stats_sums(&transport_stats);
             driver.update_transport_stats(total_stats);
 
             // Execute the command
