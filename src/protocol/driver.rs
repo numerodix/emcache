@@ -108,7 +108,7 @@ impl Driver {
     }
 
     fn do_stats(&self) -> Resp {
-        let storage = self.cache.get_metrics();
+        let storage = self.cache.get_stats();
 
         let pid = get_pid().to_string();
         let uptime = ((time_now() - self.time_start) as u64).to_string();

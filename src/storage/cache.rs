@@ -8,7 +8,7 @@ use super::typedefs::CacheResult;
 use super::value::Value;
 
 
-struct CacheMetrics {
+struct CacheStats {
     pub bytes: u64, // Bytes currently stored
     pub evictions: u64, // Number of items removed to make space for new items
     pub get_hits: u64,
@@ -17,9 +17,9 @@ struct CacheMetrics {
     pub total_items: u64, // Total items stored since server started
 }
 
-impl CacheMetrics {
-    pub fn new() -> CacheMetrics {
-        CacheMetrics {
+impl CacheStats {
+    pub fn new() -> CacheStats {
+        CacheStats {
             bytes: 0,
             evictions: 0,
             get_hits: 0,
@@ -45,7 +45,7 @@ pub struct Cache {
     pub capacity: u64, // in bytes
     item_lifetime: f64, // in seconds, <0 for unlimited
     key_maxlen: u64, // in bytes
-    metrics: CacheMetrics,
+    stats: CacheStats,
     value_maxlen: u64, // in bytes
     storage: LinkedHashMap<Key, Value>,
 }
@@ -56,7 +56,7 @@ impl Cache {
             capacity: capacity,
             item_lifetime: -1.0,
             key_maxlen: 250, // 250b
-            metrics: CacheMetrics::new(),
+            stats: CacheStats::new(),
             value_maxlen: 1048576, // 1mb
             storage: LinkedHashMap::new(),
         }
@@ -78,8 +78,8 @@ impl Cache {
     }
 
 
-    pub fn get_metrics(&self) -> &CacheMetrics {
-        &self.metrics
+    pub fn get_stats(&self) -> &CacheStats {
+        &self.stats
     }
 
 
@@ -97,9 +97,9 @@ impl Cache {
 
         match opt {
             Some((key, value)) => {
-                // Update metrics
-                self.metrics.bytes_subtract(&key, &value);
-                self.metrics.evictions += 1;
+                // Update stats
+                self.stats.bytes_subtract(&key, &value);
+                self.stats.evictions += 1;
 
                 Ok((key, value))
             }
@@ -161,28 +161,28 @@ impl Cache {
 
         // We didn't find it
         if opt.is_none() {
-            self.metrics.get_misses += 1;
+            self.stats.get_misses += 1;
             return Err(CacheError::KeyNotFound);
         }
 
         // From here on we can assume we did find it
         let mut value = opt.unwrap();
 
-        // The value has been successfully removed - update metrics
-        self.metrics.bytes_subtract(key, &value);
+        // The value has been successfully removed - update stats
+        self.stats.bytes_subtract(key, &value);
 
         // Now check if the value is still alive
         if !self.value_is_alive(&value) {
-            self.metrics.get_misses += 1;
+            self.stats.get_misses += 1;
             return Err(CacheError::KeyNotFound);
         }
 
         // Update the value to mark that it's been accessed just now
         value.touch();
 
-        // We are going to re-instate the key - update metrics
-        self.metrics.bytes_add(key, &value);
-        self.metrics.get_hits += 1;
+        // We are going to re-instate the key - update stats
+        self.stats.bytes_add(key, &value);
+        self.stats.get_hits += 1;
 
         // Now we reinsert the key to refresh it
         self.storage.insert(key.clone(), value);
@@ -220,7 +220,7 @@ impl Cache {
                 let prev_value = self.storage.get(&key).unwrap();
 
                 // We're updating the key, possibly with a different size value
-                self.metrics.bytes_subtract(&key, &prev_value);
+                self.stats.bytes_subtract(&key, &prev_value);
 
                 // Figure out how much more space we need to store the new value
                 if value.len() > prev_value.len() {
@@ -230,35 +230,35 @@ impl Cache {
 
             // Would the new value exceed our capacity? Then we need to reclaim
             loop {
-                if self.metrics.bytes + key.len() as u64 + plus_delta <=
+                if self.stats.bytes + key.len() as u64 + plus_delta <=
                    self.capacity {
                     break;
                 }
 
                 self.evict_oldest();
 
-                // Update metrics
-                self.metrics.reclaimed += 1;
+                // Update stats
+                self.stats.reclaimed += 1;
             }
 
         } else {
             // Do we have space for the new item?
             loop {
-                if self.metrics.bytes + key.len() as u64 +
+                if self.stats.bytes + key.len() as u64 +
                    value.len() as u64 <= self.capacity {
                     break;
                 }
 
                 self.evict_oldest();
 
-                // Update metrics
-                self.metrics.reclaimed += 1;
+                // Update stats
+                self.stats.reclaimed += 1;
             }
         }
 
-        // Update metrics
-        self.metrics.bytes_add(&key, &value);
-        self.metrics.total_items += 1;
+        // Update stats
+        self.stats.bytes_add(&key, &value);
+        self.stats.total_items += 1;
 
         // Update atime for value
         value.touch();
