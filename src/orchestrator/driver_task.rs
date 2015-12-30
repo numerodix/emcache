@@ -2,13 +2,13 @@ use std::collections::HashMap;
 
 use protocol::Driver;
 use storage::Cache;
-use tcp_transport::metrics::TransportMetrics;
+use tcp_transport::stats::TransportStats;
 
 use super::CmdReceiver;
 use super::TransportId;
 
 
-type MetricsMap = HashMap<TransportId, TransportMetrics>;
+type StatsMap = HashMap<TransportId, TransportStats>;
 
 
 pub struct DriverTask {
@@ -21,15 +21,15 @@ impl DriverTask {
     }
 
     // TODO this doesn't seem to belong here
-    fn compute_metrics_sums(&self, map: &MetricsMap) -> TransportMetrics {
-        let mut total_metrics = TransportMetrics::new();
+    fn compute_stats_sums(&self, map: &StatsMap) -> TransportStats {
+        let mut total_stats = TransportStats::new();
 
         for (key, value) in map {
-            total_metrics.bytes_read += value.bytes_read;
-            total_metrics.bytes_written += value.bytes_written;
+            total_stats.bytes_read += value.bytes_read;
+            total_stats.bytes_written += value.bytes_written;
         }
 
-        total_metrics
+        total_stats
     }
 
     pub fn run(&self) {
@@ -37,19 +37,19 @@ impl DriverTask {
         let mut driver = Driver::new(cache);
 
         // Here we store metrics per transport
-        let mut transport_metrics: MetricsMap = HashMap::new();
+        let mut transport_stats: StatsMap = HashMap::new();
 
         loop {
             // Receive command
-            let (id, resp_tx, cmd, metrics) = self.cmd_rx.recv().unwrap();
+            let (id, resp_tx, cmd, stats) = self.cmd_rx.recv().unwrap();
             println!("Driver received from {:?}: {:?}", id, cmd);
 
-            // Update our metrics store
-            transport_metrics.insert(id, metrics);
+            // Update our stats store
+            transport_stats.insert(id, stats);
 
             // Update the driver's view of all transport metrics
-            let total_metrics = self.compute_metrics_sums(&transport_metrics);
-            driver.update_transport_metrics(total_metrics);
+            let total_stats = self.compute_stats_sums(&transport_stats);
+            driver.update_transport_stats(total_stats);
 
             // Execute the command
             let resp = driver.run(cmd);

@@ -8,7 +8,7 @@ use protocol::cmd::Resp;
 use protocol::cmd::Set;
 
 use super::errors::TcpTransportError;
-use super::metrics::TransportMetrics;
+use super::stats::TransportStats;
 use super::typedefs::TcpTransportResult;
 
 
@@ -17,7 +17,7 @@ pub struct TcpTransport<T> {
     // queue up response data before writing to the stream
     outgoing_buffer: Vec<u8>,
 
-    metrics: TransportMetrics,
+    metrics: TransportStats,
     key_maxlen: u64,
 }
 
@@ -25,7 +25,7 @@ impl<T: Read + Write> TcpTransport<T> {
     pub fn new(stream: T) -> TcpTransport<T> {
         TcpTransport {
             key_maxlen: 250, // memcached standard
-            metrics: TransportMetrics::new(),
+            metrics: TransportStats::new(),
             outgoing_buffer: vec![],
             stream: stream,
         }
@@ -45,7 +45,7 @@ impl<T: Read + Write> TcpTransport<T> {
         self.key_maxlen as usize + 100
     }
 
-    pub fn get_metrics_clone(&self) -> TransportMetrics {
+    pub fn get_stats_clone(&self) -> TransportStats {
         self.metrics.clone()
     }
 

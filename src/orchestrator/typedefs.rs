@@ -4,7 +4,7 @@ use std::sync::mpsc::Receiver;
 use metrics::Metrics;
 use protocol::cmd::Cmd;
 use protocol::cmd::Resp;
-use tcp_transport::metrics::TransportMetrics;
+use tcp_transport::stats::TransportStats;
 
 
 // Cmd/Resp Protocol
@@ -14,11 +14,11 @@ pub type TransportId = u64;
 pub type RespSender = Sender<Resp>;
 pub type RespReceiver = Receiver<Resp>;
 
-pub type CmdSender = Sender<(TransportId, RespSender, Cmd, TransportMetrics)>;
+pub type CmdSender = Sender<(TransportId, RespSender, Cmd, TransportStats)>;
 pub type CmdReceiver = Receiver<(TransportId,
                                  RespSender,
                                  Cmd,
-                                 TransportMetrics)>;
+                                 TransportStats)>;
 
 // Metrics
 

@@ -3,7 +3,7 @@ use platform::time::time_now;
 use storage::Cache;
 use storage::Key;
 use storage::Value;
-use tcp_transport::metrics::TransportMetrics;
+use tcp_transport::stats::TransportStats;
 
 use super::cmd::Cmd;
 use super::cmd::Get;
@@ -37,7 +37,7 @@ pub struct Driver {
     time_start: f64,
 
     metrics: DriverMetrics,
-    transport_metrics: TransportMetrics, // this is a global snapshot
+    transport_stats: TransportStats, // this is a global snapshot
 }
 
 impl Driver {
@@ -46,7 +46,7 @@ impl Driver {
             cache: cache,
             metrics: DriverMetrics::new(),
             time_start: time_now(),
-            transport_metrics: TransportMetrics::new(),
+            transport_stats: TransportStats::new(),
         }
     }
 
@@ -119,8 +119,8 @@ impl Driver {
         let cmd_touch = self.metrics.cmd_touch.to_string();
         let get_hits = storage.get_hits.to_string();
         let get_misses = storage.get_misses.to_string();
-        let bytes_read = self.transport_metrics.bytes_read.to_string();
-        let bytes_written = self.transport_metrics.bytes_written.to_string();
+        let bytes_read = self.transport_stats.bytes_read.to_string();
+        let bytes_written = self.transport_stats.bytes_written.to_string();
         let limit_maxbytes = self.cache.capacity.to_string();
         let bytes = storage.bytes.to_string();
         let curr_items = self.cache.len().to_string();
@@ -174,7 +174,7 @@ impl Driver {
         }
     }
 
-    pub fn update_transport_metrics(&mut self, metrics: TransportMetrics) {
-        self.transport_metrics = metrics;
+    pub fn update_transport_stats(&mut self, stats: TransportStats) {
+        self.transport_stats = stats;
     }
 }

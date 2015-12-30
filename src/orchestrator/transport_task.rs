@@ -54,11 +54,11 @@ impl TransportTask {
             // Send the command to the driver
             let cmd = rv.unwrap();
             let resp_tx_clone = resp_tx.clone();
-            let metrics = transport.get_metrics_clone();
+            let stats = transport.get_stats_clone();
             {
                 let _t = Timer::new(&mut rec, "send_cmd");
                 self.cmd_tx
-                    .send((self.id, resp_tx_clone, cmd, metrics))
+                    .send((self.id, resp_tx_clone, cmd, stats))
                     .unwrap();
             }
 
