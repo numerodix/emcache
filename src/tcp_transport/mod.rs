@@ -5,7 +5,6 @@ pub mod transport;
 pub mod typedefs;
 
 // internal stuff
-mod test_stream;
 mod tests;  // needed to be part of the compilation unit in test mode
 
 

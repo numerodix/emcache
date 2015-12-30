@@ -1,13 +1,13 @@
-use super::TcpTransport;
-use super::TcpTransportError;
-use super::test_stream::TestStream;
-
 use protocol::cmd::Cmd;
 use protocol::cmd::Get;
 use protocol::cmd::Resp;
 use protocol::cmd::Set;
 use protocol::cmd::Stat;
 use protocol::cmd::Value;
+use testlib::test_stream::TestStream;
+
+use super::TcpTransport;
+use super::TcpTransportError;
 
 
 // Basic methods to consume the stream

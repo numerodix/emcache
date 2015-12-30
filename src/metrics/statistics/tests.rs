@@ -1,5 +1,4 @@
-use rand::Rng;
-use rand::thread_rng;
+use testlib::datagen::get_rand_f64_vec;
 
 use super::ComputedMetric;
 use super::compute_average;
@@ -8,20 +7,6 @@ use super::compute_p90;
 use super::compute_p999;
 use super::compute_p99;
 use super::sort_f64;
-
-
-fn get_rand_f64_vec(lower: u64, upper: u64) -> Vec<f64> {
-    // create the floats
-    let mut items: Vec<f64> = (lower..upper + 1)
-                                  .map(|x: u64| x as f64)
-                                  .collect();
-    assert_eq!(upper - lower + 1, items.len() as u64);
-
-    // now shuffle them
-    thread_rng().shuffle(&mut items);
-
-    items
-}
 
 
 #[test]

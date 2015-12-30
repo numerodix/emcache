@@ -9,6 +9,7 @@ mod platform;
 mod protocol;
 mod storage;
 mod tcp_transport;
+mod testlib;
 
 use orchestrator::ListenerTask;
 
