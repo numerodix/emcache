@@ -40,7 +40,7 @@ impl TransportTask {
         loop {
             // println!("Ready to read command...");
             let rv = {
-                let _t = Timer::new(&mut rec, "read_cmd");
+                let _t = Timer::new(&mut rec, "TransportTask:read_cmd");
                 transport.read_cmd()
             };
 
@@ -56,7 +56,7 @@ impl TransportTask {
             let resp_tx_clone = resp_tx.clone();
             let stats = transport.get_stats_clone();
             {
-                let _t = Timer::new(&mut rec, "send_cmd");
+                let _t = Timer::new(&mut rec, "TransportTask:send_cmd");
                 self.cmd_tx
                     .send((self.id, resp_tx_clone, cmd, stats))
                     .unwrap();
@@ -64,14 +64,14 @@ impl TransportTask {
 
             // Obtain a response
             let resp = {
-                let _t = Timer::new(&mut rec, "recv_resp");
+                let _t = Timer::new(&mut rec, "TransportTask:recv_resp");
                 resp_rx.recv().unwrap()
             };
 
             // Return a response
             // println!("Returning response: {:?}", &resp);
             let rv = {
-                let _t = Timer::new(&mut rec, "write_resp");
+                let _t = Timer::new(&mut rec, "TransportTask:write_resp");
                 transport.write_resp(&resp)
             };
             if !rv.is_ok() {
