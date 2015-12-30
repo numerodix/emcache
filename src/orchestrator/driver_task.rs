@@ -41,7 +41,7 @@ impl DriverTask {
         loop {
             // Receive command
             let (id, resp_tx, cmd, stats) = self.cmd_rx.recv().unwrap();
-            println!("Driver received from {:?}: {:?}", id, cmd);
+            // println!("Driver received from {:?}: {:?}", id, cmd);
 
             // Update our stats store
             transport_stats.insert(id, stats);
@@ -54,7 +54,7 @@ impl DriverTask {
             let resp = driver.run(cmd);
 
             // Send response
-            println!("Driver sending to {:?}: {:?}", id, &resp);
+            // println!("Driver sending to {:?}: {:?}", id, &resp);
             resp_tx.send(resp).unwrap();
         }
     }

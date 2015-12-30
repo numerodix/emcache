@@ -4,12 +4,13 @@ use metrics::Metrics;
 use platform::time::time_now;
 use orchestrator::MetricsSender;
 
+use super::LiveTimers;
+use super::TimeSeries;
+
 
 pub struct MetricsRecorder {
-    // name, start_time
-    live_timers: HashMap<String, f64>,
-    // name, duration
-    done_timers: HashMap<String, f64>,
+    live_timers: LiveTimers,
+    done_timers: TimeSeries,
 
     met_tx: MetricsSender,
 }
@@ -17,39 +18,30 @@ pub struct MetricsRecorder {
 impl MetricsRecorder {
     pub fn new(met_tx: MetricsSender) -> MetricsRecorder {
         MetricsRecorder {
-            live_timers: HashMap::new(),
-            done_timers: HashMap::new(),
+            live_timers: LiveTimers::new(),
+            done_timers: TimeSeries::new(),
             met_tx: met_tx,
         }
     }
 
     pub fn start_timer(&mut self, name: &str) {
-        // println!("Timed starting: {:?}", name);
-        self.live_timers.insert(name.to_string(), time_now());
+        self.live_timers.start(name);
     }
 
     pub fn stop_timer(&mut self, name: &str) {
-        // println!("Timed stopping: {:?}", name);
-        let stop_time = time_now();
-
-        let opt = self.live_timers.remove(name);
-        if opt.is_none() {
-            panic!("Tried to stop non-live timer: {:?}", name);
-        }
-
-        let start_time = opt.unwrap();
-        let duration = stop_time - start_time;
-
-        self.done_timers.insert(name.to_string(), duration);
-        // println!("Timed {:20}: {:?}s", name, duration);
+        let (start_time, dur) = self.live_timers.stop(name);
+        self.done_timers.add_timer(name, start_time, dur);
     }
 
     pub fn flush_metrics(&mut self) {
+        // package up all our data into a metrics object
         let mut metrics = Metrics::new();
         metrics.with_timers(self.done_timers.clone());
 
+        // transmit the metrics
         self.met_tx.send(metrics);
 
+        // clear our counters
         self.done_timers.clear();
     }
 }
