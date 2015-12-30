@@ -5,6 +5,9 @@ pub mod statistics;
 pub mod timer;
 pub mod typedefs;
 
+// internal stuff
+mod tests;  // needed to be part of the compilation unit in test mode
+
 
 // Export our public api
 pub use self::metrics::LiveTimers;

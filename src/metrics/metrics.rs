@@ -19,6 +19,11 @@ impl LiveTimers {
         LiveTimers { timers: HashMap::new() }
     }
 
+    pub fn get_timers(&self) -> &HashMap<String, StartTime> {
+        &self.timers
+    }
+
+
     pub fn start(&mut self, name: &str) -> StartTime {
         let start_time = time_now();
         self.timers.insert(name.to_string(), start_time.clone());
