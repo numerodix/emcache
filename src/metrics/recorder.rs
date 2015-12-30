@@ -1,7 +1,4 @@
-use std::collections::HashMap;
-
 use metrics::Metrics;
-use platform::time::time_now;
 use orchestrator::MetricsSender;
 
 use super::LiveTimers;
@@ -39,7 +36,7 @@ impl MetricsRecorder {
         metrics.with_timers(self.done_timers.clone());
 
         // transmit the metrics
-        self.met_tx.send(metrics);
+        self.met_tx.send(metrics).unwrap();
 
         // clear our counters
         self.done_timers.clear();

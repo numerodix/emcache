@@ -227,7 +227,7 @@ fn test_metrics() {
     assert_eq!(cache.get_stats().total_items, 0);
 
     // Set a key
-    cache.set(key!(1), value!(2, 3));
+    cache.set(key!(1), value!(2, 3)).unwrap();
     assert_eq!(cache.get_stats().bytes, 3);
     assert_eq!(cache.get_stats().evictions, 0);
     assert_eq!(cache.get_stats().get_hits, 0);
@@ -235,7 +235,7 @@ fn test_metrics() {
     assert_eq!(cache.get_stats().total_items, 1);
 
     // Set a different key, evicting the first
-    cache.set(key!(5), value!(6, 7));
+    cache.set(key!(5), value!(6, 7)).unwrap();
     assert_eq!(cache.get_stats().bytes, 3);
     assert_eq!(cache.get_stats().evictions, 1);
     assert_eq!(cache.get_stats().get_hits, 0);
@@ -243,7 +243,7 @@ fn test_metrics() {
     assert_eq!(cache.get_stats().total_items, 2);
 
     // Re-set the key with a different value
-    cache.set(key!(5), value!(6, 7, 8));
+    cache.set(key!(5), value!(6, 7, 8)).unwrap();
     assert_eq!(cache.get_stats().bytes, 4);
     assert_eq!(cache.get_stats().evictions, 1);
     assert_eq!(cache.get_stats().get_hits, 0);
@@ -279,7 +279,7 @@ fn test_metrics() {
     value.set_exptime(time_now() - 1.0);
 
     // Set a key that expires immediately
-    cache.set(key!(9), value);
+    cache.set(key!(9), value).unwrap();
     assert_eq!(cache.get_stats().bytes, 4);
     assert_eq!(cache.get_stats().evictions, 2);
     assert_eq!(cache.get_stats().get_hits, 2);

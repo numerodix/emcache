@@ -13,7 +13,7 @@ type StatsMap = HashMap<TransportId, TransportStats>;
 fn compute_stats_sums(map: &StatsMap) -> TransportStats {
     let mut total_stats = TransportStats::new();
 
-    for (key, value) in map {
+    for (_, value) in map {
         total_stats.bytes_read += value.bytes_read;
         total_stats.bytes_written += value.bytes_written;
     }

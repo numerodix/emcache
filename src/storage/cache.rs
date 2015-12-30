@@ -235,7 +235,7 @@ impl Cache {
                     break;
                 }
 
-                self.evict_oldest();
+                try!(self.evict_oldest());
 
                 // Update stats
                 self.stats.reclaimed += 1;
@@ -249,7 +249,7 @@ impl Cache {
                     break;
                 }
 
-                self.evict_oldest();
+                try!(self.evict_oldest());
 
                 // Update stats
                 self.stats.reclaimed += 1;

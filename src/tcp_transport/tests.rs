@@ -99,7 +99,7 @@ fn test_read_line_too_long() {
 #[test]
 fn test_remove_first_char() {
     let ts = TestStream::new(vec![]);
-    let mut transport = TcpTransport::new(ts);
+    let transport = TcpTransport::new(ts);
 
     let mut bytes = vec![1];
     let rv = transport.remove_first_char(&mut bytes);

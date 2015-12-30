@@ -3,7 +3,6 @@ use std::sync::mpsc;
 
 use metrics::MetricsRecorder;
 use metrics::Timer;
-use protocol::cmd::Cmd;
 use protocol::cmd::Resp;
 use tcp_transport::TcpTransport;
 

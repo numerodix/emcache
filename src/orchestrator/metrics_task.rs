@@ -1,7 +1,5 @@
-use std::fmt::LowerExp;
-
-use platform::time::time_now;
 use metrics::TimeSeries;
+use platform::time::time_now;
 
 use super::MetricsReceiver;
 
@@ -52,10 +50,10 @@ impl MetricsTask {
         for name in names {
             let comp = comp_mets.get(name).unwrap();
 
-            let avg = comp.avg.unwrap_or(0.0) * 1000.0;
-            let p90 = comp.p90.unwrap_or(0.0) * 1000.0;
-            let p99 = comp.p99.unwrap_or(0.0) * 1000.0;
-            let p999 = comp.p999.unwrap_or(0.0) * 1000.0;
+            let avg = comp.avg.unwrap_or(-1.0) * 1000.0;
+            let p90 = comp.p90.unwrap_or(-1.0) * 1000.0;
+            let p99 = comp.p99.unwrap_or(-1.0) * 1000.0;
+            let p999 = comp.p999.unwrap_or(-1.0) * 1000.0;
 
             println!("{:30}  avg: {:.3}ms  p90: {:.3}ms  p99: {:.3}ms  \
                       p99.9: {:.3}ms",

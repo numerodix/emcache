@@ -9,7 +9,7 @@ use super::statistics::compute_metric;
 use super::statistics::ComputedMetric;
 
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq)]
 pub struct LiveTimers {
     timers: HashMap<String, StartTime>,
 }
@@ -41,7 +41,7 @@ impl LiveTimers {
 }
 
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq)]
 pub struct TimeSeries {
     timers: HashMap<String, HashMap<Second, Vec<Duration>>>,
 }
@@ -112,7 +112,7 @@ impl TimeSeries {
         let mut comp_mets = HashMap::new();
 
         for (name, seconds) in self.timers.iter() {
-            for (second, samples) in seconds.iter() {
+            for (_, samples) in seconds.iter() {
                 let comp = compute_metric(name, samples);
                 comp_mets.insert(name.to_string(), comp);
             }
@@ -123,7 +123,7 @@ impl TimeSeries {
 }
 
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq)]
 pub struct Metrics {
     pub timers: TimeSeries,
 }
