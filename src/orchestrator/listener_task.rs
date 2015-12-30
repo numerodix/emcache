@@ -3,6 +3,7 @@ use std::sync::mpsc;
 use std::thread;
 
 use super::DriverTask;
+use super::MetricsTask;
 use super::TransportId;
 use super::TransportTask;
 
@@ -23,6 +24,14 @@ impl ListenerTask {
     }
 
     pub fn run(&mut self) {
+        // Initialize the metrics sink
+        let (met_tx, met_rx) = mpsc::channel();
+        let metrics_task = MetricsTask::new(met_rx);
+
+        thread::spawn(move || {
+            metrics_task.run();
+        });
+
         // Initialize the driver
         let (cmd_tx, cmd_rx) = mpsc::channel();
         let driver_task = DriverTask::new(cmd_rx);
@@ -39,7 +48,8 @@ impl ListenerTask {
                 Ok(stream) => {
                     let id = self.next_transport_id();
                     let cmd_tx = cmd_tx.clone();
-                    let transport_task = TransportTask::new(id, cmd_tx);
+                    let met_tx = met_tx.clone();
+                    let transport_task = TransportTask::new(id, cmd_tx, met_tx);
 
                     thread::spawn(move || {
                         transport_task.run(stream);

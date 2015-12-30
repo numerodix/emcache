@@ -3,10 +3,12 @@ use std::sync::mpsc;
 
 use metrics::MetricsRecorder;
 use metrics::Timer;
+use protocol::cmd::Cmd;
 use protocol::cmd::Resp;
 use tcp_transport::TcpTransport;
 
 use super::CmdSender;
+use super::MetricsSender;
 use super::RespReceiver;
 use super::RespSender;
 use super::TransportId;
@@ -15,23 +17,25 @@ use super::TransportId;
 pub struct TransportTask {
     id: TransportId,
     cmd_tx: CmdSender,
+    met_tx: MetricsSender,
 }
 
 impl TransportTask {
-    pub fn new(id: TransportId, cmd_tx: CmdSender) -> TransportTask {
+    pub fn new(id: TransportId, cmd_tx: CmdSender, met_tx: MetricsSender) -> TransportTask {
         TransportTask {
             id: id,
             cmd_tx: cmd_tx,
+            met_tx: met_tx,
         }
     }
 
     pub fn run(&self, stream: TcpStream) {
-        let mut rec = MetricsRecorder::new();
+        let mut rec = MetricsRecorder::new(self.met_tx.clone());
         let mut transport = TcpTransport::new(stream);
         let (resp_tx, resp_rx): (RespSender, RespReceiver) = mpsc::channel();
 
         loop {
-            println!("Ready to read command...");
+            //println!("Ready to read command...");
             let rv = {
                 let t = Timer::new(&mut rec, "read_cmd");
                 transport.read_cmd()
@@ -60,7 +64,7 @@ impl TransportTask {
             };
 
             // Return a response
-            println!("Returning response: {:?}", &resp);
+            //println!("Returning response: {:?}", &resp);
             let rv = {
                 let t = Timer::new(&mut rec, "write_resp");
                 transport.write_resp(&resp)
@@ -68,6 +72,9 @@ impl TransportTask {
             if !rv.is_ok() {
                 println!("Failed to write response :(");
             }
+
+            // Now flush metrics outside the request path
+            rec.flush_metrics();
         }
     }
 }
