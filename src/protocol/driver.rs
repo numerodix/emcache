@@ -13,16 +13,16 @@ use super::cmd::Stat;
 use super::cmd::Value as CmdValue;
 
 
-struct DriverMetrics {
+struct DriverStats {
     cmd_get: u64,
     cmd_set: u64,
     cmd_flush: u64,
     cmd_touch: u64,
 }
 
-impl DriverMetrics {
-    pub fn new() -> DriverMetrics {
-        DriverMetrics {
+impl DriverStats {
+    pub fn new() -> DriverStats {
+        DriverStats {
             cmd_get: 0,
             cmd_set: 0,
             cmd_flush: 0,
@@ -36,7 +36,7 @@ pub struct Driver {
     cache: Cache,
     time_start: f64,
 
-    metrics: DriverMetrics,
+    stats: DriverStats,
     transport_stats: TransportStats, // this is a global snapshot
 }
 
@@ -44,7 +44,7 @@ impl Driver {
     pub fn new(cache: Cache) -> Driver {
         Driver {
             cache: cache,
-            metrics: DriverMetrics::new(),
+            stats: DriverStats::new(),
             time_start: time_now(),
             transport_stats: TransportStats::new(),
         }
@@ -71,8 +71,8 @@ impl Driver {
 
 
     fn do_get(&mut self, get: Get) -> Resp {
-        // Update metrics
-        self.metrics.cmd_get += 1;
+        // Update stats
+        self.stats.cmd_get += 1;
 
         // XXX get rid of all the cloning
         let get_clone = get.clone();
@@ -92,8 +92,8 @@ impl Driver {
     }
 
     fn do_set(&mut self, set: Set) -> Resp {
-        // Update metrics
-        self.metrics.cmd_set += 1;
+        // Update stats
+        self.stats.cmd_set += 1;
 
         let key = Key::new(set.key.into_bytes());
         let mut value = Value::new(set.data);
@@ -113,10 +113,10 @@ impl Driver {
         let pid = get_pid().to_string();
         let uptime = ((time_now() - self.time_start) as u64).to_string();
         let time = (time_now() as u64).to_string();
-        let cmd_get = self.metrics.cmd_get.to_string();
-        let cmd_set = self.metrics.cmd_set.to_string();
-        let cmd_flush = self.metrics.cmd_flush.to_string();
-        let cmd_touch = self.metrics.cmd_touch.to_string();
+        let cmd_get = self.stats.cmd_get.to_string();
+        let cmd_set = self.stats.cmd_set.to_string();
+        let cmd_flush = self.stats.cmd_flush.to_string();
+        let cmd_touch = self.stats.cmd_touch.to_string();
         let get_hits = storage.get_hits.to_string();
         let get_misses = storage.get_misses.to_string();
         let bytes_read = self.transport_stats.bytes_read.to_string();
