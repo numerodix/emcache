@@ -34,7 +34,7 @@ impl ListenerTask {
 
         // Initialize the driver
         let (cmd_tx, cmd_rx) = mpsc::channel();
-        let driver_task = DriverTask::new(cmd_rx);
+        let driver_task = DriverTask::new(cmd_rx, met_tx.clone());
 
         thread::spawn(move || {
             driver_task.run();

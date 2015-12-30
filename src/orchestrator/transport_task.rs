@@ -37,6 +37,9 @@ impl TransportTask {
         let (resp_tx, resp_rx): (RespSender, RespReceiver) = mpsc::channel();
 
         loop {
+            // Time the whole loop
+            rec.start_timer("TransportTask:loop");
+
             // println!("Ready to read command...");
             let rv = {
                 let _t = Timer::new(&mut rec, "TransportTask:read_cmd");
@@ -76,6 +79,9 @@ impl TransportTask {
             if !rv.is_ok() {
                 println!("Failed to write response :(");
             }
+
+            // Stop timing the loop
+            rec.stop_timer("TransportTask:loop");
 
             // Now flush metrics outside the request path
             rec.flush_metrics();
