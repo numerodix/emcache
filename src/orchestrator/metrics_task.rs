@@ -7,9 +7,7 @@ pub struct MetricsTask {
 
 impl MetricsTask {
     pub fn new(met_rx: MetricsReceiver) -> MetricsTask {
-        MetricsTask {
-            met_rx: met_rx,
-        }
+        MetricsTask { met_rx: met_rx }
     }
 
     pub fn run(&self) {

@@ -24,12 +24,12 @@ impl MetricsRecorder {
     }
 
     pub fn start_timer(&mut self, name: &str) {
-        //println!("Timed starting: {:?}", name);
+        // println!("Timed starting: {:?}", name);
         self.live_timers.insert(name.to_string(), time_now());
     }
 
     pub fn stop_timer(&mut self, name: &str) {
-        //println!("Timed stopping: {:?}", name);
+        // println!("Timed stopping: {:?}", name);
         let stop_time = time_now();
 
         let opt = self.live_timers.remove(name);
@@ -41,7 +41,7 @@ impl MetricsRecorder {
         let duration = stop_time - start_time;
 
         self.done_timers.insert(name.to_string(), duration);
-        //println!("Timed {:20}: {:?}s", name, duration);
+        // println!("Timed {:20}: {:?}s", name, duration);
     }
 
     pub fn flush_metrics(&mut self) {

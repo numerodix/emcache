@@ -21,7 +21,10 @@ pub struct TransportTask {
 }
 
 impl TransportTask {
-    pub fn new(id: TransportId, cmd_tx: CmdSender, met_tx: MetricsSender) -> TransportTask {
+    pub fn new(id: TransportId,
+               cmd_tx: CmdSender,
+               met_tx: MetricsSender)
+               -> TransportTask {
         TransportTask {
             id: id,
             cmd_tx: cmd_tx,
@@ -35,9 +38,9 @@ impl TransportTask {
         let (resp_tx, resp_rx): (RespSender, RespReceiver) = mpsc::channel();
 
         loop {
-            //println!("Ready to read command...");
+            // println!("Ready to read command...");
             let rv = {
-                let t = Timer::new(&mut rec, "read_cmd");
+                let _t = Timer::new(&mut rec, "read_cmd");
                 transport.read_cmd()
             };
 
@@ -53,20 +56,22 @@ impl TransportTask {
             let resp_tx_clone = resp_tx.clone();
             let metrics = transport.get_metrics_clone();
             {
-                let t = Timer::new(&mut rec, "send_cmd");
-                self.cmd_tx.send((self.id, resp_tx_clone, cmd, metrics)).unwrap();
+                let _t = Timer::new(&mut rec, "send_cmd");
+                self.cmd_tx
+                    .send((self.id, resp_tx_clone, cmd, metrics))
+                    .unwrap();
             }
 
             // Obtain a response
             let resp = {
-                let t = Timer::new(&mut rec, "recv_resp");
+                let _t = Timer::new(&mut rec, "recv_resp");
                 resp_rx.recv().unwrap()
             };
 
             // Return a response
-            //println!("Returning response: {:?}", &resp);
+            // println!("Returning response: {:?}", &resp);
             let rv = {
-                let t = Timer::new(&mut rec, "write_resp");
+                let _t = Timer::new(&mut rec, "write_resp");
                 transport.write_resp(&resp)
             };
             if !rv.is_ok() {

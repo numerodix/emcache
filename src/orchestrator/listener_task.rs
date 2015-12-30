@@ -49,7 +49,9 @@ impl ListenerTask {
                     let id = self.next_transport_id();
                     let cmd_tx = cmd_tx.clone();
                     let met_tx = met_tx.clone();
-                    let transport_task = TransportTask::new(id, cmd_tx, met_tx);
+                    let transport_task = TransportTask::new(id,
+                                                            cmd_tx,
+                                                            met_tx);
 
                     thread::spawn(move || {
                         transport_task.run(stream);
