@@ -4,8 +4,8 @@ use super::Duration;
 use super::Second;
 use super::StartTime;
 use super::Timing;
-use super::statistics::ComputedMetric;
-use super::statistics::compute_metric;
+use super::statistics::AggregatedMetric;
+use super::statistics::aggregate_metric;
 
 
 #[derive(Debug, Clone, PartialEq)]
@@ -48,12 +48,12 @@ impl TimeSeries {
         self.timers.clear();
     }
 
-    pub fn compute_metrics(&self) -> HashMap<String, ComputedMetric> {
+    pub fn compute_metrics(&self) -> HashMap<String, AggregatedMetric> {
         let mut comp_mets = HashMap::new();
 
         for (name, seconds) in self.timers.iter() {
             for (_, samples) in seconds.iter() {
-                let comp = compute_metric(name, samples);
+                let comp = aggregate_metric(name, samples);
                 comp_mets.insert(name.to_string(), comp);
             }
         }

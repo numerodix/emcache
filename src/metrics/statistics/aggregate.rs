@@ -1,6 +1,6 @@
 use std::cmp::Ordering;
 
-use super::ComputedMetric;
+use super::AggregatedMetric;
 
 
 // f64 does not have total ordering hence this convenience function which
@@ -48,8 +48,8 @@ pub fn compute_p999(samples: &Vec<f64>) -> Option<f64> {
 }
 
 
-pub fn compute_metric(name: &str, samples: &Vec<f64>) -> ComputedMetric {
-    ComputedMetric {
+pub fn aggregate_metric(name: &str, samples: &Vec<f64>) -> AggregatedMetric {
+    AggregatedMetric {
         name: name.to_string(),
         avg: compute_average(&samples),
         p90: compute_p90(&samples),

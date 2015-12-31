@@ -1,8 +1,8 @@
 use testlib::datagen::get_rand_f64_vec;
 
-use super::ComputedMetric;
+use super::AggregatedMetric;
+use super::aggregate_metric;
 use super::compute_average;
-use super::compute_metric;
 use super::compute_p90;
 use super::compute_p999;
 use super::compute_p99;
@@ -94,9 +94,9 @@ fn test_compute_p999_large() {
 #[test]
 fn test_compute_metric() {
     let vals = get_rand_f64_vec(1, 1000);
-    let metric = compute_metric("latency", &vals);
+    let metric = aggregate_metric("latency", &vals);
 
-    let expected = ComputedMetric {
+    let expected = AggregatedMetric {
         name: "latency".to_string(),
         avg: Some(500.5),
         p90: Some(901.0),

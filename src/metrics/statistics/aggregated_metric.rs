@@ -1,5 +1,5 @@
 #[derive(Debug, Clone, PartialEq)]
-pub struct ComputedMetric {
+pub struct AggregatedMetric {
     pub name: String,
     pub avg: Option<f64>,
     pub p90: Option<f64>,
