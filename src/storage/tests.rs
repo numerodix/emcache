@@ -1,5 +1,3 @@
-use test::Bencher;
-
 use platform::time::sleep_secs;
 use platform::time::time_now;
 
@@ -295,20 +293,4 @@ fn test_metrics() {
     assert_eq!(cache.get_stats().get_hits, 2);
     assert_eq!(cache.get_stats().get_misses, 2);
     assert_eq!(cache.get_stats().total_items, 4);
-}
-
-
-/*
- * Benchmarks
- */
-
-#[bench]
-fn bench_set_get_key(b: &mut Bencher) {
-    let mut cache = Cache::new(1024);
-
-    b.iter(|| {
-        // Set a key
-        cache.set(key!(1), value!(9));
-        cache.get(&key!(1));
-    })
 }
