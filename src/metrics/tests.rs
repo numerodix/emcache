@@ -1,15 +1,11 @@
-use std::collections::HashMap;
 use std::sync::mpsc;
 
 use platform::time::sleep_secs;
 use platform::time::time_now;
 use testlib::cmp::eq_f64;
 
-use super::Duration;
 use super::LiveTimers;
 use super::MetricsRecorder;
-use super::Second;
-use super::StartTime;
 use super::TimeSeries;
 use super::Timer;
 use super::Timing;
@@ -118,8 +114,7 @@ fn test_timer_correct() {
     let mut rec = MetricsRecorder::new(met_tx, true);
 
     // use Timer to make one timing
-    let t1 = time_now() as u64;
-    let rv = {
+    let _rv = {
         let _t = Timer::new(&mut rec, "cmd");
         sleep_secs(0.25);
         ()
@@ -143,8 +138,7 @@ fn test_timer_wrong_binding() {
     let mut rec = MetricsRecorder::new(met_tx, true);
 
     // use Timer to make one timing
-    let t1 = time_now() as u64;
-    let rv = {
+    let _rv = {
         // this binding discards the value right away!
         let _ = Timer::new(&mut rec, "cmd");
         sleep_secs(0.25);
@@ -169,8 +163,7 @@ fn test_timer_no_binding() {
     let mut rec = MetricsRecorder::new(met_tx, true);
 
     // use Timer to make one timing
-    let t1 = time_now() as u64;
-    let rv = {
+    let _rv = {
         // no binding means Timer does not live past the first line
         Timer::new(&mut rec, "cmd");
         sleep_secs(0.25);

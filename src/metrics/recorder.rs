@@ -51,7 +51,7 @@ impl MetricsRecorder {
         }
 
         // package up all our data into a metrics object
-        let mut metrics = self.metrics.clone();
+        let metrics = self.metrics.clone();
 
         // transmit the metrics
         self.met_tx.send(metrics).unwrap();

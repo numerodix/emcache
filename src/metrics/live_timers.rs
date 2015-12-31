@@ -2,7 +2,6 @@ use std::collections::HashMap;
 
 use platform::time::time_now;
 
-use super::Duration;
 use super::StartTime;
 use super::Timing;
 

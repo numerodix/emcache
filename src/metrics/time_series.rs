@@ -2,7 +2,6 @@ use std::collections::HashMap;
 
 use super::Duration;
 use super::Second;
-use super::StartTime;
 use super::Timing;
 use super::statistics::AggregatedMetric;
 use super::statistics::aggregate_metric;
