@@ -141,11 +141,7 @@ fn test_write_bytes() {
     let mut transport = TcpTransport::new(ts);
 
     let bytelen = transport.write_bytes(&vec![97, 98, 99]).unwrap();
-    assert_eq!(bytelen, 3);
-    assert_eq!(transport.get_outgoing_buffer(), &[97, 98, 99]);
-
     transport.flush_writes().unwrap();
-    assert_eq!(transport.get_outgoing_buffer(), &[]);
     assert_eq!(transport.get_stream().outgoing, [97, 98, 99]);
 }
 

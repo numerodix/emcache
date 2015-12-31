@@ -16,8 +16,6 @@ use super::typedefs::TcpTransportResult;
 
 pub struct TcpTransport<T: Read + Write> {
     stream: BufStream<T>,
-    // queue up response data before writing to the stream
-    outgoing_buffer: Vec<u8>,
 
     metrics: TransportStats,
     key_maxlen: u64,
@@ -28,7 +26,6 @@ impl<T: Read + Write> TcpTransport<T> {
         TcpTransport {
             key_maxlen: 250, // memcached standard
             metrics: TransportStats::new(),
-            outgoing_buffer: vec![],
             stream: BufStream::new(stream),
         }
     }
@@ -53,10 +50,6 @@ impl<T: Read + Write> TcpTransport<T> {
 
     pub fn get_stream(&self) -> &T {
         self.stream.get_ref()
-    }
-
-    pub fn get_outgoing_buffer(&self) -> &Vec<u8> {
-        &self.outgoing_buffer
     }
 
     // Basic bytes manipulation and reading from the stream
@@ -179,15 +172,25 @@ impl<T: Read + Write> TcpTransport<T> {
 
     // Writing to the stream
 
+    pub fn flush_writes(&mut self) -> TcpTransportResult<()> {
+        match self.stream.flush() {
+            Ok(_) => Ok(()),
+            Err(_) => Err(TcpTransportError::StreamWriteError),
+        }
+    }
+
     pub fn write_bytes(&mut self,
                        bytes: &Vec<u8>)
                        -> TcpTransportResult<usize> {
-        for i in 0..bytes.len() {
-            let byte = bytes[i];
-            self.outgoing_buffer.push(byte);
-        }
+        match self.stream.write(bytes) {
+            Ok(cnt_written) => {
+                // Update metrics
+                self.metrics.bytes_written += cnt_written as u64;
 
-        Ok(bytes.len())
+                Ok(cnt_written)
+            }
+            Err(_) => Err(TcpTransportError::StreamWriteError)
+        }
     }
 
     pub fn write_string(&mut self, string: &str) -> TcpTransportResult<usize> {
@@ -195,26 +198,6 @@ impl<T: Read + Write> TcpTransport<T> {
         Ok(try!(self.write_bytes(&bytes)))
     }
 
-    pub fn flush_writes(&mut self) -> TcpTransportResult<()> {
-        let rv = self.stream.write(&self.outgoing_buffer);
-        self.outgoing_buffer.clear();
-
-        if !rv.is_ok() {
-            return Err(TcpTransportError::StreamWriteError);
-        }
-
-        let cnt_written = rv.unwrap();
-
-        // Update metrics
-        self.metrics.bytes_written += cnt_written as u64;
-
-        let rv = self.stream.flush();
-
-        match rv {
-            Ok(_) => Ok(()),
-            Err(_) => Err(TcpTransportError::StreamWriteError),
-        }
-    }
 
     // Parse individual commands
 
