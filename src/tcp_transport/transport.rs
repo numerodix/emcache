@@ -2,6 +2,8 @@ use std::io::Read;
 use std::io::Write;
 use std::str::FromStr;
 
+use bufstream::BufStream;
+
 use protocol::cmd::Cmd;
 use protocol::cmd::Get;
 use protocol::cmd::Resp;
@@ -12,8 +14,8 @@ use super::stats::TransportStats;
 use super::typedefs::TcpTransportResult;
 
 
-pub struct TcpTransport<T> {
-    stream: T,
+pub struct TcpTransport<T: Read + Write> {
+    stream: BufStream<T>,
     // queue up response data before writing to the stream
     outgoing_buffer: Vec<u8>,
 
@@ -27,7 +29,7 @@ impl<T: Read + Write> TcpTransport<T> {
             key_maxlen: 250, // memcached standard
             metrics: TransportStats::new(),
             outgoing_buffer: vec![],
-            stream: stream,
+            stream: BufStream::new(stream),
         }
     }
 
@@ -50,7 +52,7 @@ impl<T: Read + Write> TcpTransport<T> {
     }
 
     pub fn get_stream(&self) -> &T {
-        &self.stream
+        self.stream.get_ref()
     }
 
     pub fn get_outgoing_buffer(&self) -> &Vec<u8> {

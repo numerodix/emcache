@@ -1,5 +1,6 @@
 #[macro_use]
 extern crate maplit;
+extern crate bufstream;
 extern crate docopt;
 extern crate linked_hash_map;
 extern crate libc;
