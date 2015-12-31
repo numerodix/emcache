@@ -29,7 +29,7 @@ fn test_live_timers_ok() {
     let t1 = time_now();
     let start_time = lt.start("cmd");
     // start_time is very close to *now*
-    assert!(eq_f64(t1, start_time, 0.001));
+    assert!(eq_f64(t1, start_time, 0.01));
     // "cmd" -> start_time was added to the map
     assert_eq!(&start_time, lt.get_timers().get("cmd").unwrap());
 
@@ -39,7 +39,7 @@ fn test_live_timers_ok() {
     // the returned start_time matches what we saw before
     assert_eq!(start_time, timing.start_time);
     // the duration is almost exactly the time we slept
-    assert!(eq_f64(0.25, timing.duration, 0.001));
+    assert!(eq_f64(0.25, timing.duration, 0.01));
     // "cmd" was removed from the map
     assert!(!lt.get_timers().contains_key("cmd"));
 }
