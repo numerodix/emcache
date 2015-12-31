@@ -1,13 +1,13 @@
-use metrics::Metrics;
 use orchestrator::MetricsSender;
 
 use super::LiveTimers;
-use super::TimeSeries;
+use super::Metric;
+use super::Metrics;
 
 
 pub struct MetricsRecorder {
     live_timers: LiveTimers,
-    done_timers: TimeSeries,
+    metrics: Metrics,
 
     met_tx: MetricsSender,
 }
@@ -16,7 +16,7 @@ impl MetricsRecorder {
     pub fn new(met_tx: MetricsSender) -> MetricsRecorder {
         MetricsRecorder {
             live_timers: LiveTimers::new(),
-            done_timers: TimeSeries::new(),
+            metrics: Metrics::new(),
             met_tx: met_tx,
         }
     }
@@ -27,18 +27,17 @@ impl MetricsRecorder {
 
     pub fn stop_timer(&mut self, name: &str) {
         let timing = self.live_timers.stop(name);
-        self.done_timers.add_timer(name, timing.start_time, timing.duration);
+        self.metrics.push(Metric::Timing(timing));
     }
 
     pub fn flush_metrics(&mut self) {
         // package up all our data into a metrics object
-        let mut metrics = Metrics::new();
-        metrics.with_timers(self.done_timers.clone());
+        let mut metrics = self.metrics.clone();
 
         // transmit the metrics
         self.met_tx.send(metrics).unwrap();
 
         // clear our counters
-        self.done_timers.clear();
+        self.metrics.clear();
     }
 }

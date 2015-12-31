@@ -1,3 +1,4 @@
+use metrics::Metric;
 use metrics::TimeSeries;
 use platform::time::time_now;
 
@@ -26,7 +27,13 @@ impl MetricsTask {
         loop {
             // Receive metrics
             let metrics = self.met_rx.recv().unwrap();
-            ts.merge(&metrics.timers);
+            for metric in metrics.metrics {
+                match metric {
+                    Metric::Timing(timing) => {
+                        ts.add_timing(&timing);
+                    }
+                }
+            }
 
             // Is is time to print a summary?
             if last_summary_at + self.summary_interval < time_now() {

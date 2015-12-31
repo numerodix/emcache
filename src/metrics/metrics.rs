@@ -1,17 +1,25 @@
-use super::TimeSeries;
+use super::Metric;
 
 
 #[derive(Debug, Clone, PartialEq)]
 pub struct Metrics {
-    pub timers: TimeSeries,
+    pub metrics: Vec<Metric>,
 }
 
 impl Metrics {
     pub fn new() -> Metrics {
-        Metrics { timers: TimeSeries::new() }
+        Metrics { metrics: vec![] }
     }
 
-    pub fn with_timers(&mut self, timers: TimeSeries) {
-        self.timers = timers;
+    pub fn clear(&mut self) {
+        self.metrics.clear();
+    }
+
+    pub fn first(&self) -> &Metric {
+        &self.metrics[0]
+    }
+
+    pub fn push(&mut self, item: Metric) {
+        self.metrics.push(item);
     }
 }
