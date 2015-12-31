@@ -23,7 +23,7 @@ pub fn compute_average(samples: &Vec<f64>) -> Option<f64> {
 }
 
 
-pub fn compute_pX(samples: &Vec<f64>, len: usize, pct: f64) -> Option<f64> {
+pub fn compute_px(samples: &Vec<f64>, len: usize, pct: f64) -> Option<f64> {
     if samples.len() < len {
         return None;
     }
@@ -36,19 +36,19 @@ pub fn compute_pX(samples: &Vec<f64>, len: usize, pct: f64) -> Option<f64> {
 }
 
 pub fn compute_p0(samples: &Vec<f64>) -> Option<f64> {
-    compute_pX(samples, 1, 0.0)
+    compute_px(samples, 1, 0.0)
 }
 
 pub fn compute_p90(samples: &Vec<f64>) -> Option<f64> {
-    compute_pX(samples, 10, 0.9)
+    compute_px(samples, 10, 0.9)
 }
 
 pub fn compute_p99(samples: &Vec<f64>) -> Option<f64> {
-    compute_pX(samples, 100, 0.99)
+    compute_px(samples, 100, 0.99)
 }
 
 pub fn compute_p999(samples: &Vec<f64>) -> Option<f64> {
-    compute_pX(samples, 1000, 0.999)
+    compute_px(samples, 1000, 0.999)
 }
 
 
