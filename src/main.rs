@@ -1,3 +1,7 @@
+// Benchmark testing primitives
+#![feature(test)]
+extern crate test;
+
 #[macro_use]
 extern crate maplit;
 extern crate bufstream;
