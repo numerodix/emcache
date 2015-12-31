@@ -17,7 +17,7 @@ use super::typedefs::TcpTransportResult;
 pub struct TcpTransport<T: Read + Write> {
     stream: BufStream<T>,
 
-    metrics: TransportStats,
+    stats: TransportStats,
     key_maxlen: u64,
 }
 
@@ -25,7 +25,7 @@ impl<T: Read + Write> TcpTransport<T> {
     pub fn new(stream: T) -> TcpTransport<T> {
         TcpTransport {
             key_maxlen: 250, // memcached standard
-            metrics: TransportStats::new(),
+            stats: TransportStats::new(),
             stream: BufStream::new(stream),
         }
     }
@@ -45,7 +45,7 @@ impl<T: Read + Write> TcpTransport<T> {
     }
 
     pub fn get_stats_clone(&self) -> TransportStats {
-        self.metrics.clone()
+        self.stats.clone()
     }
 
     pub fn get_stream(&self) -> &T {
@@ -76,8 +76,8 @@ impl<T: Read + Write> TcpTransport<T> {
 
         match self.stream.read(&mut bytes) {
             Ok(1) => {
-                // Update metrics
-                self.metrics.bytes_read += 1;
+                // Update stats
+                self.stats.bytes_read += 1;
 
                 Ok(bytes[0])
             }
@@ -184,8 +184,8 @@ impl<T: Read + Write> TcpTransport<T> {
                        -> TcpTransportResult<usize> {
         match self.stream.write(bytes) {
             Ok(cnt_written) => {
-                // Update metrics
-                self.metrics.bytes_written += cnt_written as u64;
+                // Update stats
+                self.stats.bytes_written += cnt_written as u64;
 
                 Ok(cnt_written)
             }
