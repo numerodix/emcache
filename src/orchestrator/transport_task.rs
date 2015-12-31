@@ -32,7 +32,7 @@ impl TransportTask {
     }
 
     pub fn run(&self, stream: TcpStream) {
-        let mut rec = MetricsRecorder::new(self.met_tx.clone());
+        let mut rec = MetricsRecorder::new(self.met_tx.clone(), true);
         let mut transport = TcpTransport::new(stream);
         let (resp_tx, resp_rx): (RespSender, RespReceiver) = mpsc::channel();
 

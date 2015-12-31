@@ -46,7 +46,7 @@ impl DriverTask {
         let mut transport_stats: StatsMap = HashMap::new();
 
         // For collecting server metrics
-        let mut rec = MetricsRecorder::new(self.met_tx.clone());
+        let mut rec = MetricsRecorder::new(self.met_tx.clone(), true);
 
         loop {
             // Time the whole loop

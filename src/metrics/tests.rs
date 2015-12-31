@@ -115,7 +115,7 @@ fn test_time_series_updates() {
 #[test]
 fn test_timer_correct() {
     let (met_tx, met_rx) = mpsc::channel();
-    let mut rec = MetricsRecorder::new(met_tx);
+    let mut rec = MetricsRecorder::new(met_tx, true);
 
     // use Timer to make one timing
     let t1 = time_now() as u64;
@@ -140,7 +140,7 @@ fn test_timer_correct() {
 #[test]
 fn test_timer_wrong_binding() {
     let (met_tx, met_rx) = mpsc::channel();
-    let mut rec = MetricsRecorder::new(met_tx);
+    let mut rec = MetricsRecorder::new(met_tx, true);
 
     // use Timer to make one timing
     let t1 = time_now() as u64;
@@ -166,7 +166,7 @@ fn test_timer_wrong_binding() {
 #[test]
 fn test_timer_no_binding() {
     let (met_tx, met_rx) = mpsc::channel();
-    let mut rec = MetricsRecorder::new(met_tx);
+    let mut rec = MetricsRecorder::new(met_tx, true);
 
     // use Timer to make one timing
     let t1 = time_now() as u64;

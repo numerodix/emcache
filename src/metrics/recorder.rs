@@ -6,6 +6,12 @@ use super::Metrics;
 
 
 pub struct MetricsRecorder {
+    // If not enabled the recorder is just a shim - records nothing, transmits
+    // nothing (no performance overhead)
+    // TODO: Consider replacing this flag with a Collector trait - can implement
+    // a real collector and a NullCollector
+    enabled: bool,
+
     live_timers: LiveTimers,
     metrics: Metrics,
 
@@ -13,8 +19,9 @@ pub struct MetricsRecorder {
 }
 
 impl MetricsRecorder {
-    pub fn new(met_tx: MetricsSender) -> MetricsRecorder {
+    pub fn new(met_tx: MetricsSender, enabled: bool) -> MetricsRecorder {
         MetricsRecorder {
+            enabled: enabled,
             live_timers: LiveTimers::new(),
             metrics: Metrics::new(),
             met_tx: met_tx,
@@ -22,15 +29,27 @@ impl MetricsRecorder {
     }
 
     pub fn start_timer(&mut self, name: &str) {
+        if !self.enabled {
+            return;
+        }
+
         self.live_timers.start(name);
     }
 
     pub fn stop_timer(&mut self, name: &str) {
+        if !self.enabled {
+            return;
+        }
+
         let timing = self.live_timers.stop(name);
         self.metrics.push(Metric::Timing(timing));
     }
 
     pub fn flush_metrics(&mut self) {
+        if !self.enabled {
+            return;
+        }
+
         // package up all our data into a metrics object
         let mut metrics = self.metrics.clone();
 
