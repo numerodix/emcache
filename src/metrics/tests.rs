@@ -1,4 +1,5 @@
 use std::collections::HashMap;
+use std::sync::mpsc;
 
 use platform::time::sleep_secs;
 use platform::time::time_now;
@@ -6,9 +7,11 @@ use testlib::cmp::eq_f64;
 
 use super::Duration;
 use super::LiveTimers;
+use super::MetricsRecorder;
 use super::Second;
 use super::StartTime;
 use super::TimeSeries;
+use super::Timer;
 
 
 #[test]
@@ -154,4 +157,97 @@ fn test_time_series_merges() {
     // merge and compare
     ts.merge(&other);
     assert_eq!(&expected, ts.get_timers());
+}
+
+
+// this is a slow test that relies on sleeps
+#[ignore]
+#[test]
+fn test_timer_correct() {
+    let (met_tx, met_rx) = mpsc::channel();
+    let mut rec = MetricsRecorder::new(met_tx);
+
+    // use Timer to make one timing
+    let t1 = time_now() as u64;
+    let rv = {
+        let _t = Timer::new(&mut rec, "cmd");
+        sleep_secs(0.25);
+        ()
+    };
+
+    // flush the metrics so we can see them
+    rec.flush_metrics();
+
+    // receive the metrics
+    let metrics = met_rx.recv().unwrap();
+    // verify that the timing is correct
+    let dur = metrics.timers
+                     .get_timers()
+                     .get("cmd")
+                     .unwrap()
+                     .get(&t1)
+                     .unwrap()[0];
+    assert!(eq_f64(0.25, dur, 0.001));
+}
+
+// this is a slow test that relies on sleeps
+#[ignore]
+#[test]
+fn test_timer_wrong_binding() {
+    let (met_tx, met_rx) = mpsc::channel();
+    let mut rec = MetricsRecorder::new(met_tx);
+
+    // use Timer to make one timing
+    let t1 = time_now() as u64;
+    let rv = {
+        // this binding discards the value right away!
+        let _ = Timer::new(&mut rec, "cmd");
+        sleep_secs(0.25);
+        ()
+    };
+
+    // flush the metrics so we can see them
+    rec.flush_metrics();
+
+    // receive the metrics
+    let metrics = met_rx.recv().unwrap();
+    // verify that the timing is correct
+    let dur = metrics.timers
+                     .get_timers()
+                     .get("cmd")
+                     .unwrap()
+                     .get(&t1)
+                     .unwrap()[0];
+    assert!(eq_f64(0.0, dur, 0.01));
+}
+
+// this is a slow test that relies on sleeps
+#[ignore]
+#[test]
+fn test_timer_no_binding() {
+    let (met_tx, met_rx) = mpsc::channel();
+    let mut rec = MetricsRecorder::new(met_tx);
+
+    // use Timer to make one timing
+    let t1 = time_now() as u64;
+    let rv = {
+        // no binding means Timer does not live past the first line
+        Timer::new(&mut rec, "cmd");
+        sleep_secs(0.25);
+        ()
+    };
+
+    // flush the metrics so we can see them
+    rec.flush_metrics();
+
+    // receive the metrics
+    let metrics = met_rx.recv().unwrap();
+    // verify that the timing is correct
+    let dur = metrics.timers
+                     .get_timers()
+                     .get("cmd")
+                     .unwrap()
+                     .get(&t1)
+                     .unwrap()[0];
+    assert!(eq_f64(0.0, dur, 0.01));
 }
