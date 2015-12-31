@@ -1,3 +1,4 @@
+#[macro_use] extern crate maplit;
 extern crate linked_hash_map;
 extern crate libc;
 extern crate rand;

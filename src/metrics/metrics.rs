@@ -56,6 +56,11 @@ impl TimeSeries {
         TimeSeries { timers: HashMap::new() }
     }
 
+    pub fn get_timers(&self) -> &HashMap<String, HashMap<Second, Vec<Duration>>> {
+        &self.timers
+    }
+
+
     pub fn add_timer(&mut self,
                      name: &str,
                      start_time: StartTime,

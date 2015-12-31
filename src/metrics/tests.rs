@@ -1,8 +1,14 @@
+use std::collections::HashMap;
+
 use platform::time::sleep_secs;
 use platform::time::time_now;
 use testlib::cmp::eq_f64;
 
+use super::Duration;
 use super::LiveTimers;
+use super::Second;
+use super::StartTime;
+use super::TimeSeries;
 
 
 #[test]
@@ -36,4 +42,116 @@ fn test_live_timers_ok() {
     assert!(eq_f64(0.25, duration, 0.001));
     // "cmd" was removed from the map
     assert!(!lt.get_timers().contains_key("cmd"));
+}
+
+
+#[test]
+fn test_time_series_updates() {
+    let mut ts = TimeSeries::new();
+
+    // add a timer
+    ts.add_timer("cmd", 1.1, 0.25);
+    // construct the expected value for comparison
+    let expected = hashmap!{
+        "cmd".to_string() => hashmap!{
+            1 => vec![0.25],
+        },
+    };
+    // compare
+    assert_eq!(&expected, ts.get_timers());
+
+    // add another timer
+    ts.add_timer("cmd", 1.9, 0.51);
+    // construct the expected value for comparison
+    let expected = hashmap!{
+        "cmd".to_string() => hashmap!{
+            1 => vec![0.25, 0.51],
+        },
+    };
+    // compare
+    assert_eq!(&expected, ts.get_timers());
+
+    // add another timer
+    ts.add_timer("cmd", 2.3, 8.8);
+    // construct the expected value for comparison
+    let expected = hashmap!{
+        "cmd".to_string() => hashmap!{
+            1 => vec![0.25, 0.51],
+            2 => vec![8.8],
+        },
+    };
+    // compare
+    assert_eq!(&expected, ts.get_timers());
+
+    // add another timer
+    ts.add_timer("resp", 4.1, 1.0);
+    // construct the expected value for comparison
+    let expected = hashmap!{
+        "cmd".to_string() => hashmap!{
+            1 => vec![0.25, 0.51],
+            2 => vec![8.8],
+        },
+        "resp".to_string() => hashmap!{
+            4 => vec![1.0],
+        },
+    };
+    // compare
+    assert_eq!(&expected, ts.get_timers());
+
+    // empty the series
+    ts.clear();
+    // construct the expected value for comparison
+    let expected = hashmap!{};
+    // compare
+    assert_eq!(&expected, ts.get_timers());
+}
+
+#[test]
+fn test_time_series_merges() {
+    let mut ts = TimeSeries::new();
+
+    // add some timers to both series
+    ts.add_timer("cmd1", 1.1, 0.21);
+    let mut other = TimeSeries::new();
+    other.add_timer("cmd1", 1.7, 98.3);
+    // construct expected value
+    let expected = hashmap!{
+        "cmd1".to_string() => hashmap!{
+            1 => vec![0.21, 98.3],
+        },
+    };
+    // merge and compare
+    ts.merge(&other);
+    assert_eq!(&expected, ts.get_timers());
+
+    // add a timer to the other series
+    let mut other = TimeSeries::new();
+    other.add_timer("cmd1", 6.4, 0.9);
+    // construct expected value
+    let expected = hashmap!{
+        "cmd1".to_string() => hashmap!{
+            1 => vec![0.21, 98.3],
+            6 => vec![0.9],
+        },
+    };
+    // merge and compare
+    ts.merge(&other);
+    assert_eq!(&expected, ts.get_timers());
+
+    // add a timer to the other series
+    let mut other = TimeSeries::new();
+    other.add_timer("cmd2", 3.1, 9.1);
+    // construct expected value
+    let expected = hashmap!{
+        "cmd1".to_string() => hashmap!{
+            1 => vec![0.21, 98.3],
+            6 => vec![0.9],
+        },
+        "cmd2".to_string() => hashmap!{
+            3 => vec![9.1],
+        },
+    };
+    // merge and compare
+    ts.merge(&other);
+    assert_eq!(&expected, ts.get_timers());
 }
