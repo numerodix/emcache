@@ -46,8 +46,8 @@ impl MetricsTask {
     }
 
     pub fn print_summary(&self, ts: &TimeSeries) {
-        let comp_mets = ts.compute_metrics();
-        let mut names: Vec<&String> = comp_mets.keys().collect();
+        let agg_mets = ts.aggregate_metrics();
+        let mut names: Vec<&String> = agg_mets.keys().collect();
         names.sort();
 
         println!("== Metrics {}s snapshot at {} ==",
@@ -55,12 +55,12 @@ impl MetricsTask {
                  time_now() as u64);
 
         for name in names {
-            let comp = comp_mets.get(name).unwrap();
+            let agg = agg_mets.get(name).unwrap();
 
-            let avg = comp.avg.unwrap_or(-1.0) * 1000.0;
-            let p90 = comp.p90.unwrap_or(-1.0) * 1000.0;
-            let p99 = comp.p99.unwrap_or(-1.0) * 1000.0;
-            let p999 = comp.p999.unwrap_or(-1.0) * 1000.0;
+            let avg = agg.avg.unwrap_or(-1.0) * 1000.0;
+            let p90 = agg.p90.unwrap_or(-1.0) * 1000.0;
+            let p99 = agg.p99.unwrap_or(-1.0) * 1000.0;
+            let p999 = agg.p999.unwrap_or(-1.0) * 1000.0;
 
             println!("{:30}  avg: {:.3}ms  p90: {:.3}ms  p99: {:.3}ms  \
                       p99.9: {:.3}ms",

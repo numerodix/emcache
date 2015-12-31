@@ -10,6 +10,7 @@ use super::statistics::aggregate_metric;
 
 #[derive(Debug, Clone, PartialEq)]
 pub struct TimeSeries {
+    // name -> { 1 -> [0.13, 0.41], 2 -> [0.42, 0.6] }
     timers: HashMap<String, HashMap<Second, Vec<Duration>>>,
 }
 
@@ -44,20 +45,20 @@ impl TimeSeries {
             .push(timing.duration);
     }
 
-    pub fn clear(&mut self) {
-        self.timers.clear();
-    }
-
-    pub fn compute_metrics(&self) -> HashMap<String, AggregatedMetric> {
-        let mut comp_mets = HashMap::new();
+    pub fn aggregate_metrics(&self) -> HashMap<String, AggregatedMetric> {
+        let mut agg_mets = HashMap::new();
 
         for (name, seconds) in self.timers.iter() {
             for (_, samples) in seconds.iter() {
-                let comp = aggregate_metric(name, samples);
-                comp_mets.insert(name.to_string(), comp);
+                let agg = aggregate_metric(name, samples);
+                agg_mets.insert(name.to_string(), agg);
             }
         }
 
-        comp_mets
+        agg_mets
+    }
+
+    pub fn clear(&mut self) {
+        self.timers.clear();
     }
 }
