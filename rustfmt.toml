@@ -1,1 +1,4 @@
 max_width = 79
+
+# Avoid nuking docopt spec for one
+format_strings = false

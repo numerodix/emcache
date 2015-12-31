@@ -33,8 +33,10 @@ pub struct DriverTask {
 }
 
 impl DriverTask {
-    pub fn new(cmd_rx: CmdReceiver, met_tx: MetricsSender, options: MemcacheOptions) 
-        -> DriverTask {
+    pub fn new(cmd_rx: CmdReceiver,
+               met_tx: MetricsSender,
+               options: MemcacheOptions)
+               -> DriverTask {
         DriverTask {
             cmd_rx: cmd_rx,
             met_tx: met_tx,
@@ -50,9 +52,8 @@ impl DriverTask {
         let mut transport_stats: StatsMap = HashMap::new();
 
         // For collecting server metrics
-        let mut rec = MetricsRecorder::new(
-            self.met_tx.clone(),
-            self.options.get_metrics_enabled());
+        let mut rec = MetricsRecorder::new(self.met_tx.clone(),
+                                           self.options.get_metrics_enabled());
 
         loop {
             // Time the whole loop

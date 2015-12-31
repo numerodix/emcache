@@ -28,7 +28,8 @@ fn main() {
     let mut listener_task = ListenerTask::new(opts.clone());
 
     println!("Launching tcp server on {} with {}mb capacity...",
-        opts.get_bind_string(), opts.get_mem_limit());
+             opts.get_bind_string(),
+             opts.get_mem_limit());
 
     listener_task.run();
 }

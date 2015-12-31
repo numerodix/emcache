@@ -26,7 +26,8 @@ pub struct MemcacheOptions {
 impl MemcacheOptions {
     pub fn get_bind_params(&self) -> (String, u16) {
         let opts = self.clone();
-        (opts.flag_host.unwrap().clone(), opts.flag_port.unwrap().clone())
+        (opts.flag_host.unwrap().clone(),
+         opts.flag_port.unwrap().clone())
     }
 
     pub fn get_bind_string(&self) -> String {
@@ -51,10 +52,10 @@ impl MemcacheOptions {
 pub fn parse_args(args: Vec<String>) -> MemcacheOptions {
     let argv = || args;
     let mut opts: MemcacheOptions = Docopt::new(USAGE)
-        .and_then(|d| d.decode())
-        .unwrap_or_else(|e| e.exit());
+                                        .and_then(|d| d.decode())
+                                        .unwrap_or_else(|e| e.exit());
 
-    //println!("{:?}", opts);
+    // println!("{:?}", opts);
 
     if opts.flag_host.is_none() {
         opts.flag_host = Some("127.0.0.1".to_string());

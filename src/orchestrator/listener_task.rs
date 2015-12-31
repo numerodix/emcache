@@ -32,18 +32,20 @@ impl ListenerTask {
     pub fn run(&mut self) {
         // Initialize the metrics sink
         let (met_tx, met_rx) = mpsc::channel();
-        let metrics_task = MetricsTask::new(met_rx);
+        let metrics = MetricsTask::new(met_rx);
 
         thread::spawn(move || {
-            metrics_task.run();
+            metrics.run();
         });
 
         // Initialize the driver
         let (cmd_tx, cmd_rx) = mpsc::channel();
-        let driver_task = DriverTask::new(cmd_rx, met_tx.clone(), self.options.clone());
+        let driver = DriverTask::new(cmd_rx,
+                                     met_tx.clone(),
+                                     self.options.clone());
 
         thread::spawn(move || {
-            driver_task.run();
+            driver.run();
         });
 
         // Start up a tcp server
@@ -56,14 +58,11 @@ impl ListenerTask {
                     let id = self.next_transport_id();
                     let cmd_tx = cmd_tx.clone();
                     let met_tx = met_tx.clone();
-                    let transport_task = TransportTask::new(
-                        id,
-                        cmd_tx,
-                        met_tx,
-                        self.options.clone());
+                    let opts = self.options.clone();
+                    let task = TransportTask::new(id, cmd_tx, met_tx, opts);
 
                     thread::spawn(move || {
-                        transport_task.run(stream);
+                        task.run(stream);
                     });
                 }
                 Err(_) => {
