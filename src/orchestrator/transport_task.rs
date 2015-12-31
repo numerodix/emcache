@@ -3,6 +3,7 @@ use std::sync::mpsc;
 
 use metrics::MetricsRecorder;
 use metrics::Timer;
+use options::MemcacheOptions;
 use protocol::cmd::Resp;
 use tcp_transport::TcpTransport;
 
@@ -17,22 +18,28 @@ pub struct TransportTask {
     id: TransportId,
     cmd_tx: CmdSender,
     met_tx: MetricsSender,
+    options: MemcacheOptions,
 }
 
 impl TransportTask {
     pub fn new(id: TransportId,
                cmd_tx: CmdSender,
-               met_tx: MetricsSender)
+               met_tx: MetricsSender,
+               options: MemcacheOptions)
                -> TransportTask {
         TransportTask {
             id: id,
             cmd_tx: cmd_tx,
             met_tx: met_tx,
+            options: options,
         }
     }
 
     pub fn run(&self, stream: TcpStream) {
-        let mut rec = MetricsRecorder::new(self.met_tx.clone(), true);
+        let mut rec = MetricsRecorder::new(
+            self.met_tx.clone(),
+            self.options.get_metrics_enabled());
+
         let mut transport = TcpTransport::new(stream);
         let (resp_tx, resp_rx): (RespSender, RespReceiver) = mpsc::channel();
 

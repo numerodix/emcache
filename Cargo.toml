@@ -4,8 +4,10 @@ version = "0.1.0"
 authors = ["Martin Matusiak"]
 
 [dependencies]
+docopt = "0.6.78"
 libc = "0.2"
 linked-hash-map = "0.0.7"
 maplit = "0.1.2"
 rand = "0.3"
+rustc-serialize = "0.3.16" # needed for docopt
 time = "0.1"

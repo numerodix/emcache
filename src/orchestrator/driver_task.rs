@@ -2,6 +2,7 @@ use std::collections::HashMap;
 
 use metrics::MetricsRecorder;
 use metrics::Timer;
+use options::MemcacheOptions;
 use protocol::Driver;
 use storage::Cache;
 use tcp_transport::stats::TransportStats;
@@ -28,25 +29,30 @@ fn compute_stats_sums(map: &StatsMap) -> TransportStats {
 pub struct DriverTask {
     cmd_rx: CmdReceiver,
     met_tx: MetricsSender,
+    options: MemcacheOptions,
 }
 
 impl DriverTask {
-    pub fn new(cmd_rx: CmdReceiver, met_tx: MetricsSender) -> DriverTask {
+    pub fn new(cmd_rx: CmdReceiver, met_tx: MetricsSender, options: MemcacheOptions) 
+        -> DriverTask {
         DriverTask {
             cmd_rx: cmd_rx,
             met_tx: met_tx,
+            options: options,
         }
     }
 
     pub fn run(&self) {
-        let cache = Cache::new(64 * 1024 * 1024); // 64mb
+        let cache = Cache::new(self.options.get_mem_limit_bytes());
         let mut driver = Driver::new(cache);
 
         // Here we store stats per transport
         let mut transport_stats: StatsMap = HashMap::new();
 
         // For collecting server metrics
-        let mut rec = MetricsRecorder::new(self.met_tx.clone(), true);
+        let mut rec = MetricsRecorder::new(
+            self.met_tx.clone(),
+            self.options.get_metrics_enabled());
 
         loop {
             // Time the whole loop
