@@ -58,15 +58,14 @@ impl MetricsTask {
             let agg = agg_mets.get(name).unwrap();
 
             let avg = agg.avg.unwrap_or(-1.0) * 1000.0;
-            let p90 = agg.p90.unwrap_or(-1.0) * 1000.0;
+            let p0 = agg.p0.unwrap_or(-1.0) * 1000.0;
             let p99 = agg.p99.unwrap_or(-1.0) * 1000.0;
             let p999 = agg.p999.unwrap_or(-1.0) * 1000.0;
 
-            println!("{:30}  avg: {:.3}ms  p90: {:.3}ms  p99: {:.3}ms  \
-                      p99.9: {:.3}ms",
+            println!("{:30}  avg: {:.3}ms  p0: {:.3}ms  p99: {:.3}ms  p99.9: {:.3}ms",
                      name,
                      avg,
-                     p90,
+                     p0,
                      p99,
                      p999);
         }

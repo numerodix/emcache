@@ -23,7 +23,7 @@ pub fn compute_average(samples: &Vec<f64>) -> Option<f64> {
 }
 
 
-pub fn compute_p9x(samples: &Vec<f64>, len: usize, pct: f64) -> Option<f64> {
+pub fn compute_pX(samples: &Vec<f64>, len: usize, pct: f64) -> Option<f64> {
     if samples.len() < len {
         return None;
     }
@@ -35,16 +35,20 @@ pub fn compute_p9x(samples: &Vec<f64>, len: usize, pct: f64) -> Option<f64> {
     Some(sorted[pos])
 }
 
+pub fn compute_p0(samples: &Vec<f64>) -> Option<f64> {
+    compute_pX(samples, 1, 0.0)
+}
+
 pub fn compute_p90(samples: &Vec<f64>) -> Option<f64> {
-    compute_p9x(samples, 10, 0.9)
+    compute_pX(samples, 10, 0.9)
 }
 
 pub fn compute_p99(samples: &Vec<f64>) -> Option<f64> {
-    compute_p9x(samples, 100, 0.99)
+    compute_pX(samples, 100, 0.99)
 }
 
 pub fn compute_p999(samples: &Vec<f64>) -> Option<f64> {
-    compute_p9x(samples, 1000, 0.999)
+    compute_pX(samples, 1000, 0.999)
 }
 
 
@@ -52,6 +56,7 @@ pub fn aggregate_metric(name: &str, samples: &Vec<f64>) -> AggregatedMetric {
     AggregatedMetric {
         name: name.to_string(),
         avg: compute_average(&samples),
+        p0: compute_p0(&samples),
         p90: compute_p90(&samples),
         p99: compute_p99(&samples),
         p999: compute_p999(&samples),

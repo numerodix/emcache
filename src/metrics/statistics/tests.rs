@@ -3,6 +3,7 @@ use testlib::datagen::get_rand_f64_vec;
 use super::AggregatedMetric;
 use super::aggregate_metric;
 use super::compute_average;
+use super::compute_p0;
 use super::compute_p90;
 use super::compute_p999;
 use super::compute_p99;
@@ -33,6 +34,18 @@ fn test_sort_f64() {
     assert_eq!(&vec![1.2, 3.1, 9.1], sort_f64(&mut vec![9.1, 1.2, 3.1]));
 }
 
+
+#[test]
+fn test_compute_p0_too_short() {
+    let vals = vec![];
+    assert_eq!(None, compute_p0(&vals));
+}
+
+#[test]
+fn test_compute_p0_ok() {
+    let vals = get_rand_f64_vec(1, 17);
+    assert_eq!(1.0, compute_p0(&vals).unwrap());
+}
 
 #[test]
 fn test_compute_p90_too_short() {
@@ -99,6 +112,7 @@ fn test_compute_metric() {
     let expected = AggregatedMetric {
         name: "latency".to_string(),
         avg: Some(500.5),
+        p0: Some(1.0),
         p90: Some(901.0),
         p99: Some(991.0),
         p999: Some(1000.0),
