@@ -26,8 +26,8 @@ impl MetricsRecorder {
     }
 
     pub fn stop_timer(&mut self, name: &str) {
-        let (start_time, dur) = self.live_timers.stop(name);
-        self.done_timers.add_timer(name, start_time, dur);
+        let timing = self.live_timers.stop(name);
+        self.done_timers.add_timer(name, timing.start_time, timing.duration);
     }
 
     pub fn flush_metrics(&mut self) {

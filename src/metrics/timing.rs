@@ -4,9 +4,9 @@ use super::StartTime;
 
 #[derive(Debug, Clone, PartialEq)]
 pub struct Timing {
-    name: String,
-    start_time: StartTime,
-    duration: Duration,
+    pub name: String,
+    pub start_time: StartTime,
+    pub duration: Duration,
 }
 
 impl Timing {

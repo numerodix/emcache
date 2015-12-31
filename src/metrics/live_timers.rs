@@ -4,6 +4,7 @@ use platform::time::time_now;
 
 use super::Duration;
 use super::StartTime;
+use super::Timing;
 
 
 #[derive(Debug, Clone, PartialEq)]
@@ -27,7 +28,7 @@ impl LiveTimers {
         start_time
     }
 
-    pub fn stop(&mut self, name: &str) -> (StartTime, Duration) {
+    pub fn stop(&mut self, name: &str) -> Timing {
         let stop_time = time_now();
 
         let opt = self.timers.remove(name);
@@ -38,6 +39,6 @@ impl LiveTimers {
         let start_time = opt.unwrap();
         let duration = stop_time - start_time;
 
-        (start_time, duration)
+        Timing::new(name, start_time, duration)
     }
 }

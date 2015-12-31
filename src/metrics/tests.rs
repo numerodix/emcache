@@ -38,11 +38,11 @@ fn test_live_timers_ok() {
 
     sleep_secs(0.25);
 
-    let (start_time2, duration) = lt.stop("cmd");
+    let timing = lt.stop("cmd");
     // the returned start_time matches what we saw before
-    assert_eq!(start_time, start_time2);
+    assert_eq!(start_time, timing.start_time);
     // the duration is almost exactly the time we slept
-    assert!(eq_f64(0.25, duration, 0.001));
+    assert!(eq_f64(0.25, timing.duration, 0.001));
     // "cmd" was removed from the map
     assert!(!lt.get_timers().contains_key("cmd"));
 }
