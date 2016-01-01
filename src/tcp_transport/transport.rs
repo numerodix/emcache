@@ -268,8 +268,11 @@ impl<T: Read + Write> TcpTransport<T> {
         // We know the byte length, so now read the value
         let value = try!(self.read_bytes(bytelen_num));
 
-        // Read the line termination marker
-        let newline = try!(self.read_bytes(2));  // TODO: verify newline
+        // Read the line termination marker and verify it
+        let newline = try!(self.read_bytes(2));
+        if !newline.starts_with(&[13, 10]) {
+            return Err(TcpTransportError::CommandParseError);
+        }
 
         // We got all the values we expected and there is nothing left
         return Ok(Cmd::Set(Set {
@@ -277,8 +280,6 @@ impl<T: Read + Write> TcpTransport<T> {
             exptime: exptime_num,
             data: value,
         }));
-
-        //Err(TcpTransportError::CommandParseError)
     }
 
     // High level functions
