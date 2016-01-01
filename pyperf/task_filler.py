@@ -10,10 +10,10 @@ from pyperf.util import insert_number_commas
 
 
 class CacheFillerTask(Task):
-    def __init__(self, percentage=0, jobs=4, *args, **kwargs):
+    def __init__(self, percentage=None, jobs=None, *args, **kwargs):
         super(CacheFillerTask, self).__init__(*args, **kwargs)
-        self.percentage = percentage
-        self.jobs = jobs
+        self.percentage = percentage or 0
+        self.jobs = jobs or 4
 
     def create_tasklets(self, state):
         tasklets = []
