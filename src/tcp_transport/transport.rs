@@ -15,6 +15,23 @@ use super::stats::TransportStats;
 use super::typedefs::TcpTransportResult;
 
 
+
+pub fn _as_string(bytes: &[u8]) -> TcpTransportResult<String> {
+    // TODO fix bogus conversion without checks
+    let st = String::from_utf8_lossy(bytes);
+    return Ok(st.to_string());
+}
+
+pub fn _as_number<N: FromStr>(bytes: &[u8]) -> TcpTransportResult<N> {
+    let string = try!(_as_string(bytes));
+    match string.parse::<N>() {
+        Ok(num) => Ok(num),
+        Err(_) => Err(TcpTransportError::NumberParseError),
+    }
+}
+
+
+
 pub struct TcpTransport<T: Read + Write> {
     stream: BufStream<T>,
 
@@ -68,15 +85,21 @@ impl<T: Read + Write> TcpTransport<T> {
 
     // Basic bytes manipulation and reading from the stream
 
-    pub fn as_string(&self, bytes: Vec<u8>) -> TcpTransportResult<String> {
-        match String::from_utf8(bytes) {
-            Ok(string) => Ok(string),
+    pub fn as_string(&self, bytes: &[u8]) -> TcpTransportResult<String> {
+        // TODO fix bogus conversion without checks
+        let st = String::from_utf8_lossy(bytes);
+        return Ok(st.to_string());
+
+/*
+        match String::from_utf8_lossy(bytes) {
+            Ok(string) => Ok(string.to_string()),
             Err(_) => Err(TcpTransportError::Utf8Error),
         }
+*/
     }
 
     pub fn as_number<N: FromStr>(&self,
-                                 bytes: Vec<u8>)
+                                 bytes: &[u8])
                                  -> TcpTransportResult<N> {
         let string = try!(self.as_string(bytes));
         match string.parse::<N>() {
@@ -114,78 +137,59 @@ impl<T: Read + Write> TcpTransport<T> {
     }
 
     pub fn preread_line(&mut self) -> TcpTransportResult<()> {
-        // Fill our line buffer
-        let rv = self.stream.read(&mut self.line_buffer);
+        let mut cursor = 0;
 
-        // In case of error abort
-        if rv.is_err() {
-            return Err(TcpTransportError::StreamReadError);
-        }
+        // We keep reading one byte at a time into line_buffer, looking for
+        // a line terminator \r\n. The underlying stream is buffered.
+        loop {
+            let rv = self.stream.read(&mut self.line_buffer[cursor..cursor+1]);
 
-        // Now figure out where \r\n is
-        let mut found = false;
-        for (i, byte) in self.line_buffer.iter().enumerate() {
-            // We've found \r
-            if *byte == 13 {
-                self.line_cursor = 0;
-                self.line_break_pos = i;
-                found = true;
+            // If there was an error or if there was nothing to read we bail
+            if rv.is_err() || rv.unwrap() == 0 {
+                return Err(TcpTransportError::StreamReadError);
+            }
+
+            // We found \r
+            if self.line_buffer[cursor] == 13 {
+                // Read one more, hoping it's \n
+                cursor += 1;
+                let rv = self.stream.read(&mut self.line_buffer[cursor..cursor+1]);
+
+                // If there was an error or if there was nothing to read we bail
+                if rv.is_err() || rv.unwrap() == 0 {
+                    return Err(TcpTransportError::StreamReadError);
+                }
+
+                // Woops, it's not \n, we bail
+                if self.line_buffer[cursor] != 10 {
+                    return Err(TcpTransportError::StreamReadError);
+                }
+
                 break;
             }
+
+            cursor += 1;
         }
 
-        // If we didn't find it that's bad
-        if !found {
-            return Err(TcpTransportError::StreamReadError);
-        }
+        self.line_cursor = 0;
+        self.line_break_pos = cursor - 1;  // point it at \r, not \n
 
         Ok(())
     }
 
-    pub fn read_line(&mut self, maxlen: usize) -> TcpTransportResult<Vec<u8>> {
-        let mut bytes = vec![];
-        let mut found_line_end = false;
-
-        for _ in 0..maxlen {
-            let byte = try!(self.read_byte());
-            bytes.push(byte);
-
-            // Look for \r\n
-            if bytes.ends_with(&[13, 10]) {
-                found_line_end = true;
-                break;
-            }
-        }
-
-        if found_line_end {
-            // Pop off \r\n
-            bytes.pop();
-            bytes.pop();
-            Ok(bytes)
-        } else {
-            Err(TcpTransportError::LineReadError)
-        }
+    pub fn line_is_empty(&self) -> bool {
+        // If the cursor precedes the line break then there are still bytes to
+        // read from the line, otherwise it's empty
+        self.line_cursor >= self.line_break_pos
     }
 
     pub fn line_remove_first_char(&mut self) -> TcpTransportResult<()> {
-        match self.line_cursor < self.line_break_pos {
+        match !self.line_is_empty() {
             true => {
                 self.line_cursor += 1;
                 Ok(())
             }
             false => Err(TcpTransportError::LineReadError),
-        }
-    }
-
-    pub fn remove_first_char(&self,
-                             bytes: &mut Vec<u8>)
-                             -> TcpTransportResult<()> {
-        match bytes.len() > 0 {
-            true => {
-                bytes.remove(0);
-                Ok(())
-            }
-            false => Err(TcpTransportError::StreamReadError),
         }
     }
 
@@ -198,7 +202,7 @@ impl<T: Read + Write> TcpTransport<T> {
         let mut space_idx = 0;
         let mut found = false;
 
-        for i in self.line_cursor + 1..self.line_break_pos - 1 {
+        for i in self.line_cursor + 1..self.line_break_pos {
             // We found a space
             if self.line_buffer[i] == 32 {
                 space_idx = i;
@@ -207,8 +211,10 @@ impl<T: Read + Write> TcpTransport<T> {
             }
         }
 
+        // If we didn't find a space then the whole line is a word
+        // TODO test for this
         if !found {
-            return Err(TcpTransportError::StreamReadError);
+            space_idx = self.line_break_pos;
         }
 
         // Advance the cursor, we've now "consumed" the word we found
@@ -216,43 +222,6 @@ impl<T: Read + Write> TcpTransport<T> {
         self.line_cursor = space_idx;
 
         Ok(word)
-    }
-
-    pub fn parse_word(&self,
-                      bytes: Vec<u8>)
-                      -> TcpTransportResult<(Vec<u8>, Vec<u8>)> {
-        let mut space_idx: i64 = -1;
-
-        for i in 0..bytes.len() {
-            // We're looking for a space
-            if bytes[i] == 32 {
-                space_idx = i as i64;
-                break;
-            }
-        }
-
-        if space_idx > -1 {
-            let mut word = vec![];
-            let mut rest = vec![];
-
-            // TODO figure out how to return a modified vector instead of
-            // copying the whole rest of it
-            for i in 0..bytes.len() {
-                let byte = bytes[i];
-                if (i as i64) < space_idx {
-                    word.push(byte);
-                } else {
-                    rest.push(byte);
-                }
-            }
-
-            Ok((word, rest))
-
-        } else {
-            // If we've reached the end of the buffer without seeing a space
-            // that makes the whole buffer a word
-            Ok((bytes, vec![]))
-        }
     }
 
     // Writing to the stream
@@ -286,71 +255,86 @@ impl<T: Read + Write> TcpTransport<T> {
 
     // Parse individual commands
 
-    pub fn parse_cmd_get(&self, mut rest: Vec<u8>) -> TcpTransportResult<Cmd> {
-        try!(self.remove_first_char(&mut rest)); // remove leading space
-        let (key, rest) = try!(self.parse_word(rest));
+    pub fn parse_cmd_get(&mut self) -> TcpTransportResult<Cmd> {
+        // remove the space after the keyword
+        try!(self.line_remove_first_char());
+
+        // parse the key
+        let key_str = {
+            let key = try!(self.line_parse_word());
+            try!(_as_string(key))
+        };
 
         // We expect to find the end of the line now
-        if rest.is_empty() {
-            let key_str = try!(self.as_string(key));
+        if self.line_is_empty() {
             Ok(Cmd::Get(Get { key: key_str }))
         } else {
             Err(TcpTransportError::CommandParseError)
         }
     }
 
-    pub fn parse_cmd_set(&mut self,
-                         mut rest: Vec<u8>)
-                         -> TcpTransportResult<Cmd> {
-        try!(self.remove_first_char(&mut rest)); // remove leading space
-        let (key, mut rest) = try!(self.parse_word(rest));
+    pub fn parse_cmd_set(&mut self) -> TcpTransportResult<Cmd> {
+        // remove the space after the keyword
+        try!(self.line_remove_first_char());
 
-        try!(self.remove_first_char(&mut rest)); // remove leading space
-        let (flags, mut rest) = try!(self.parse_word(rest));
+        // parse the key + remove trailing space
+        let key_str = {
+            let key = try!(self.line_parse_word());
+            try!(_as_string(key))
+        };
+        try!(self.line_remove_first_char());
 
-        try!(self.remove_first_char(&mut rest)); // remove leading space
-        let (exptime, mut rest) = try!(self.parse_word(rest));
+        // parse the flags + remove trailing space
+        let flags_num = {
+            let flags = try!(self.line_parse_word());
+            try!(_as_number::<u16>(flags))
+        };
+        try!(self.line_remove_first_char());
 
-        try!(self.remove_first_char(&mut rest)); // remove leading space
-        let (bytelen, _) = try!(self.parse_word(rest));
+        // parse the exptime + remove trailing space
+        let exptime_num = {
+            let exptime = try!(self.line_parse_word());
+            try!(_as_number::<u32>(exptime))
+        };
+        try!(self.line_remove_first_char());
 
-        let key_str = try!(self.as_string(key));
-        let flags_num = try!(self.as_number::<u16>(flags));
-        let exptime_num = try!(self.as_number::<u32>(exptime));
-        let bytelen_num = try!(self.as_number::<u64>(bytelen));
+        // parse the bytelen
+        let bytelen_num = {
+            let bytelen = try!(self.line_parse_word());
+            try!(_as_number::<u64>(bytelen))
+        };
 
         // We know the byte length, so now read the value
         let value = try!(self.read_bytes(bytelen_num));
 
         // Read the line termination marker
-        let line_len = self.get_max_line_len();
-        let rest = try!(self.read_line(line_len));
+        let newline = try!(self.read_bytes(2));  // TODO: verify newline
 
         // We got all the values we expected and there is nothing left
-        if rest.is_empty() {
-            return Ok(Cmd::Set(Set {
-                key: key_str,
-                exptime: exptime_num,
-                data: value,
-            }));
-        }
+        return Ok(Cmd::Set(Set {
+            key: key_str,
+            exptime: exptime_num,
+            data: value,
+        }));
 
-        Err(TcpTransportError::CommandParseError)
+        //Err(TcpTransportError::CommandParseError)
     }
 
     // High level functions
 
     pub fn read_cmd(&mut self) -> TcpTransportResult<Cmd> {
-        let line_len = self.get_max_line_len();
+        // read the first line
+        try!(self.preread_line());
 
-        let fst_line = try!(self.read_line(line_len));
-        let (keyword, rest) = try!(self.parse_word(fst_line));
-        let keyword_str = try!(self.as_string(keyword));
+        let keyword_str = {
+            let keyword = try!(self.line_parse_word());
+            try!(_as_string(keyword))
+        };
 
         if keyword_str == "get" {
-            return self.parse_cmd_get(rest);
+            return self.parse_cmd_get();
         } else if keyword_str == "set" {
-            return self.parse_cmd_set(rest);
+            return self.parse_cmd_set();
         } else if keyword_str == "stats" {
             return Ok(Cmd::Stats);
         }
