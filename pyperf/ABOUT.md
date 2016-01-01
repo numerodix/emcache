@@ -22,8 +22,8 @@ memcached:
 
 memcache.rs:
 
-* 10,000x get (constant key): 15.9k/s
-* 10,000x set (constant key): 15.6k/s
+* 10,000x get (constant key): 19.0k/s
+* 10,000x set (constant key): 18.3k/s
 
 
 ### Fill cache to a certain percentage
