@@ -53,12 +53,6 @@ impl<T: Read + Write> TcpTransport<T> {
     }
 
 
-    pub fn get_max_line_len(&self) -> usize {
-        // This needs to be the length of the longest command line, not
-        // including data values for which the length is given upfront
-        self.key_maxlen as usize + 100
-    }
-
     pub fn get_stats_clone(&self) -> TransportStats {
         self.stats.clone()
     }
