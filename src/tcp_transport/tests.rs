@@ -139,7 +139,7 @@ fn test_preread_line_too_long() {
     let ts = TestStream::new(vec![93; 4096]);
     let mut transport = TcpTransport::new(ts);
 
-    transport.preread_line();
+    transport.preread_line().unwrap();
 }
 
 
@@ -217,6 +217,7 @@ fn test_write_bytes() {
     let mut transport = TcpTransport::new(ts);
 
     let bytelen = transport.write_bytes(&vec![97, 98, 99]).unwrap();
+    assert_eq!(3, bytelen);
     transport.flush_writes().unwrap();
     assert_eq!(transport.get_stream().outgoing, [97, 98, 99]);
 }

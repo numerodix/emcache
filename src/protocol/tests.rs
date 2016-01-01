@@ -59,7 +59,7 @@ fn test_cmd_stats() {
 
     // Retrieve it
     let cmd = Cmd::Get(Get::new("x"));
-    let resp = driver.run(cmd);
+    driver.run(cmd);
 
     // Run stats
     let cmd = Cmd::Stats;

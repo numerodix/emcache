@@ -4,7 +4,6 @@ use protocol::cmd::Cmd;
 use protocol::cmd::Get;
 use protocol::cmd::Resp;
 use protocol::cmd::Set;
-use protocol::cmd::Stat;
 use protocol::cmd::Value;
 use testlib::test_stream::TestStream;
 

@@ -1,4 +1,3 @@
-use std::cmp;
 use std::io::Read;
 use std::io::Write;
 

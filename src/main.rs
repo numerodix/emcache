@@ -23,14 +23,12 @@ mod storage;
 mod tcp_transport;
 mod testlib;
 
-use std::env;
-
 use options::parse_args;
 use orchestrator::ListenerTask;
 
 
 fn main() {
-    let opts = parse_args(env::args().collect());
+    let opts = parse_args();
 
     let mut listener_task = ListenerTask::new(opts.clone());
 

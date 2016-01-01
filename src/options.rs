@@ -49,7 +49,7 @@ impl MemcacheOptions {
 }
 
 
-pub fn parse_args(args: Vec<String>) -> MemcacheOptions {
+pub fn parse_args() -> MemcacheOptions {
     let mut opts: MemcacheOptions = Docopt::new(USAGE)
                                         .and_then(|d| d.decode())
                                         .unwrap_or_else(|e| e.exit());
