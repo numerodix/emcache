@@ -21,6 +21,8 @@ if __name__ == '__main__':
                       help='Fill the cache to a given percentage full')
     parser.add_option('', '--stress', action='store_true', dest='stress_test',
                       help='Perform a stress test')
+    parser.add_option('-w', '--workers', action='store', type='int', dest='worker_count',
+                      help='Use these many worker threads')
     (options, args) = parser.parse_args()
 
 
@@ -35,6 +37,7 @@ if __name__ == '__main__':
         filler = CacheFillerTask(
             client_params=cli_params,
             percentage=pct,
+            jobs=options.worker_count,
         )
         filler.launch()
 
