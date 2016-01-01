@@ -86,14 +86,17 @@ impl<T: Read + Write> TcpTransport<T> {
     }
 
     pub fn read_bytes(&mut self, len: u64) -> TcpTransportResult<Vec<u8>> {
-        let mut bytes = vec![];
+        let mut bytes = vec![0; len as usize];
 
-        for _ in 0..len {
-            let byte = try!(self.read_byte());
-            bytes.push(byte);
+        match self.stream.read(&mut bytes[..]) {
+            Ok(n) => {
+                // Update stats
+                self.stats.bytes_read += n as u64;
+
+                Ok(bytes)
+            },
+            _ => Err(TcpTransportError::StreamReadError),
         }
-
-        Ok(bytes)
     }
 
     pub fn read_line(&mut self, maxlen: usize) -> TcpTransportResult<Vec<u8>> {
