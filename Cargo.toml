@@ -4,11 +4,13 @@ version = "0.1.0"
 authors = ["Martin Matusiak"]
 
 [dependencies]
-bufstream = "0.1.1"
-docopt = "0.6.78"
+bufstream = "0.1.1"  # for buffered tcp streams
+docopt = "0.6.78"  # cmdline arguments
 libc = "0.2"
-linked-hash-map = "0.0.7"
-maplit = "0.1.2"
-rand = "0.3"
-rustc-serialize = "0.3.16" # needed for docopt
+linked-hash-map = "0.0.7"  # hashmap that remembers order of insertion
+net2 = "0.2.20"  # support for socket options
+rustc-serialize = "0.3.16"  # needed for docopt
 time = "0.1"
+# Testing related
+maplit = "0.1.2"  # hashmap literals
+rand = "0.3"  # random number generator

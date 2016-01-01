@@ -1,6 +1,7 @@
 #include <arpa/inet.h>
 #include <assert.h>
 #include <netdb.h>
+#include <netinet/tcp.h>
 #include <stdint.h>
 #include <stdio.h>
 #include <string.h>
@@ -59,6 +60,12 @@ bool TcpClient::_connect() {
     if (connect(sockfd, (struct sockaddr*) &server_addr, sizeof(server_addr)) < 0) {
         perror("connect() failed");
         return false;
+    }
+
+    // Set socket options
+    int flags = 1;
+    if (setsockopt(sockfd, IPPROTO_TCP, TCP_NODELAY, (void *)&flags, sizeof(flags)) != 0) {
+        perror("setsockopt() failed");
     }
 
     std::cout << "tcp: connected to " << m_host << ":" << m_port << "\n";

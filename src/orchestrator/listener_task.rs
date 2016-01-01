@@ -2,6 +2,8 @@ use std::net::TcpListener;
 use std::sync::mpsc;
 use std::thread;
 
+use net2::TcpStreamExt;
+
 use options::MemcacheOptions;
 
 use super::DriverTask;
@@ -55,6 +57,9 @@ impl ListenerTask {
         for stream in tcp_listener.incoming() {
             match stream {
                 Ok(stream) => {
+                    // Make sure we don't delay on sending
+                    TcpStreamExt::set_nodelay(&stream, true).unwrap();
+
                     let id = self.next_transport_id();
                     let cmd_tx = cmd_tx.clone();
                     let met_tx = met_tx.clone();
