@@ -4,6 +4,7 @@ use std::thread;
 
 use net2::TcpStreamExt;
 
+use common::conversions::string_to_str;
 use options::MemcacheOptions;
 
 use super::DriverTask;
@@ -52,7 +53,8 @@ impl ListenerTask {
 
         // Start up a tcp server
         let (host, port) = self.options.get_bind_params();
-        let tcp_listener = TcpListener::bind(("localhost", port)).unwrap();
+        let tcp_listener = TcpListener::bind((string_to_str(&host), port))
+                               .unwrap();
 
         for stream in tcp_listener.incoming() {
             match stream {
