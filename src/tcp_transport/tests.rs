@@ -343,7 +343,7 @@ fn test_read_cmd_set_over_size() {
     let mut transport = TcpTransport::new(ts);
 
     let err = transport.read_cmd().unwrap_err();
-    assert_eq!(err, TcpTransportError::StreamReadError);
+    assert_eq!(err, TcpTransportError::CommandParseError);
 }
 
 #[test]
