@@ -1,3 +1,4 @@
+use std::str;
 use std::str::FromStr;
 
 use super::errors::TcpTransportError;
@@ -5,9 +6,10 @@ use super::typedefs::TcpTransportResult;
 
 
 pub fn as_string(bytes: &[u8]) -> TcpTransportResult<String> {
-    // TODO fix bogus conversion without checks
-    let st = String::from_utf8_lossy(bytes);
-    return Ok(st.to_string());
+    match str::from_utf8(bytes) {
+        Ok(st) => Ok(st.to_string()),
+        Err(_) => Err(TcpTransportError::Utf8Error),
+    }
 }
 
 pub fn as_number<N: FromStr>(bytes: &[u8]) -> TcpTransportResult<N> {

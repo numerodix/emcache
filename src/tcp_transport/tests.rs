@@ -12,47 +12,40 @@ use super::TcpTransport;
 use super::TcpTransportError;
 
 
-// Basic methods to consume the stream
-/*
+// Conversions
+
 #[test]
 fn test_as_string_ok() {
-    let ts = TestStream::new(vec![]);
-    let transport = TcpTransport::new(ts);
-
-    let string = transport.as_string(&[97, 32, 65]).unwrap();
+    // "a A"
+    let string = as_string(&[97, 32, 65]).unwrap();
     assert_eq!(string, "a A".to_string());
 }
 
 #[test]
 fn test_as_string_invalid() {
-    let ts = TestStream::new(vec![]);
-    let transport = TcpTransport::new(ts);
-
-    // Invalid utf8 bytes
-    let err = transport.as_string(&[97, 254, 255]).unwrap_err();
+    // "a" + two invalid utf8 bytes
+    let err = as_string(&[97, 254, 255]).unwrap_err();
     assert_eq!(err, TcpTransportError::Utf8Error);
 }
 
+
 #[test]
 fn test_as_number_ok() {
-    let ts = TestStream::new(vec![]);
-    let transport = TcpTransport::new(ts);
-
-    let bytes = "123".to_string().as_bytes();
-    let num = transport.as_number::<u32>(&bytes).unwrap();
+    let st = "123".to_string();
+    let num = as_number::<u32>(&st.as_bytes()).unwrap();
     assert_eq!(num, 123);
 }
 
 #[test]
 fn test_as_number_invalid() {
-    let ts = TestStream::new(vec![]);
-    let transport = TcpTransport::new(ts);
-
-    let bytes = "12 3".to_string().as_bytes();
-    let err = transport.as_number::<u32>(bytes).unwrap_err();
+    let st = "12 3".to_string();
+    let err = as_number::<u32>(&st.as_bytes()).unwrap_err();
     assert_eq!(err, TcpTransportError::NumberParseError);
 }
-*/
+
+
+// Basic methods to consume the stream
+
 #[test]
 fn test_read_byte() {
     let ts = TestStream::new(vec![93]);
@@ -60,7 +53,9 @@ fn test_read_byte() {
 
     let byte = transport.read_byte().unwrap();
     assert_eq!(byte, 93);
-}
+} // TODO empty?
+
+
 
 #[test]
 fn test_read_bytes() {
@@ -69,7 +64,7 @@ fn test_read_bytes() {
 
     let bytes = transport.read_bytes(3).unwrap();
     assert_eq!(bytes, [93, 13, 10]);
-}
+} // TODO failed?
 
 
 
