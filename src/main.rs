@@ -13,6 +13,7 @@ extern crate rand;
 extern crate rustc_serialize;
 extern crate time;
 
+mod common;
 mod metrics;
 mod options;
 mod orchestrator;

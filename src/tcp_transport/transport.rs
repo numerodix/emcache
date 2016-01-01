@@ -4,6 +4,7 @@ use std::io::Write;
 
 use bufstream::BufStream;
 
+use common::consts;
 use protocol::cmd::Cmd;
 use protocol::cmd::Get;
 use protocol::cmd::Resp;
@@ -106,7 +107,8 @@ impl<T: Read + Write> TcpTransport<T> {
                 panic!("Line too long to be read");
             }
 
-            let rv = self.stream.read(&mut self.line_buffer[cursor..cursor+1]);
+            let rv = self.stream
+                         .read(&mut self.line_buffer[cursor..cursor + 1]);
 
             // If there was an error or if there was nothing to read we bail
             if rv.is_err() || rv.unwrap() == 0 {
@@ -117,10 +119,11 @@ impl<T: Read + Write> TcpTransport<T> {
             self.stats.bytes_read += 1;
 
             // We found \r
-            if self.line_buffer[cursor] == 13 {
+            if self.line_buffer[cursor] == consts::BYTE_CARRIAGE_RETURN {
                 // Read one more, hoping it's \n
                 cursor += 1;
-                let rv = self.stream.read(&mut self.line_buffer[cursor..cursor+1]);
+                let rv = self.stream
+                             .read(&mut self.line_buffer[cursor..cursor + 1]);
 
                 // If there was an error or if there was nothing to read we bail
                 if rv.is_err() || rv.unwrap() == 0 {
@@ -131,7 +134,7 @@ impl<T: Read + Write> TcpTransport<T> {
                 self.stats.bytes_read += 1;
 
                 // Woops, it's not \n, we bail
-                if self.line_buffer[cursor] != 10 {
+                if self.line_buffer[cursor] != consts::BYTE_LINE_FEED {
                     return Err(TcpTransportError::StreamReadError);
                 }
 
@@ -174,7 +177,7 @@ impl<T: Read + Write> TcpTransport<T> {
 
         for i in self.line_cursor + 1..self.line_break_pos {
             // We found a space
-            if self.line_buffer[i] == 32 {
+            if self.line_buffer[i] == consts::BYTE_SPACE {
                 space_idx = i;
                 found = true;
                 break;
