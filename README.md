@@ -15,7 +15,7 @@ A toy implementation of memcached in Rust.
 * Numerous opportunities for optimization by eliminating data copying.
 * Fairly good test coverage.
 * No config file, logging or daemonization yet.
-* [Performance](https://github.com/numerodix/memcache.rs/blob/master/pyperf/ABOUT.md) is roughly 1/3 of memcached (which is async).
+* [Performance](https://github.com/numerodix/memcache.rs/blob/master/pyperf/ABOUT.md) is roughly 1/3 of memcached.
 * Currently (Dec 2015) only builds against rust-nightly due to linked-hash-map dependency.
 
 
