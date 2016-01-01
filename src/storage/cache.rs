@@ -13,6 +13,8 @@ struct CacheStats {
     pub evictions: u64, // Number of items removed to make space for new items
     pub get_hits: u64,
     pub get_misses: u64,
+    pub delete_misses: u64,
+    pub delete_hits: u64,
     pub reclaimed: u64, // Number of times an entry was reclaimed to store a new entry
     pub total_items: u64, // Total items stored since server started
 }
@@ -21,6 +23,8 @@ impl CacheStats {
     pub fn new() -> CacheStats {
         CacheStats {
             bytes: 0,
+            delete_hits: 0,
+            delete_misses: 0,
             evictions: 0,
             get_hits: 0,
             get_misses: 0,
@@ -126,16 +130,6 @@ impl Cache {
         value.atime + self.item_lifetime > time_now()
     }
 
-    // TODO expose as public api
-    fn remove(&mut self, key: &Key) -> CacheResult<()> {
-        let opt = self.storage.remove(key);
-
-        match opt {
-            Some(_) => Ok(()),
-            None => Err(CacheError::KeyNotFound),
-        }
-    }
-
 
     pub fn contains_key(&mut self, key: &Key) -> CacheResult<bool> {
         let result = self.get(key);
@@ -196,6 +190,31 @@ impl Cache {
 
     pub fn len(&self) -> usize {
         self.storage.len()
+    }
+
+    pub fn remove(&mut self, key: &Key) -> CacheResult<()> {
+        // Check key size
+        if !self.check_key_len(key) {
+            return Err(CacheError::KeyTooLong);
+        }
+
+        let opt = self.storage.remove(key);
+
+        match opt {
+            Some(value) => {
+                // Update stats
+                self.stats.delete_hits += 1;
+                self.stats.bytes_subtract(key, &value);
+
+                Ok(())
+            }
+            None => {
+                // Update stats
+                self.stats.delete_misses += 1;
+
+                Err(CacheError::KeyNotFound)
+            }
+        }
     }
 
     pub fn set(&mut self, key: Key, mut value: Value) -> CacheResult<()> {

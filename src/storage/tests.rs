@@ -30,8 +30,20 @@ fn test_set_one_key() {
     assert_eq!(rv.unwrap(), false);
 
     // Now fetch it
-    let value_found = cache.get(&key).unwrap();
-    assert_eq!(value, *value_found);
+    {
+        let value_found = cache.get(&key).unwrap();
+        assert_eq!(value, *value_found);
+    }
+
+    // Now remove it
+    cache.remove(&key).unwrap();
+
+    // Now test for it
+    let rv = cache.contains_key(&key);
+    assert_eq!(rv.unwrap(), false);
+
+    // Check the size of the cache
+    assert_eq!(0, cache.len());
 }
 
 #[test]
@@ -121,6 +133,24 @@ fn test_exceed_item_size_limits() {
     cache.with_key_maxlen(1)
          .with_value_maxlen(1);
 
+    // contains_key: use a key that is too long
+    {
+        let rv = cache.contains_key(&key!(1, 2));
+        assert_eq!(rv.unwrap_err(), CacheError::KeyTooLong);
+    }
+
+    // get: use a key that is too long
+    {
+        let rv = cache.get(&key!(1, 2));
+        assert_eq!(rv.unwrap_err(), CacheError::KeyTooLong);
+    }
+
+    // remove: use a key that is too long
+    {
+        let rv = cache.remove(&key!(1, 2));
+        assert_eq!(rv.unwrap_err(), CacheError::KeyTooLong);
+    }
+
     // set: use a key that is too long
     {
         let rv = cache.set(key!(1, 2), value!(9));
@@ -131,18 +161,6 @@ fn test_exceed_item_size_limits() {
     {
         let rv = cache.set(key!(1), value!(9, 8));
         assert_eq!(rv.unwrap_err(), CacheError::ValueTooLong);
-    }
-
-    // get: use a key that is too long
-    {
-        let rv = cache.get(&key!(1, 2));
-        assert_eq!(rv.unwrap_err(), CacheError::KeyTooLong);
-    }
-
-    // contains_key: use a key that is too long
-    {
-        let rv = cache.contains_key(&key!(1, 2));
-        assert_eq!(rv.unwrap_err(), CacheError::KeyTooLong);
     }
 }
 
@@ -232,6 +250,8 @@ fn test_metrics() {
     assert_eq!(cache.get_stats().evictions, 0);
     assert_eq!(cache.get_stats().get_hits, 0);
     assert_eq!(cache.get_stats().get_misses, 0);
+    assert_eq!(cache.get_stats().delete_hits, 0);
+    assert_eq!(cache.get_stats().delete_misses, 0);
     assert_eq!(cache.get_stats().total_items, 1);
 
     // Set a different key, evicting the first
@@ -240,6 +260,8 @@ fn test_metrics() {
     assert_eq!(cache.get_stats().evictions, 1);
     assert_eq!(cache.get_stats().get_hits, 0);
     assert_eq!(cache.get_stats().get_misses, 0);
+    assert_eq!(cache.get_stats().delete_hits, 0);
+    assert_eq!(cache.get_stats().delete_misses, 0);
     assert_eq!(cache.get_stats().total_items, 2);
 
     // Re-set the key with a different value
@@ -248,6 +270,8 @@ fn test_metrics() {
     assert_eq!(cache.get_stats().evictions, 1);
     assert_eq!(cache.get_stats().get_hits, 0);
     assert_eq!(cache.get_stats().get_misses, 0);
+    assert_eq!(cache.get_stats().delete_hits, 0);
+    assert_eq!(cache.get_stats().delete_misses, 0);
     assert_eq!(cache.get_stats().total_items, 3);
 
     // Retrieve the key successfully
@@ -256,6 +280,8 @@ fn test_metrics() {
     assert_eq!(cache.get_stats().evictions, 1);
     assert_eq!(cache.get_stats().get_hits, 1);
     assert_eq!(cache.get_stats().get_misses, 0);
+    assert_eq!(cache.get_stats().delete_hits, 0);
+    assert_eq!(cache.get_stats().delete_misses, 0);
     assert_eq!(cache.get_stats().total_items, 3);
 
     // Test for the key successfully
@@ -264,6 +290,8 @@ fn test_metrics() {
     assert_eq!(cache.get_stats().evictions, 1);
     assert_eq!(cache.get_stats().get_hits, 2);
     assert_eq!(cache.get_stats().get_misses, 0);
+    assert_eq!(cache.get_stats().delete_hits, 0);
+    assert_eq!(cache.get_stats().delete_misses, 0);
     assert_eq!(cache.get_stats().total_items, 3);
 
     // Retrieve a key that doesn't exist
@@ -272,6 +300,8 @@ fn test_metrics() {
     assert_eq!(cache.get_stats().evictions, 1);
     assert_eq!(cache.get_stats().get_hits, 2);
     assert_eq!(cache.get_stats().get_misses, 1);
+    assert_eq!(cache.get_stats().delete_hits, 0);
+    assert_eq!(cache.get_stats().delete_misses, 0);
     assert_eq!(cache.get_stats().total_items, 3);
 
     // Create an expired value
@@ -284,6 +314,8 @@ fn test_metrics() {
     assert_eq!(cache.get_stats().evictions, 2);
     assert_eq!(cache.get_stats().get_hits, 2);
     assert_eq!(cache.get_stats().get_misses, 1);
+    assert_eq!(cache.get_stats().delete_hits, 0);
+    assert_eq!(cache.get_stats().delete_misses, 0);
     assert_eq!(cache.get_stats().total_items, 4);
 
     // Retrieve expired key
@@ -292,5 +324,37 @@ fn test_metrics() {
     assert_eq!(cache.get_stats().evictions, 2);
     assert_eq!(cache.get_stats().get_hits, 2);
     assert_eq!(cache.get_stats().get_misses, 2);
+    assert_eq!(cache.get_stats().delete_hits, 0);
+    assert_eq!(cache.get_stats().delete_misses, 0);
     assert_eq!(cache.get_stats().total_items, 4);
+
+    // Set another key
+    cache.set(key!(21), value!(12)).unwrap();
+    assert_eq!(cache.get_stats().bytes, 2);
+    assert_eq!(cache.get_stats().evictions, 2);
+    assert_eq!(cache.get_stats().get_hits, 2);
+    assert_eq!(cache.get_stats().get_misses, 2);
+    assert_eq!(cache.get_stats().delete_hits, 0);
+    assert_eq!(cache.get_stats().delete_misses, 0);
+    assert_eq!(cache.get_stats().total_items, 5);
+
+    // Delete it
+    cache.remove(&key!(21)).unwrap();
+    assert_eq!(cache.get_stats().bytes, 0);
+    assert_eq!(cache.get_stats().evictions, 2);
+    assert_eq!(cache.get_stats().get_hits, 2);
+    assert_eq!(cache.get_stats().get_misses, 2);
+    assert_eq!(cache.get_stats().delete_hits, 1);
+    assert_eq!(cache.get_stats().delete_misses, 0);
+    assert_eq!(cache.get_stats().total_items, 5);
+
+    // Try to delete it again
+    cache.remove(&key!(21)).unwrap_err();
+    assert_eq!(cache.get_stats().bytes, 0);
+    assert_eq!(cache.get_stats().evictions, 2);
+    assert_eq!(cache.get_stats().get_hits, 2);
+    assert_eq!(cache.get_stats().get_misses, 2);
+    assert_eq!(cache.get_stats().delete_hits, 1);
+    assert_eq!(cache.get_stats().delete_misses, 1);
+    assert_eq!(cache.get_stats().total_items, 5);
 }
