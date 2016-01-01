@@ -109,6 +109,9 @@ impl<T: Read + Write> TcpTransport<T> {
                 return Err(TcpTransportError::StreamReadError);
             }
 
+            // Update stats
+            self.stats.bytes_read += 1;
+
             // We found \r
             if self.line_buffer[cursor] == 13 {
                 // Read one more, hoping it's \n
@@ -119,6 +122,9 @@ impl<T: Read + Write> TcpTransport<T> {
                 if rv.is_err() || rv.unwrap() == 0 {
                     return Err(TcpTransportError::StreamReadError);
                 }
+
+                // Update stats
+                self.stats.bytes_read += 1;
 
                 // Woops, it's not \n, we bail
                 if self.line_buffer[cursor] != 10 {
