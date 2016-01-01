@@ -74,8 +74,7 @@ impl Driver {
         // Update stats
         self.stats.cmd_get += 1;
 
-        // XXX get rid of all the cloning
-        let get_clone = get.clone();
+        let key_str = get.key.clone();
         let key = Key::new(get.key.into_bytes());
 
         let rv = self.cache.get(&key);
@@ -83,7 +82,7 @@ impl Driver {
         match rv {
             Ok(value) => {
                 Resp::Value(CmdValue {
-                    key: get_clone.key,
+                    key: key_str,
                     data: value.item.clone(),
                 })
             }
