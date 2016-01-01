@@ -1,7 +1,6 @@
 use std::cmp;
 use std::io::Read;
 use std::io::Write;
-use std::str::FromStr;
 
 use bufstream::BufStream;
 
@@ -10,26 +9,11 @@ use protocol::cmd::Get;
 use protocol::cmd::Resp;
 use protocol::cmd::Set;
 
+use super::conversions::as_number;
+use super::conversions::as_string;
 use super::errors::TcpTransportError;
 use super::stats::TransportStats;
 use super::typedefs::TcpTransportResult;
-
-
-
-pub fn _as_string(bytes: &[u8]) -> TcpTransportResult<String> {
-    // TODO fix bogus conversion without checks
-    let st = String::from_utf8_lossy(bytes);
-    return Ok(st.to_string());
-}
-
-pub fn _as_number<N: FromStr>(bytes: &[u8]) -> TcpTransportResult<N> {
-    let string = try!(_as_string(bytes));
-    match string.parse::<N>() {
-        Ok(num) => Ok(num),
-        Err(_) => Err(TcpTransportError::NumberParseError),
-    }
-}
-
 
 
 pub struct TcpTransport<T: Read + Write> {
@@ -84,29 +68,6 @@ impl<T: Read + Write> TcpTransport<T> {
     }
 
     // Basic bytes manipulation and reading from the stream
-
-    pub fn as_string(&self, bytes: &[u8]) -> TcpTransportResult<String> {
-        // TODO fix bogus conversion without checks
-        let st = String::from_utf8_lossy(bytes);
-        return Ok(st.to_string());
-
-/*
-        match String::from_utf8_lossy(bytes) {
-            Ok(string) => Ok(string.to_string()),
-            Err(_) => Err(TcpTransportError::Utf8Error),
-        }
-*/
-    }
-
-    pub fn as_number<N: FromStr>(&self,
-                                 bytes: &[u8])
-                                 -> TcpTransportResult<N> {
-        let string = try!(self.as_string(bytes));
-        match string.parse::<N>() {
-            Ok(num) => Ok(num),
-            Err(_) => Err(TcpTransportError::NumberParseError),
-        }
-    }
 
     pub fn read_byte(&mut self) -> TcpTransportResult<u8> {
         let mut bytes = [0; 1];
@@ -262,7 +223,7 @@ impl<T: Read + Write> TcpTransport<T> {
         // parse the key
         let key_str = {
             let key = try!(self.line_parse_word());
-            try!(_as_string(key))
+            try!(as_string(key))
         };
 
         // We expect to find the end of the line now
@@ -280,28 +241,28 @@ impl<T: Read + Write> TcpTransport<T> {
         // parse the key + remove trailing space
         let key_str = {
             let key = try!(self.line_parse_word());
-            try!(_as_string(key))
+            try!(as_string(key))
         };
         try!(self.line_remove_first_char());
 
         // parse the flags + remove trailing space
         let flags_num = {
             let flags = try!(self.line_parse_word());
-            try!(_as_number::<u16>(flags))
+            try!(as_number::<u16>(flags))
         };
         try!(self.line_remove_first_char());
 
         // parse the exptime + remove trailing space
         let exptime_num = {
             let exptime = try!(self.line_parse_word());
-            try!(_as_number::<u32>(exptime))
+            try!(as_number::<u32>(exptime))
         };
         try!(self.line_remove_first_char());
 
         // parse the bytelen
         let bytelen_num = {
             let bytelen = try!(self.line_parse_word());
-            try!(_as_number::<u64>(bytelen))
+            try!(as_number::<u64>(bytelen))
         };
 
         // We know the byte length, so now read the value
@@ -328,7 +289,7 @@ impl<T: Read + Write> TcpTransport<T> {
 
         let keyword_str = {
             let keyword = try!(self.line_parse_word());
-            try!(_as_string(keyword))
+            try!(as_string(keyword))
         };
 
         if keyword_str == "get" {

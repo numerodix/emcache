@@ -1,4 +1,5 @@
 // Declare sub modules
+pub mod conversions;
 pub mod errors;
 pub mod stats;
 pub mod transport;

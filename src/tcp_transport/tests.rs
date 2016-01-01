@@ -6,12 +6,14 @@ use protocol::cmd::Stat;
 use protocol::cmd::Value;
 use testlib::test_stream::TestStream;
 
+use super::conversions::as_number;
+use super::conversions::as_string;
 use super::TcpTransport;
 use super::TcpTransportError;
 
 
 // Basic methods to consume the stream
-
+/*
 #[test]
 fn test_as_string_ok() {
     let ts = TestStream::new(vec![]);
@@ -30,7 +32,7 @@ fn test_as_string_invalid() {
     let err = transport.as_string(&[97, 254, 255]).unwrap_err();
     assert_eq!(err, TcpTransportError::Utf8Error);
 }
-/*
+
 #[test]
 fn test_as_number_ok() {
     let ts = TestStream::new(vec![]);
