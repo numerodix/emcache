@@ -178,7 +178,6 @@ impl<T: Read + Write> TcpTransport<T> {
         }
 
         // If we didn't find a space then the whole line is a word
-        // TODO test for this
         if !found {
             space_idx = self.line_break_pos;
         }
