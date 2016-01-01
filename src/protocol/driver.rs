@@ -118,6 +118,8 @@ impl Driver {
         let cmd_touch = self.stats.cmd_touch.to_string();
         let get_hits = storage.get_hits.to_string();
         let get_misses = storage.get_misses.to_string();
+        let delete_hits = storage.delete_hits.to_string();
+        let delete_misses = storage.delete_misses.to_string();
         let bytes_read = self.transport_stats.bytes_read.to_string();
         let bytes_written = self.transport_stats.bytes_written.to_string();
         let limit_maxbytes = self.cache.capacity.to_string();
@@ -136,6 +138,8 @@ impl Driver {
         let st_cmd_touch = Stat::new("cmd_touch", cmd_touch);
         let st_get_hits = Stat::new("get_hits", get_hits);
         let st_get_misses = Stat::new("get_misses", get_misses);
+        let st_delete_hits = Stat::new("delete_hits", delete_hits);
+        let st_delete_misses = Stat::new("delete_misses", delete_misses);
         let st_bytes_read = Stat::new("bytes_read", bytes_read);
         let st_bytes_written = Stat::new("bytes_written", bytes_written);
         let st_limit_maxbytes = Stat::new("limit_maxbytes", limit_maxbytes);
@@ -154,6 +158,8 @@ impl Driver {
                          st_cmd_touch,
                          st_get_hits,
                          st_get_misses,
+                         st_delete_hits,
+                         st_delete_misses,
                          st_bytes_read,
                          st_bytes_written,
                          st_limit_maxbytes,
