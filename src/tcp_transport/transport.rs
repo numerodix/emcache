@@ -85,6 +85,10 @@ impl<T: Read + Write> TcpTransport<T> {
                 // Update stats
                 self.stats.bytes_read += n as u64;
 
+                if (n as u64) < len {
+                    bytes.truncate(n);
+                }
+
                 Ok(bytes)
             }
             _ => Err(TcpTransportError::StreamReadError),

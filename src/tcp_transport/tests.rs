@@ -54,7 +54,17 @@ fn test_read_byte() {
 
     let byte = transport.read_byte().unwrap();
     assert_eq!(byte, 93);
-} // TODO empty?
+}
+
+#[test]
+fn test_read_byte_empty() {
+    // ""
+    let ts = TestStream::new(vec![]);
+    let mut transport = TcpTransport::new(ts);
+
+    let err = transport.read_byte().unwrap_err();
+    assert_eq!(err, TcpTransportError::StreamReadError);
+}
 
 
 
@@ -66,7 +76,17 @@ fn test_read_bytes() {
 
     let bytes = transport.read_bytes(3).unwrap();
     assert_eq!(bytes, [93, 13, 10]);
-} // TODO failed?
+}
+
+#[test]
+fn test_read_bytes_too_few() {
+    // "a"
+    let ts = TestStream::new(vec![93]);
+    let mut transport = TcpTransport::new(ts);
+
+    let bytes = transport.read_bytes(2).unwrap();
+    assert_eq!(bytes, [93]);
+}
 
 
 
