@@ -6,10 +6,10 @@ use protocol::cmd::Stat;
 use protocol::cmd::Value;
 use testlib::test_stream::TestStream;
 
-use super::conversions::as_number;
-use super::conversions::as_string;
 use super::TcpTransport;
 use super::TcpTransportError;
+use super::conversions::as_number;
+use super::conversions::as_string;
 
 
 // Conversions
