@@ -48,6 +48,7 @@ fn test_as_number_invalid() {
 
 #[test]
 fn test_read_byte() {
+    // "a"
     let ts = TestStream::new(vec![93]);
     let mut transport = TcpTransport::new(ts);
 
@@ -59,6 +60,7 @@ fn test_read_byte() {
 
 #[test]
 fn test_read_bytes() {
+    // "a\r\n"
     let ts = TestStream::new(vec![93, 13, 10]);
     let mut transport = TcpTransport::new(ts);
 
@@ -70,6 +72,7 @@ fn test_read_bytes() {
 
 #[test]
 fn test_preread_line_zero_char() {
+    // "\r\n"
     let ts = TestStream::new(vec![13, 10]);
     let mut transport = TcpTransport::new(ts);
 
@@ -80,6 +83,7 @@ fn test_preread_line_zero_char() {
 
 #[test]
 fn test_preread_line_one_char() {
+    // "a\r\n"
     let ts = TestStream::new(vec![93, 13, 10]);
     let mut transport = TcpTransport::new(ts);
 
@@ -90,6 +94,7 @@ fn test_preread_line_one_char() {
 
 #[test]
 fn test_preread_line_no_newline() {
+    // "ab"
     let ts = TestStream::new(vec![93, 94]);
     let mut transport = TcpTransport::new(ts);
 
@@ -97,9 +102,30 @@ fn test_preread_line_no_newline() {
     assert_eq!([93, 94, 0, 0], &transport.line_buffer[..4]);
 }
 
+#[test]
+fn test_preread_line_invalid_newline_marker() {
+    // "a\r"
+    let ts = TestStream::new(vec![93, 13]);
+    let mut transport = TcpTransport::new(ts);
+
+    let err = transport.preread_line().unwrap_err();
+    assert_eq!(err, TcpTransportError::StreamReadError);
+}
+
+#[test]
+#[should_panic]
+fn test_preread_line_too_long() {
+    // "a" * 4096
+    let ts = TestStream::new(vec![93; 4096]);
+    let mut transport = TcpTransport::new(ts);
+
+    transport.preread_line();
+}
+
 
 #[test]
 fn test_line_remove_first_char_ok() {
+    // "ab\r\n"
     let ts = TestStream::new(vec![93, 94, 13, 10]);
     let mut transport = TcpTransport::new(ts);
 
@@ -111,6 +137,7 @@ fn test_line_remove_first_char_ok() {
 
 #[test]
 fn test_line_remove_first_char_fails() {
+    // "\r\n"
     let ts = TestStream::new(vec![13, 10]);
     let mut transport = TcpTransport::new(ts);
 
@@ -122,6 +149,7 @@ fn test_line_remove_first_char_fails() {
 
 #[test]
 fn test_line_parse_word_ok() {
+    // "ab a\r\n"
     let ts = TestStream::new(vec![93, 94, 32, 93, 13, 10]);
     let mut transport = TcpTransport::new(ts);
 
@@ -135,6 +163,7 @@ fn test_line_parse_word_ok() {
 
 #[test]
 fn test_parse_word_whole() {
+    // "\1\2\3\3\4\11\r\n"
     let ts = TestStream::new(vec![1, 2, 3, 3, 4, 11, 13, 10]);
     let mut transport = TcpTransport::new(ts);
 
@@ -149,6 +178,7 @@ fn test_parse_word_whole() {
 
 #[test]
 fn test_line_parse_word_fails() {
+    // " ab a\r\n"
     let ts = TestStream::new(vec![32, 93, 94, 32, 93, 13, 10]);
     let mut transport = TcpTransport::new(ts);
 
@@ -158,72 +188,6 @@ fn test_line_parse_word_fails() {
     assert_eq!(0, transport.line_cursor);
 }
 
-
-
-/*
-#[test]
-fn test_read_line_ok() {
-    let ts = TestStream::new(vec![93, 13, 10]);
-    let mut transport = TcpTransport::new(ts);
-
-    let line = transport.read_line(3).unwrap();
-    assert_eq!(line, [93]);
-}
-
-#[test]
-fn test_read_line_invalid_newline_marker() {
-    let ts = TestStream::new(vec![93, 10]);
-    let mut transport = TcpTransport::new(ts);
-
-    let err = transport.read_line(2).unwrap_err();
-    assert_eq!(err, TcpTransportError::LineReadError);
-}
-
-#[test]
-fn test_read_line_too_long() {
-    let ts = TestStream::new(vec![93, 1, 2, 3, 13, 10]);
-    let mut transport = TcpTransport::new(ts);
-
-    let err = transport.read_line(5).unwrap_err();
-    assert_eq!(err, TcpTransportError::LineReadError);
-}
-
-#[test]
-fn test_remove_first_char() {
-    let ts = TestStream::new(vec![]);
-    let transport = TcpTransport::new(ts);
-
-    let mut bytes = vec![1];
-    let rv = transport.remove_first_char(&mut bytes);
-    assert!(rv.is_ok());
-
-    let mut bytes = vec![];
-    let rv = transport.remove_first_char(&mut bytes);
-    assert!(rv.is_err());
-}
-
-#[test]
-fn test_parse_word_split() {
-    let ts = TestStream::new(vec![1, 2, 32, 3, 4, 11, 32]);
-    let mut transport = TcpTransport::new(ts);
-
-    let bytes = transport.read_bytes(7).unwrap();
-    let (word, rest) = transport.parse_word(bytes).unwrap();
-    assert_eq!(word, [1, 2]);
-    assert_eq!(rest, [32, 3, 4, 11, 32]);
-}
-
-#[test]
-fn test_parse_word_whole() {
-    let ts = TestStream::new(vec![1, 2, 3, 3, 4, 11]);
-    let mut transport = TcpTransport::new(ts);
-
-    let bytes = transport.read_bytes(6).unwrap();
-    let (word, rest) = transport.parse_word(bytes).unwrap();
-    assert_eq!(word, [1, 2, 3, 3, 4, 11]);
-    assert_eq!(rest, []);
-}
-*/
 
 // Basic methods to produce the stream
 

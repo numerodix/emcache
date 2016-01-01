@@ -35,7 +35,7 @@ impl<T: Read + Write> TcpTransport<T> {
 
             // Used to read the first line of a command, which includes a
             // keyword, a key, flags and a bytecount. We don't expect it to be
-            // much longer than the key itself. If it is ... XXX
+            // much longer than the key itself. If it is we panic...
             line_buffer: vec![0; 250 + 100],
             line_cursor: 0,
             line_break_pos: 0,
@@ -103,6 +103,11 @@ impl<T: Read + Write> TcpTransport<T> {
         // We keep reading one byte at a time into line_buffer, looking for
         // a line terminator \r\n. The underlying stream is buffered.
         loop {
+            // Make sure we don't go over bounds
+            if cursor >= self.line_buffer.len() {
+                panic!("Line too long to be read");
+            }
+
             let rv = self.stream.read(&mut self.line_buffer[cursor..cursor+1]);
 
             // If there was an error or if there was nothing to read we bail
