@@ -10,8 +10,8 @@ parallelism.
 
 ### Set/get a constant key
 
-Single threaded client, on the same machine.
-
+* single threaded client
+* connecting to 127.0.0.1
 * key: 'x'
 * value: 'abc'
 
@@ -28,8 +28,8 @@ memcache.rs:
 
 ### Fill cache to a certain percentage
 
-Using 4 threads.
-
+* using 4 client threads
+* connecting to 127.0.0.1
 * key: 10 printable chars, random
 * value: 100-1000 bytes, random
 
@@ -39,4 +39,4 @@ memcached:
 
 memcache.rs:
 
-* 7.2k items/s - 4.0mb/s
+* 21.3k items/s - 11.9mb/s
