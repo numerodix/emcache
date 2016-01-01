@@ -46,7 +46,8 @@ fn bench_transport_write_resp_value(b: &mut Bencher) {
         let ts = TestStream::new(vec![]);
         let mut transport = TcpTransport::new(ts);
 
-        let resp = Resp::Value(Value::new("x", "abc".to_string().into_bytes()));
+        let resp = Resp::Value(Value::new("x",
+                                          "abc".to_string().into_bytes()));
         transport.write_resp(&resp).unwrap();
         let expected = "VALUE x 0 3\r\nabc\r\n".to_string().into_bytes();
         assert_eq!(transport.get_stream().outgoing, expected);

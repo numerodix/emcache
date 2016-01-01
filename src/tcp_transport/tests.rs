@@ -69,6 +69,87 @@ fn test_read_bytes() {
     assert_eq!(bytes, [93, 13, 10]);
 }
 
+
+
+#[test]
+fn test_preread_line_zero_char() {
+    let ts = TestStream::new(vec![13, 10]);
+    let mut transport = TcpTransport::new(ts);
+
+    transport.preread_line().unwrap();
+    assert_eq!(0, transport.line_break_pos);
+    assert_eq!([13, 10, 0, 0], &transport.line_buffer[..4]);
+}
+
+#[test]
+fn test_preread_line_one_char() {
+    let ts = TestStream::new(vec![93, 13, 10]);
+    let mut transport = TcpTransport::new(ts);
+
+    transport.preread_line().unwrap();
+    assert_eq!(1, transport.line_break_pos);
+    assert_eq!([93, 13, 10, 0], &transport.line_buffer[..4]);
+}
+
+#[test]
+fn test_preread_line_no_newline() {
+    let ts = TestStream::new(vec![93, 94]);
+    let mut transport = TcpTransport::new(ts);
+
+    transport.preread_line().unwrap_err();
+    assert_eq!([93, 94, 0, 0], &transport.line_buffer[..4]);
+}
+
+
+#[test]
+fn test_line_remove_first_char_ok() {
+    let ts = TestStream::new(vec![93, 94, 13, 10]);
+    let mut transport = TcpTransport::new(ts);
+
+    transport.preread_line().unwrap();
+    transport.line_remove_first_char().unwrap();
+    assert_eq!(1, transport.line_cursor);
+    assert_eq!(2, transport.line_break_pos);
+}
+
+#[test]
+fn test_line_remove_first_char_fails() {
+    let ts = TestStream::new(vec![13, 10]);
+    let mut transport = TcpTransport::new(ts);
+
+    transport.preread_line().unwrap();
+    // There's nothing left to read before the linebreak
+    transport.line_remove_first_char().unwrap_err();
+}
+
+
+#[test]
+fn test_line_parse_word_ok() {
+    let ts = TestStream::new(vec![93, 94, 32, 93, 13, 10]);
+    let mut transport = TcpTransport::new(ts);
+
+    transport.preread_line().unwrap();
+    {
+        let word = transport.line_parse_word().unwrap();
+        assert_eq!(&[93, 94], word);
+    }
+    assert_eq!(2, transport.line_cursor);
+}
+
+#[test]
+fn test_line_parse_word_fails() {
+    let ts = TestStream::new(vec![32, 93, 94, 32, 93, 13, 10]);
+    let mut transport = TcpTransport::new(ts);
+
+    transport.preread_line().unwrap();
+    // can't, line starts with a space
+    transport.line_parse_word().unwrap_err();
+    assert_eq!(0, transport.line_cursor);
+}
+
+
+
+
 #[test]
 fn test_read_line_ok() {
     let ts = TestStream::new(vec![93, 13, 10]);

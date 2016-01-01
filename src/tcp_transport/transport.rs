@@ -1,3 +1,4 @@
+use std::cmp;
 use std::io::Read;
 use std::io::Write;
 use std::str::FromStr;
@@ -17,14 +18,27 @@ use super::typedefs::TcpTransportResult;
 pub struct TcpTransport<T: Read + Write> {
     stream: BufStream<T>,
 
-    stats: TransportStats,
+    pub line_buffer: Vec<u8>,
+    pub line_cursor: usize,
+    pub line_break_pos: usize,
+
     key_maxlen: u64,
+
+    stats: TransportStats,
 }
 
 impl<T: Read + Write> TcpTransport<T> {
     pub fn new(stream: T) -> TcpTransport<T> {
         TcpTransport {
             key_maxlen: 250, // memcached standard
+
+            // Used to read the first line of a command, which includes a
+            // keyword, a key, flags and a bytecount. We don't expect it to be
+            // much longer than the key itself. If it is ... XXX
+            line_buffer: vec![0; 250 + 100],
+            line_cursor: 0,
+            line_break_pos: 0,
+
             stats: TransportStats::new(),
             stream: BufStream::new(stream),
         }
@@ -94,9 +108,38 @@ impl<T: Read + Write> TcpTransport<T> {
                 self.stats.bytes_read += n as u64;
 
                 Ok(bytes)
-            },
+            }
             _ => Err(TcpTransportError::StreamReadError),
         }
+    }
+
+    pub fn preread_line(&mut self) -> TcpTransportResult<()> {
+        // Fill our line buffer
+        let rv = self.stream.read(&mut self.line_buffer);
+
+        // In case of error abort
+        if rv.is_err() {
+            return Err(TcpTransportError::StreamReadError);
+        }
+
+        // Now figure out where \r\n is
+        let mut found = false;
+        for (i, byte) in self.line_buffer.iter().enumerate() {
+            // We've found \r
+            if *byte == 13 {
+                self.line_cursor = 0;
+                self.line_break_pos = i;
+                found = true;
+                break;
+            }
+        }
+
+        // If we didn't find it that's bad
+        if !found {
+            return Err(TcpTransportError::StreamReadError);
+        }
+
+        Ok(())
     }
 
     pub fn read_line(&mut self, maxlen: usize) -> TcpTransportResult<Vec<u8>> {
@@ -124,6 +167,16 @@ impl<T: Read + Write> TcpTransport<T> {
         }
     }
 
+    pub fn line_remove_first_char(&mut self) -> TcpTransportResult<()> {
+        match self.line_cursor < self.line_break_pos {
+            true => {
+                self.line_cursor += 1;
+                Ok(())
+            }
+            false => Err(TcpTransportError::LineReadError),
+        }
+    }
+
     pub fn remove_first_char(&self,
                              bytes: &mut Vec<u8>)
                              -> TcpTransportResult<()> {
@@ -134,6 +187,35 @@ impl<T: Read + Write> TcpTransport<T> {
             }
             false => Err(TcpTransportError::StreamReadError),
         }
+    }
+
+    pub fn line_parse_word(&mut self) -> TcpTransportResult<&[u8]> {
+        // If the very first char is a space then our caller is out of sync
+        if self.line_buffer[self.line_cursor] == 32 {
+            return Err(TcpTransportError::StreamReadError);
+        }
+
+        let mut space_idx = 0;
+        let mut found = false;
+
+        for i in self.line_cursor + 1..self.line_break_pos - 1 {
+            // We found a space
+            if self.line_buffer[i] == 32 {
+                space_idx = i;
+                found = true;
+                break;
+            }
+        }
+
+        if !found {
+            return Err(TcpTransportError::StreamReadError);
+        }
+
+        // Advance the cursor, we've now "consumed" the word we found
+        let word = &self.line_buffer[self.line_cursor..space_idx];
+        self.line_cursor = space_idx;
+
+        Ok(word)
     }
 
     pub fn parse_word(&self,
@@ -192,7 +274,7 @@ impl<T: Read + Write> TcpTransport<T> {
 
                 Ok(cnt_written)
             }
-            Err(_) => Err(TcpTransportError::StreamWriteError)
+            Err(_) => Err(TcpTransportError::StreamWriteError),
         }
     }
 
