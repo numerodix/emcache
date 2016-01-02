@@ -7,7 +7,7 @@ A toy implementation of memcached in Rust.
 
 ## Features and todo list
 
-* Minimalistic implementation of GET, SET and STATS commands.
+* Minimalistic implementation of the [memcached protocol](https://github.com/numerodix/memcache.rs/blob/master/doc/Protocol_support.md).
 * Bounded cache with LRU behavior.
 * Cache item lifetime can be controlled both globally and on a per-item basis.
 * Concurrency model based on thread-per-connection.
