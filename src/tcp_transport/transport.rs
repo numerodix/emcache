@@ -8,6 +8,7 @@ use protocol::cmd::Cmd;
 use protocol::cmd::Get;
 use protocol::cmd::Resp;
 use protocol::cmd::Set;
+use protocol::cmd::SetInstr;
 
 use super::conversions::as_number;
 use super::conversions::as_string;
@@ -298,6 +299,7 @@ impl<T: Read + Write> TcpTransport<T> {
 
         // We got all the values we expected and there is nothing left
         return Ok(Cmd::Set(Set {
+            instr: SetInstr::Set,
             key: key_str,
             flags: flags_num,
             exptime: exptime_num,

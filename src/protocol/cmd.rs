@@ -16,22 +16,36 @@ impl Get {
 
 
 #[derive(Debug, PartialEq, Clone)]
+pub enum SetInstr {
+    Set, // Store an item
+    Add, // Store only if the key does not yet exist
+    Replace, // Store only if the key does already exist
+    Append, // Append the data for an existing item
+    Prepend, // Prepend the data for an existing item
+    Cas, // Compare and swap
+}
+
+
+#[derive(Debug, PartialEq, Clone)]
 pub struct Set {
-    pub key: String, // alphanumeric characters
-    pub flags: u16, // arbitrary bit pattern chosen by the client
-    pub exptime: u32, // relative (secs) or absolute (unixtime) expiry time
-    pub data: Vec<u8>, // binary data
-    pub noreply: bool, // indicates whether the server should reply to the set
+    pub instr: SetInstr, // Instruction to perform
+    pub key: String, // Alphanumeric characters
+    pub flags: u16, // Arbitrary bit pattern chosen by the client
+    pub exptime: u32, // Relative (secs) or absolute (unixtime) expiry time
+    pub data: Vec<u8>, // Binary data
+    pub noreply: bool, // Indicates whether the server should reply to the set
 }
 
 impl Set {
-    pub fn new(key: &str,
+    pub fn new(instr: SetInstr,
+               key: &str,
                flags: u16,
                exptime: u32,
                data: Vec<u8>,
                noreply: bool)
                -> Set {
         Set {
+            instr: instr,
             key: key.to_string(),
             flags: flags,
             exptime: exptime,

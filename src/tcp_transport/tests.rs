@@ -2,6 +2,7 @@ use protocol::cmd::Cmd;
 use protocol::cmd::Get;
 use protocol::cmd::Resp;
 use protocol::cmd::Set;
+use protocol::cmd::SetInstr;
 use protocol::cmd::Stat;
 use protocol::cmd::Value;
 use testlib::test_stream::TestStream;
@@ -308,7 +309,8 @@ fn test_read_cmd_set_ok() {
     let mut transport = TcpTransport::new(ts);
 
     let cmd = transport.read_cmd().unwrap();
-    assert_eq!(cmd, Cmd::Set(Set::new("x", 15, 0, vec![97, 98, 99], false)));
+    let exp = Set::new(SetInstr::Set, "x", 15, 0, vec![97, 98, 99], false);
+    assert_eq!(cmd, Cmd::Set(exp));
 }
 
 #[test]
@@ -318,7 +320,8 @@ fn test_read_cmd_set_noreply_ok() {
     let mut transport = TcpTransport::new(ts);
 
     let cmd = transport.read_cmd().unwrap();
-    assert_eq!(cmd, Cmd::Set(Set::new("x", 15, 0, vec![97, 98, 99], true)));
+    let exp = Set::new(SetInstr::Set, "x", 15, 0, vec![97, 98, 99], true);
+    assert_eq!(cmd, Cmd::Set(exp));
 }
 
 #[test]
@@ -450,7 +453,9 @@ fn test_write_resp_value() {
     let ts = TestStream::new(vec![]);
     let mut transport = TcpTransport::new(ts);
 
-    let resp = Resp::Value(Value::new("x", 15, "abc".to_string().into_bytes()));
+    let resp = Resp::Value(Value::new("x",
+                                      15,
+                                      "abc".to_string().into_bytes()));
     transport.write_resp(&resp).unwrap();
     let expected = "VALUE x 15 3\r\nabc\r\nEND\r\n".to_string().into_bytes();
     assert_eq!(transport.get_stream().outgoing, expected);

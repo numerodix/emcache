@@ -8,6 +8,7 @@ use super::cmd::Cmd;
 use super::cmd::Get;
 use super::cmd::Resp;
 use super::cmd::Set;
+use super::cmd::SetInstr;
 use super::cmd::Stat;
 use super::cmd::Value;
 
@@ -37,7 +38,8 @@ fn test_cmd_set_and_get_a_key() {
     assert_eq!(resp, Resp::Error);
 
     // Set a key
-    let cmd = Cmd::Set(Set::new(key_name, 15, 0, blob.clone(), false));
+    let set = Set::new(SetInstr::Set, key_name, 15, 0, blob.clone(), false);
+    let cmd = Cmd::Set(set);
     let resp = driver.run(cmd);
     assert_eq!(resp, Resp::Stored);
 
@@ -48,7 +50,8 @@ fn test_cmd_set_and_get_a_key() {
     assert_eq!(blob, get_resp_value(resp).data);
 
     // Set a key with noreply flag
-    let cmd = Cmd::Set(Set::new("y", 15, 0, blob.clone(), true));
+    let set = Set::new(SetInstr::Set, "y", 15, 0, blob.clone(), true);
+    let cmd = Cmd::Set(set);
     let resp = driver.run(cmd);
     assert_eq!(resp, Resp::Empty);
 
@@ -65,7 +68,8 @@ fn test_cmd_stats() {
     let mut driver = Driver::new(cache);
 
     // Set a key
-    let cmd = Cmd::Set(Set::new("x", 0, 0, vec![8, 9], false));
+    let set = Set::new(SetInstr::Set, "x", 0, 0, vec![8, 9], false);
+    let cmd = Cmd::Set(set);
     let resp = driver.run(cmd);
     assert_eq!(resp, Resp::Stored);
 
@@ -130,7 +134,8 @@ fn test_cmd_relative_exptime() {
     let blob = vec![1, 2, 3];
 
     // Set a key with exptime of 1 second
-    let cmd = Cmd::Set(Set::new(key_name, 0, 1, blob.clone(), false));
+    let set = Set::new(SetInstr::Set, key_name, 0, 1, blob.clone(), false);
+    let cmd = Cmd::Set(set);
     let resp = driver.run(cmd);
     assert_eq!(resp, Resp::Stored);
 
@@ -157,10 +162,11 @@ fn test_cmd_absolute_exptime() {
 
     let key_name = "x";
     let blob = vec![1, 2, 3];
-    let exptime = time_now().round() as u32 + 1;
+    let etime = time_now().round() as u32 + 1;
 
     // Set a key with exptime of 1 second
-    let cmd = Cmd::Set(Set::new(key_name, 0, exptime, blob.clone(), false));
+    let set = Set::new(SetInstr::Set, key_name, 0, etime, blob.clone(), false);
+    let cmd = Cmd::Set(set);
     let resp = driver.run(cmd);
     assert_eq!(resp, Resp::Stored);
 
