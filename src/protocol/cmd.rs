@@ -20,14 +20,16 @@ pub struct Set {
     pub key: String,
     pub exptime: u32, // relative (secs) or absolute (unixtime) expiry time
     pub data: Vec<u8>,
+    pub noreply: bool,
 }
 
 impl Set {
-    pub fn new(key: &str, exptime: u32, data: Vec<u8>) -> Set {
+    pub fn new(key: &str, exptime: u32, data: Vec<u8>, noreply: bool) -> Set {
         Set {
             key: key.to_string(),
             exptime: exptime,
             data: data,
+            noreply: noreply,
         }
     }
 }

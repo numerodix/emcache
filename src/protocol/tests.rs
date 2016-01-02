@@ -37,7 +37,7 @@ fn test_cmd_set_and_get_a_key() {
     assert_eq!(resp, Resp::Error);
 
     // Set a key
-    let cmd = Cmd::Set(Set::new(key_name, 0, blob.clone()));
+    let cmd = Cmd::Set(Set::new(key_name, 0, blob.clone(), false));
     let resp = driver.run(cmd);
     assert_eq!(resp, Resp::Stored);
 
@@ -53,7 +53,7 @@ fn test_cmd_stats() {
     let mut driver = Driver::new(cache);
 
     // Set a key
-    let cmd = Cmd::Set(Set::new("x", 0, vec![8, 9]));
+    let cmd = Cmd::Set(Set::new("x", 0, vec![8, 9], false));
     let resp = driver.run(cmd);
     assert_eq!(resp, Resp::Stored);
 
@@ -118,7 +118,7 @@ fn test_cmd_relative_exptime() {
     let blob = vec![1, 2, 3];
 
     // Set a key with exptime of 1 second
-    let cmd = Cmd::Set(Set::new(key_name, 1, blob.clone()));
+    let cmd = Cmd::Set(Set::new(key_name, 1, blob.clone(), false));
     let resp = driver.run(cmd);
     assert_eq!(resp, Resp::Stored);
 
@@ -148,7 +148,7 @@ fn test_cmd_absolute_exptime() {
     let exptime = time_now().round() as u32 + 1;
 
     // Set a key with exptime of 1 second
-    let cmd = Cmd::Set(Set::new(key_name, exptime, blob.clone()));
+    let cmd = Cmd::Set(Set::new(key_name, exptime, blob.clone(), false));
     let resp = driver.run(cmd);
     assert_eq!(resp, Resp::Stored);
 

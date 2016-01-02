@@ -308,7 +308,17 @@ fn test_read_cmd_set_ok() {
     let mut transport = TcpTransport::new(ts);
 
     let cmd = transport.read_cmd().unwrap();
-    assert_eq!(cmd, Cmd::Set(Set::new("x", 0, vec![97, 98, 99])));
+    assert_eq!(cmd, Cmd::Set(Set::new("x", 0, vec![97, 98, 99], false)));
+}
+
+#[test]
+fn test_read_cmd_set_noreply_ok() {
+    let cmd_str = "set x 0 0 3 noreply\r\nabc\r\n".to_string();
+    let ts = TestStream::new(cmd_str.into_bytes());
+    let mut transport = TcpTransport::new(ts);
+
+    let cmd = transport.read_cmd().unwrap();
+    assert_eq!(cmd, Cmd::Set(Set::new("x", 0, vec![97, 98, 99], true)));
 }
 
 #[test]

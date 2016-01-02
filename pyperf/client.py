@@ -62,7 +62,7 @@ class MemcacheClient(object):
     def set(self, key, value):
         # execute set
         self.sock.send(
-            'set %s 0 0 %s\r\n' % (key, len(value))
+            'set %s 0 0 %s \r\n' % (key, len(value))
             + value + '\r\n')
         buf = self.sock.recv(4096)
 

@@ -276,6 +276,16 @@ impl<T: Read + Write> TcpTransport<T> {
         };
         try!(self.line_remove_first_char());
 
+        // parse noreply
+        let noreply_flag = {
+            let noreply = try!(self.line_parse_word());
+            let noreply_str = try!(as_string(noreply));
+            match noreply_str == "noreply" {
+                true => true,
+                false => false,
+            }
+        };
+
         // We know the byte length, so now read the value
         let value = try!(self.read_bytes(bytelen_num));
 
@@ -291,6 +301,7 @@ impl<T: Read + Write> TcpTransport<T> {
             key: key_str,
             exptime: exptime_num,
             data: value,
+            noreply: noreply_flag,
         }));
     }
 

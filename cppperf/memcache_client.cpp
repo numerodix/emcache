@@ -66,7 +66,7 @@ bool MemcacheClient::set(std::string key, std::vector<char> data) {
     std::stringstream srequest;
     std::string data_str(data.begin(), data.end());
 
-    srequest << "set " << key << " 0 0 " << data.size() << "\r\n";
+    srequest << "set " << key << " 0 0 " << data.size() << " \r\n";
     srequest << data_str << "\r\n";
 
     std::string request = srequest.str();
