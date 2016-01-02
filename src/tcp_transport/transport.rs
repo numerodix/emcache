@@ -280,7 +280,8 @@ impl<T: Read + Write> TcpTransport<T> {
 
         // Read the line termination marker and verify it
         let newline = try!(self.read_bytes(2));
-        if !newline.starts_with(&[13, 10]) {
+        if !newline.starts_with(&[consts::BYTE_CARRIAGE_RETURN,
+                                  consts::BYTE_LINE_FEED]) {
             return Err(TcpTransportError::CommandParseError);
         }
 
