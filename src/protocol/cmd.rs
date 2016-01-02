@@ -17,11 +17,11 @@ impl Get {
 
 #[derive(Debug, PartialEq, Clone)]
 pub struct Set {
-    pub key: String,
-    pub flags: u16,
+    pub key: String, // alphanumeric characters
+    pub flags: u16, // arbitrary bit pattern chosen by the client
     pub exptime: u32, // relative (secs) or absolute (unixtime) expiry time
-    pub data: Vec<u8>,
-    pub noreply: bool,
+    pub data: Vec<u8>, // binary data
+    pub noreply: bool, // indicates whether the server should reply to the set
 }
 
 impl Set {
