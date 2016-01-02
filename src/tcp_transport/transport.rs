@@ -177,108 +177,6 @@ impl<T: Read + Write> TcpTransport<T> {
         Ok(words)
     }
 
-
-
-    pub fn preread_line(&mut self) -> TcpTransportResult<()> {
-        let mut cursor = 0;
-
-        // We keep reading one byte at a time into line_buffer, looking for
-        // a line terminator \r\n. The underlying stream is buffered.
-        loop {
-            // Make sure we don't go over bounds
-            if cursor >= self.line_buffer.len() {
-                panic!("Line too long to be read");
-            }
-
-            let rv = self.stream
-                         .read(&mut self.line_buffer[cursor..cursor + 1]);
-
-            // If there was an error or if there was nothing to read we bail
-            if rv.is_err() || rv.unwrap() == 0 {
-                return Err(TcpTransportError::StreamReadError);
-            }
-
-            // Update stats
-            self.stats.bytes_read += 1;
-
-            // We found \r
-            if self.line_buffer[cursor] == consts::BYTE_CARRIAGE_RETURN {
-                // Read one more, hoping it's \n
-                cursor += 1;
-                let rv = self.stream
-                             .read(&mut self.line_buffer[cursor..cursor + 1]);
-
-                // If there was an error or if there was nothing to read we bail
-                if rv.is_err() || rv.unwrap() == 0 {
-                    return Err(TcpTransportError::StreamReadError);
-                }
-
-                // Update stats
-                self.stats.bytes_read += 1;
-
-                // Woops, it's not \n, we bail
-                if self.line_buffer[cursor] != consts::BYTE_LINE_FEED {
-                    return Err(TcpTransportError::StreamReadError);
-                }
-
-                break;
-            }
-
-            cursor += 1;
-        }
-
-        self.line_cursor = 0;
-        self.line_break_pos = cursor - 1;  // point it at \r, not \n
-
-        Ok(())
-    }
-
-    pub fn line_is_empty(&self) -> bool {
-        // If the cursor precedes the line break then there are still bytes to
-        // read from the line, otherwise it's empty
-        self.line_cursor >= self.line_break_pos
-    }
-
-    pub fn line_remove_first_char(&mut self) -> TcpTransportResult<()> {
-        match !self.line_is_empty() {
-            true => {
-                self.line_cursor += 1;
-                Ok(())
-            }
-            false => Err(TcpTransportError::LineReadError),
-        }
-    }
-
-    pub fn line_parse_word(&mut self) -> TcpTransportResult<&[u8]> {
-        // If the very first char is a space then our caller is out of sync
-        if self.line_buffer[self.line_cursor] == 32 {
-            return Err(TcpTransportError::StreamReadError);
-        }
-
-        let mut space_idx = 0;
-        let mut found = false;
-
-        for i in self.line_cursor + 1..self.line_break_pos {
-            // We found a space
-            if self.line_buffer[i] == consts::BYTE_SPACE {
-                space_idx = i;
-                found = true;
-                break;
-            }
-        }
-
-        // If we didn't find a space then the whole line is a word
-        if !found {
-            space_idx = self.line_break_pos;
-        }
-
-        // Advance the cursor, we've now "consumed" the word we found
-        let word = &self.line_buffer[self.line_cursor..space_idx];
-        self.line_cursor = space_idx;
-
-        Ok(word)
-    }
-
     // Writing to the stream
 
     pub fn flush_writes(&mut self) -> TcpTransportResult<()> {
@@ -311,58 +209,70 @@ impl<T: Read + Write> TcpTransport<T> {
     // Parse individual commands
 
     pub fn parse_cmd_get(&mut self) -> TcpTransportResult<Cmd> {
-        // remove the space after the keyword
-        try!(self.line_remove_first_char());
-
         // parse the key
-        let key_str = {
-            let key = try!(self.line_parse_word());
-            try!(as_string(key))
-        };
+        let (key, end_of_line) = try!(self.read_word_in_line());
+        let key_str = try!(as_string(key));
 
-        // We expect to find the end of the line now
-        if self.line_is_empty() {
-            Ok(Cmd::Get(Get { key: key_str }))
-        } else {
-            Err(TcpTransportError::CommandParseError)
+        if !end_of_line {
+            return Err(TcpTransportError::CommandParseError);
         }
+
+        Ok(Cmd::Get(Get { key: key_str }))
     }
 
     pub fn parse_cmd_set(&mut self) -> TcpTransportResult<Cmd> {
-        // remove the space after the keyword
-        try!(self.line_remove_first_char());
-
-        // parse the key + remove trailing space
+        // parse the key
         let key_str = {
-            let key = try!(self.line_parse_word());
+            let (key, end_of_line) = try!(self.read_word_in_line());
+
+            if end_of_line {
+                return Err(TcpTransportError::CommandParseError);
+            }
+
             try!(as_string(key))
         };
-        try!(self.line_remove_first_char());
 
-        // parse the flags + remove trailing space
+        // parse the flags
         let flags_num = {
-            let flags = try!(self.line_parse_word());
+            let (flags, end_of_line) = try!(self.read_word_in_line());
+
+            if end_of_line {
+                return Err(TcpTransportError::CommandParseError);
+            }
+
             try!(as_number::<u16>(flags))
         };
-        try!(self.line_remove_first_char());
 
-        // parse the exptime + remove trailing space
+        // parse the exptime
         let exptime_num = {
-            let exptime = try!(self.line_parse_word());
+            let (exptime, end_of_line) = try!(self.read_word_in_line());
+
+            if end_of_line {
+                return Err(TcpTransportError::CommandParseError);
+            }
+
             try!(as_number::<u32>(exptime))
         };
-        try!(self.line_remove_first_char());
 
-        // parse the bytelen + remove trailing space
+        // parse the bytelen
         let bytelen_num = {
-            let bytelen = try!(self.line_parse_word());
+            let (bytelen, end_of_line) = try!(self.read_word_in_line());
+
+            if end_of_line {
+                return Err(TcpTransportError::CommandParseError);
+            }
+
             try!(as_number::<u64>(bytelen))
         };
-        try!(self.line_remove_first_char());
 
         // parse noreply
         let noreply_flag = {
-            let noreply = try!(self.line_parse_word());
+            let (noreply, end_of_line) = try!(self.read_word_in_line());
+
+            if !end_of_line {
+                return Err(TcpTransportError::CommandParseError);
+            }
+
             let noreply_str = try!(as_string(noreply));
             match noreply_str == "noreply" {
                 true => true,
@@ -394,19 +304,19 @@ impl<T: Read + Write> TcpTransport<T> {
     // High level functions
 
     pub fn read_cmd(&mut self) -> TcpTransportResult<Cmd> {
-        // read the first line
-        try!(self.preread_line());
-
         let keyword_str = {
-            let keyword = try!(self.line_parse_word());
-            try!(as_string(keyword))
+            let (word, end_of_line) = try!(self.read_word_in_line());
+            try!(as_string(word))
         };
 
         if keyword_str == "get" {
+            // TODO check for !eol
             return self.parse_cmd_get();
         } else if keyword_str == "set" {
+            // TODO check for !eol
             return self.parse_cmd_set();
         } else if keyword_str == "stats" {
+            // TODO check for eol
             return Ok(Cmd::Stats);
         }
 
