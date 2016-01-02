@@ -27,7 +27,7 @@ fn bench_transport_read_cmd_get(b: &mut Bencher) {
 #[bench]
 fn bench_transport_read_cmd_set(b: &mut Bencher) {
     b.iter(|| {
-        let cmd_str = "set x 0 0 3\r\nabc\r\n".to_string();
+        let cmd_str = "set x 0 0 3 \r\nabc\r\n".to_string();
         let ts = TestStream::new(cmd_str.into_bytes());
         let mut transport = TcpTransport::new(ts);
 

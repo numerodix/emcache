@@ -269,11 +269,12 @@ impl<T: Read + Write> TcpTransport<T> {
         };
         try!(self.line_remove_first_char());
 
-        // parse the bytelen
+        // parse the bytelen + remove trailing space
         let bytelen_num = {
             let bytelen = try!(self.line_parse_word());
             try!(as_number::<u64>(bytelen))
         };
+        try!(self.line_remove_first_char());
 
         // We know the byte length, so now read the value
         let value = try!(self.read_bytes(bytelen_num));

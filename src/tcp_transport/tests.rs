@@ -303,7 +303,7 @@ fn test_read_cmd_get_malformed() {
 
 #[test]
 fn test_read_cmd_set_ok() {
-    let cmd_str = "set x 0 0 3\r\nabc\r\n".to_string();
+    let cmd_str = "set x 0 0 3 \r\nabc\r\n".to_string();
     let ts = TestStream::new(cmd_str.into_bytes());
     let mut transport = TcpTransport::new(ts);
 
@@ -313,7 +313,7 @@ fn test_read_cmd_set_ok() {
 
 #[test]
 fn test_read_cmd_set_under_size() {
-    let cmd_str = "set x 0 0 2\r\nabc\r\n".to_string();
+    let cmd_str = "set x 0 0 2 \r\nabc\r\n".to_string();
     let ts = TestStream::new(cmd_str.into_bytes());
     let mut transport = TcpTransport::new(ts);
 
@@ -323,7 +323,7 @@ fn test_read_cmd_set_under_size() {
 
 #[test]
 fn test_read_cmd_set_over_size() {
-    let cmd_str = "set x 0 0 4\r\nabc\r\n".to_string();
+    let cmd_str = "set x 0 0 4 \r\nabc\r\n".to_string();
     let ts = TestStream::new(cmd_str.into_bytes());
     let mut transport = TcpTransport::new(ts);
 
@@ -343,13 +343,14 @@ fn test_read_cmd_set_malformed() {
     }
 
     // Test for truncated stream
-    try_cmd("set x 0 0 3\r\nabc\r");
-    try_cmd("set x 0 0 3\r\nabc");
-    try_cmd("set x 0 0 3\r\nab");
-    try_cmd("set x 0 0 3\r\na");
-    try_cmd("set x 0 0 3\r\n");
+    try_cmd("set x 0 0 3 \r\nabc\r");
+    try_cmd("set x 0 0 3 \r\nabc");
+    try_cmd("set x 0 0 3 \r\nab");
+    try_cmd("set x 0 0 3 \r\na");
+    try_cmd("set x 0 0 3 \r\n");
     return; // TODO some are CommandParseError, some are StreamReadError eh :/
-    try_cmd("set x 0 0 3\r");
+    try_cmd("set x 0 0 3 \r");
+    try_cmd("set x 0 0 3 ");
     try_cmd("set x 0 0 3");
     try_cmd("set x 0 0 ");
     try_cmd("set x 0 0");
