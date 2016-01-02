@@ -34,5 +34,5 @@ These commands are too implementation specific to memcached itself for it to
 make sense to support them.
 
 * SLABS
-* STATS <arg>
+* STATS [arg]
 * VERBOSITY
