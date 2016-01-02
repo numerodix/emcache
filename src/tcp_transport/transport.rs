@@ -299,6 +299,7 @@ impl<T: Read + Write> TcpTransport<T> {
         // We got all the values we expected and there is nothing left
         return Ok(Cmd::Set(Set {
             key: key_str,
+            flags: flags_num,
             exptime: exptime_num,
             data: value,
             noreply: noreply_flag,

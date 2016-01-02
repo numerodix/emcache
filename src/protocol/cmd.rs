@@ -18,15 +18,22 @@ impl Get {
 #[derive(Debug, PartialEq, Clone)]
 pub struct Set {
     pub key: String,
+    pub flags: u16,
     pub exptime: u32, // relative (secs) or absolute (unixtime) expiry time
     pub data: Vec<u8>,
     pub noreply: bool,
 }
 
 impl Set {
-    pub fn new(key: &str, exptime: u32, data: Vec<u8>, noreply: bool) -> Set {
+    pub fn new(key: &str,
+               flags: u16,
+               exptime: u32,
+               data: Vec<u8>,
+               noreply: bool)
+               -> Set {
         Set {
             key: key.to_string(),
+            flags: flags,
             exptime: exptime,
             data: data,
             noreply: noreply,
