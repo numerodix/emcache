@@ -280,13 +280,18 @@ impl<T: Read + Write> TcpTransport<T> {
             }
         };
 
-        // We know the byte length, so now read the value
+        // We now know the byte length, so read the value
         let value = try!(self.read_bytes(bytelen_num));
 
-        // Read the line termination marker and verify it
-        let newline = try!(self.read_bytes(2));
-        if !newline.starts_with(&[consts::BYTE_CARRIAGE_RETURN,
-                                  consts::BYTE_LINE_FEED]) {
+        // The value is the wrong size
+        if value.len() as u64 != bytelen_num {
+            return Err(TcpTransportError::CommandParseError);
+        }
+
+        // Verify that we found the line terminator
+        let terminator = try!(self.read_bytes(2));
+        if !terminator.ends_with(&[consts::BYTE_CARRIAGE_RETURN,
+                                   consts::BYTE_LINE_FEED]) {
             return Err(TcpTransportError::CommandParseError);
         }
 
