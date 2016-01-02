@@ -48,28 +48,6 @@ fn test_as_number_invalid() {
 // Basic methods to consume the stream
 
 #[test]
-fn test_read_byte() {
-    // "a"
-    let ts = TestStream::new(vec![93]);
-    let mut transport = TcpTransport::new(ts);
-
-    let byte = transport.read_byte().unwrap();
-    assert_eq!(byte, 93);
-}
-
-#[test]
-fn test_read_byte_empty() {
-    // ""
-    let ts = TestStream::new(vec![]);
-    let mut transport = TcpTransport::new(ts);
-
-    let err = transport.read_byte().unwrap_err();
-    assert_eq!(err, TcpTransportError::StreamReadError);
-}
-
-
-
-#[test]
 fn test_read_bytes() {
     // "a\r\n"
     let ts = TestStream::new(vec![93, 13, 10]);
@@ -88,7 +66,6 @@ fn test_read_bytes_too_few() {
     let bytes = transport.read_bytes(2).unwrap();
     assert_eq!(bytes, [93]);
 }
-
 
 
 #[test]
