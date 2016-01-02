@@ -79,6 +79,7 @@ impl<T: Read + Write> TcpTransport<T> {
     }
 
     pub fn read_bytes(&mut self, len: u64) -> TcpTransportResult<Vec<u8>> {
+        // TODO: test large values >4kb
         let mut bytes = vec![0; len as usize];
 
         match self.stream.read(&mut bytes[..]) {
