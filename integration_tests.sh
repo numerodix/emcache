@@ -3,7 +3,7 @@
 set -e
 
 # Build the server
-cargo build
+cargo build --release
 
 # Options we'll use
 PORT=11311
