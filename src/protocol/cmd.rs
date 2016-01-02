@@ -109,7 +109,13 @@ pub enum Resp {
     ClientError(ClientError),
     ServerError(ServerError),
 
+    Deleted, // The item was deleted successfully
+    Exists, // The cas item has been modified
+    NotFound, // The cas item does not exist
+    NotStored, // Precondition not met
+    Stored, // The item was stored successfully
+    Touched, // The item was touched successfully
+
     Stats(Vec<Stat>),
-    Stored,
     Value(Value),
 }
