@@ -1,6 +1,6 @@
 #!/bin/bash
 
-set -e
+set -ex
 
 # Options we'll use
 PORT=11311
@@ -9,7 +9,7 @@ PORT=11311
 cargo build --release
 
 # Launch the server, give it 5sec to start up
-cargo run -- --port $PORT >/dev/null &
+cargo run -- --port $PORT &
 sleep 5
 
 # Run the fill test
