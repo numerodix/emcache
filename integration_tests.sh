@@ -8,9 +8,9 @@ PORT=11311
 # Build the server
 cargo build --release
 
-# Launch the server, give it 2sec to start up
+# Launch the server, give it 5sec to start up
 cargo run -- --port $PORT >/dev/null &
-sleep 2
+sleep 5
 
 # Run the fill test
 echo -e "\n=== FILL TEST ===\n"
