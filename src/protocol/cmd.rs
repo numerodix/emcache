@@ -101,6 +101,10 @@ pub enum Cmd {
 
 #[derive(Debug, PartialEq, Clone)]
 pub enum Resp {
+    // A sentinel value to indicate that there is nothing to return to the
+    // client (in case of noreply)
+    Empty,
+
     Error,
     ClientError(ClientError),
     ServerError(ServerError),

@@ -330,6 +330,7 @@ impl<T: Read + Write> TcpTransport<T> {
 
     pub fn write_resp(&mut self, resp: &Resp) -> TcpTransportResult<()> {
         match *resp {
+            Resp::Empty => (),
             Resp::Error => {
                 try!(self.write_string("ERROR\r\n"));
             }

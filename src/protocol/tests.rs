@@ -46,6 +46,17 @@ fn test_cmd_set_and_get_a_key() {
     let resp = driver.run(cmd);
     assert_eq!(15, get_resp_value(resp.clone()).flags);
     assert_eq!(blob, get_resp_value(resp).data);
+
+    // Set a key with noreply flag
+    let cmd = Cmd::Set(Set::new("y", 15, 0, blob.clone(), true));
+    let resp = driver.run(cmd);
+    assert_eq!(resp, Resp::Empty);
+
+    // Retrieve it
+    let cmd = Cmd::Get(Get::new("y"));
+    let resp = driver.run(cmd);
+    assert_eq!(15, get_resp_value(resp.clone()).flags);
+    assert_eq!(blob, get_resp_value(resp).data);
 }
 
 #[test]

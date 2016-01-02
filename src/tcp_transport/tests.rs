@@ -386,6 +386,20 @@ fn test_read_cmd_stats() {
 }
 
 
+// Response writing: Empty
+
+#[test]
+fn test_write_resp_empty() {
+    let ts = TestStream::new(vec![]);
+    let mut transport = TcpTransport::new(ts);
+
+    let resp = Resp::Empty;
+    transport.write_resp(&resp).unwrap();
+    let expected = "".to_string().into_bytes();
+    assert_eq!(transport.get_stream().outgoing, expected);
+}
+
+
 // Response writing: Error
 
 #[test]

@@ -103,7 +103,12 @@ impl Driver {
         let rv = self.cache.set(key, value);
 
         match rv {
-            Ok(_) => Resp::Stored,
+            Ok(_) => {
+                match set.noreply {
+                    true => Resp::Empty,
+                    false => Resp::Stored,
+                }
+            }
             Err(_) => Resp::Error,
         }
     }
