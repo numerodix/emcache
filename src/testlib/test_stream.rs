@@ -10,6 +10,8 @@ use std::io::Result;
 // This allows us to unit test a transport without using sockets. :)
 pub struct TestStream {
     pub incoming: Vec<u8>,
+    pub incoming_cursor: usize,
+
     pub outgoing: Vec<u8>,
 }
 
@@ -17,19 +19,25 @@ impl TestStream {
     pub fn new(incoming: Vec<u8>) -> TestStream {
         TestStream {
             incoming: incoming,
-            outgoing: vec![],
+            incoming_cursor: 0,
+
+            // Should be a good fit for most test responses
+            outgoing: Vec::with_capacity(200),
         }
     }
 }
 
 impl Read for TestStream {
     fn read(&mut self, buf: &mut [u8]) -> Result<usize> {
-        let read_len = cmp::min(buf.len(), self.incoming.len());
+        // We can only read either as much as we have in incoming, or as big as
+        // the output buffer is.
+        let read_len = cmp::min(buf.len(),
+                                self.incoming.len() - self.incoming_cursor);
 
         for i in 0..read_len {
-            let byte = self.incoming.remove(0);
-            buf[i] = byte;
+            buf[i] = self.incoming[self.incoming_cursor + i];
         }
+        self.incoming_cursor += read_len;
 
         Ok(read_len)
     }
@@ -37,9 +45,7 @@ impl Read for TestStream {
 
 impl Write for TestStream {
     fn write(&mut self, buf: &[u8]) -> Result<usize> {
-        for byte in buf.iter() {
-            self.outgoing.push(*byte);
-        }
+        self.outgoing.extend(buf.iter().cloned());
 
         Ok(buf.len())
     }
@@ -58,7 +64,8 @@ fn test_stream_read_whole() {
     let read_cnt = ts.read(&mut buf).unwrap();
     assert_eq!(buf, [1, 2, 3, 0]);
     assert_eq!(read_cnt, 3);
-    assert_eq!(ts.incoming, []);
+    assert_eq!(ts.incoming, [1, 2, 3]);
+    assert_eq!(ts.incoming_cursor, 3);
 }
 
 #[test]
@@ -70,14 +77,16 @@ fn test_stream_read_incremental() {
     let read_cnt = ts.read(&mut buf).unwrap();
     assert_eq!(read_cnt, 2);
     assert_eq!(buf, [1, 2]);
-    assert_eq!(ts.incoming, [3]);
+    assert_eq!(ts.incoming, [1, 2, 3]);
+    assert_eq!(ts.incoming_cursor, 2);
 
     // Read once more
     let mut buf = [0; 2];
     let read_cnt = ts.read(&mut buf).unwrap();
     assert_eq!(read_cnt, 1);
     assert_eq!(buf, [3, 0]);
-    assert_eq!(ts.incoming, []);
+    assert_eq!(ts.incoming, [1, 2, 3]);
+    assert_eq!(ts.incoming_cursor, 3);
 }
 
 #[test]
