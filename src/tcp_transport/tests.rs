@@ -427,6 +427,6 @@ fn test_write_resp_value() {
 
     let resp = Resp::Value(Value::new("x", "abc".to_string().into_bytes()));
     transport.write_resp(&resp).unwrap();
-    let expected = "VALUE x 0 3\r\nabc\r\n".to_string().into_bytes();
+    let expected = "VALUE x 0 3\r\nabc\r\nEND\r\n".to_string().into_bytes();
     assert_eq!(transport.get_stream().outgoing, expected);
 }

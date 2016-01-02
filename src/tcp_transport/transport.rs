@@ -340,6 +340,7 @@ impl<T: Read + Write> TcpTransport<T> {
                 try!(self.write_string(&"\r\n".to_string())); // newline
                 try!(self.write_bytes(&value.data)); // data block
                 try!(self.write_string(&"\r\n".to_string())); // newline
+                try!(self.write_string(&"END\r\n".to_string())); // END + newline
             }
             _ => {
                 return Err(TcpTransportError::StreamWriteError);
