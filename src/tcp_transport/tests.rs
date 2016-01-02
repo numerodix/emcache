@@ -92,6 +92,62 @@ fn test_read_bytes_too_few() {
 
 
 #[test]
+fn test_read_word_in_line_one_char() {
+    // "a a"
+    let ts = TestStream::new(vec![93, 32, 93]);
+    let mut transport = TcpTransport::new(ts);
+
+    let (word, eol) = transport.read_word_in_line().unwrap();
+    assert_eq!(word, &[93]);
+    assert_eq!(false, eol);
+}
+
+#[test]
+fn test_read_word_in_line_leading_spaces() {
+    // "  a "
+    let ts = TestStream::new(vec![32, 32, 93, 32]);
+    let mut transport = TcpTransport::new(ts);
+
+    let (word, eol) = transport.read_word_in_line().unwrap();
+    assert_eq!(word, &[93]);
+    assert_eq!(false, eol);
+}
+
+#[test]
+fn test_read_word_in_line_eol() {
+    // "\r\n"
+    let ts = TestStream::new(vec![13, 10]);
+    let mut transport = TcpTransport::new(ts);
+
+    let (word, eol) = transport.read_word_in_line().unwrap();
+    assert_eq!(word, &[]);
+    assert_eq!(true, eol);
+}
+
+
+#[test]
+fn test_read_line_as_words_ok() {
+    // "aa bb\r\n"
+    let ts = TestStream::new(vec![93, 93, 32, 32, 94, 94, 13, 10]);
+    let mut transport = TcpTransport::new(ts);
+
+    let words = transport.read_line_as_words().unwrap();
+    assert_eq!(words, &[&[93, 93], &[94, 94]]);
+}
+
+#[test]
+fn test_read_line_as_words_surrounding_space() {
+    // "  a  b  \r\n"
+    let ts = TestStream::new(vec![32, 32, 93, 32, 32, 94, 32, 32, 13, 10]);
+    let mut transport = TcpTransport::new(ts);
+
+    let words = transport.read_line_as_words().unwrap();
+    assert_eq!(words, &[&[93], &[94]]);
+}
+
+
+
+#[test]
 fn test_preread_line_zero_char() {
     // "\r\n"
     let ts = TestStream::new(vec![13, 10]);

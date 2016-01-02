@@ -97,6 +97,88 @@ impl<T: Read + Write> TcpTransport<T> {
         }
     }
 
+    pub fn read_word_in_line(&mut self) -> TcpTransportResult<(Vec<u8>, bool)> {
+        let mut word = vec![];
+        let mut byte = [0; 1];
+        let mut end_of_line = false;
+
+        loop {
+            // Read a byte
+            let rv = self.stream.read(&mut byte);
+
+            // If there was an error or if there was nothing to read we bail
+            if rv.is_err() || rv.unwrap() == 0 {
+                return Err(TcpTransportError::StreamReadError);
+            }
+
+            // Update stats
+            self.stats.bytes_read += 1;
+
+            if byte[0] == consts::BYTE_SPACE {
+                // We found a space
+
+                if word.is_empty() {
+                    // If it's one or more leading space we ignore it
+                    continue;
+                }
+
+                // All good, we've found the end of the word
+                break;
+
+            } else if byte[0] == consts::BYTE_CARRIAGE_RETURN {
+                // We found \r, we think it's the end of the line
+
+                // Try to read \n
+                let rv = self.stream.read(&mut byte);
+
+                // If there was an error or if there was nothing to read we bail
+                if rv.is_err() || rv.unwrap() == 0 {
+                    return Err(TcpTransportError::StreamReadError);
+                }
+
+                // Update stats
+                self.stats.bytes_read += 1;
+
+                // If it's not a correct end of line we storm out in protest
+                if byte[0] != consts::BYTE_LINE_FEED {
+                    return Err(TcpTransportError::LineReadError);
+                }
+
+                // Else it's all good, we've read the whole line including the
+                // terminator
+                end_of_line = true;
+                break;
+
+            } else {
+                // It's not a special char, append to our word
+                word.push(byte[0]);
+            }
+        }
+
+        Ok((word, end_of_line))
+    }
+
+    pub fn read_line_as_words(&mut self) -> TcpTransportResult<Vec<Vec<u8>>> {
+        let mut words = vec![];
+
+        loop {
+            let (word, end_of_line) = try!(self.read_word_in_line());
+
+            // Don't bother if it's an empty word (trailing space before \r\n)
+            if !word.is_empty() {
+                words.push(word);
+            }
+
+            if end_of_line {
+                break;
+            }
+        }
+
+        Ok(words)
+    }
+
+
+
     pub fn preread_line(&mut self) -> TcpTransportResult<()> {
         let mut cursor = 0;
 
