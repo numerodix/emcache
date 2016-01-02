@@ -162,10 +162,10 @@ fn test_cmd_absolute_exptime() {
 
     let key_name = "x";
     let blob = vec![1, 2, 3];
-    let etime = time_now().round() as u32 + 1;
+    let exp = time_now().round() as u32 + 1;
 
     // Set a key with exptime of 1 second
-    let set = Set::new(SetInstr::Set, key_name, 0, etime, blob.clone(), false);
+    let set = Set::new(SetInstr::Set, key_name, 0, exp, blob.clone(), false);
     let cmd = Cmd::Set(set);
     let resp = driver.run(cmd);
     assert_eq!(resp, Resp::Stored);
