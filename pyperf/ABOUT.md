@@ -39,4 +39,4 @@ memcached:
 
 memcache.rs:
 
-* 21.3k items/s - 11.9mb/s
+* 50k items/s - 28mb/s

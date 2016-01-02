@@ -1,4 +1,4 @@
 #!/bin/bash
 
 cargo build --release
-cargo run -- $@
+target/release/memcache $@
