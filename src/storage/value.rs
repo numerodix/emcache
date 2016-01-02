@@ -4,6 +4,7 @@ use platform::time::time_now;
 #[derive(Debug, Clone)]
 pub struct Value {
     pub item: Vec<u8>,
+    pub flags: u16, // chosen by the client
     pub atime: f64, // last access time (unixtime)
     pub exptime: f64, // expiry time (unixtime), <0 for unset
 }
@@ -19,10 +20,17 @@ impl Value {
     pub fn new(item: Vec<u8>) -> Value {
         Value {
             item: item,
+            flags: 0,
             atime: -1.0,
             exptime: -1.0,
         }
     }
+
+    pub fn with_flags(&mut self, flags: u16) -> &mut Self {
+        self.flags = flags;
+        self
+    }
+
 
     pub fn len(&self) -> usize {
         self.item.len()

@@ -75,13 +75,15 @@ impl Stat {
 #[derive(Debug, PartialEq, Clone)]
 pub struct Value {
     pub key: String,
+    pub flags: u16,
     pub data: Vec<u8>,
 }
 
 impl Value {
-    pub fn new(key: &str, data: Vec<u8>) -> Value {
+    pub fn new(key: &str, flags: u16, data: Vec<u8>) -> Value {
         Value {
             key: key.to_string(),
+            flags: flags,
             data: data,
         }
     }

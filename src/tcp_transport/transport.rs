@@ -349,7 +349,9 @@ impl<T: Read + Write> TcpTransport<T> {
             Resp::Value(ref value) => {
                 try!(self.write_string("VALUE ")); // keyword
                 try!(self.write_string(&value.key)); // key
-                try!(self.write_string(" 0 ")); // flags
+                try!(self.write_string(" ")); // space
+                try!(self.write_string(&value.flags.to_string())); // flags
+                try!(self.write_string(" ")); // space
                 try!(self.write_string(&value.data.len().to_string())); // bytelen
                 try!(self.write_string(&"\r\n".to_string())); // newline
                 try!(self.write_bytes(&value.data)); // data block

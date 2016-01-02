@@ -12,7 +12,8 @@ fn test_set_one_key() {
     let mut cache = Cache::new(1024);
 
     let key = key!(1, 2, 3);
-    let value = value!(4, 5, 6);
+    let mut value = value!(4, 5, 6);
+    value.with_flags(15);
 
     // First set it
     let rv = cache.set(key.clone(), value.clone());

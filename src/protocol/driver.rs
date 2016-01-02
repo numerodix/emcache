@@ -83,6 +83,7 @@ impl Driver {
             Ok(value) => {
                 Resp::Value(CmdValue {
                     key: key_str,
+                    flags: value.flags,
                     data: value.item.clone(),
                 })
             }
@@ -96,6 +97,7 @@ impl Driver {
 
         let key = Key::new(set.key.into_bytes());
         let mut value = Value::new(set.data);
+        value.with_flags(set.flags);
         self.set_exptime(&mut value, set.exptime);
 
         let rv = self.cache.set(key, value);
