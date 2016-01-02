@@ -6,7 +6,7 @@ set -ex
 PORT=11311
 
 # Build the server
-cargo build --release
+cargo build
 
 # Launch the server, give it 5sec to start up
 cargo run -- --port $PORT &
