@@ -5,12 +5,12 @@ We follow [the official protocol specification](https://github.com/memcached/mem
 
 ## Fully supported
 
+* GET
 * SET
 
 
 ## Partial support
 
-* GET (single key mode only)
 * STATS (not all stats are present)
 
 
