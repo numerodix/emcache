@@ -14,15 +14,15 @@ sleep 5
 
 # Run the fill test
 echo -e "\n=== FILL TEST ===\n"
-python -m pyperf.tester -p $PORT --fill 5.0
+python -m pyperf.main -p $PORT --fill 5.0
 
 # Run the stress test
 echo -e "\n=== STRESS TEST ===\n"
-python -m pyperf.tester -p $PORT --stress
+python -m pyperf.main -p $PORT --stress
 
 # Run the integ tests
 echo -e "\n=== INTEG TEST ===\n"
-python -m pyperf.tester -p $PORT
+python -m pyperf.main -p $PORT
 exit_code=$?
 
 # Kill the server
