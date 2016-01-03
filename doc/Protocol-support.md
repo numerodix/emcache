@@ -5,6 +5,7 @@ We follow [the official protocol specification](https://github.com/memcached/mem
 
 ## Fully supported
 
+* DELETE
 * GET
 * SET
 
@@ -19,7 +20,6 @@ We follow [the official protocol specification](https://github.com/memcached/mem
 * ADD/REPLACE
 * APPEND/PREPEND
 * CAS
-* DELETE
 * FLUSH_ALL
 * GETS
 * INCR/DECR
