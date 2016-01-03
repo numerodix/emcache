@@ -345,6 +345,19 @@ fn test_read_cmd_stats() {
 }
 
 
+// Command parsing: Version
+
+#[test]
+fn test_read_cmd_version() {
+    let cmd_str = "version\r\n".to_string();
+    let ts = TestStream::new(cmd_str.into_bytes());
+    let mut transport = TcpTransport::new(ts);
+
+    let cmd = transport.read_cmd().unwrap();
+    assert_eq!(cmd, Cmd::Version);
+}
+
+
 // Response writing: Deleted
 
 #[test]
@@ -457,4 +470,18 @@ fn test_write_resp_value_two() {
     let expected = "VALUE x 15 3\r\nabc\r\nVALUE y 17 3\r\ndef\r\nEND\r\n";
     let exp_bytes = expected.to_string().into_bytes();
     assert_eq!(transport.get_stream().outgoing, exp_bytes);
+}
+
+
+// Response writing: Version
+
+#[test]
+fn test_write_resp_version() {
+    let ts = TestStream::new(vec![]);
+    let mut transport = TcpTransport::new(ts);
+
+    let resp = Resp::Version("1.0.1".to_string());
+    transport.write_resp(&resp).unwrap();
+    let expected = "VERSION 1.0.1\r\n".to_string().into_bytes();
+    assert_eq!(transport.get_stream().outgoing, expected);
 }

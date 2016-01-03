@@ -382,6 +382,9 @@ impl<T: Read + Write> TcpTransport<T> {
         } else if keyword_str == "stats" {
             // TODO check for eol since nothing follows the keyword
             return Ok(Cmd::Stats);
+        } else if keyword_str == "version" {
+            // TODO check for eol since nothing follows the keyword
+            return Ok(Cmd::Version);
         }
 
         Err(TcpTransportError::InvalidCmd)
@@ -425,6 +428,11 @@ impl<T: Read + Write> TcpTransport<T> {
                     try!(self.write_string(&"\r\n".to_string())); // newline
                 }
                 try!(self.write_string(&"END\r\n".to_string())); // END + newline
+            }
+            Resp::Version(ref version) => {
+                try!(self.write_string("VERSION "));
+                try!(self.write_string(&version)); // key
+                try!(self.write_string(&"\r\n".to_string())); // newline
             }
             _ => {
                 return Err(TcpTransportError::StreamWriteError);

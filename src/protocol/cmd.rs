@@ -132,6 +132,7 @@ pub enum Cmd {
     Get(Get),
     Set(Set),
     Stats,
+    Version,
 }
 
 #[derive(Debug, PartialEq, Clone)]
@@ -153,6 +154,8 @@ pub enum Resp {
 
     Stats(Vec<Stat>),
     Values(Vec<Value>),
+
+    Version(String),
 }
 
 impl Resp {

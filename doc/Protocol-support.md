@@ -8,6 +8,7 @@ We follow [the official protocol specification](https://github.com/memcached/mem
 * DELETE
 * GET
 * SET
+* VERSION
 
 
 ## Partial support
@@ -24,7 +25,6 @@ We follow [the official protocol specification](https://github.com/memcached/mem
 * INCR/DECR
 * QUIT
 * TOUCH
-* VERSION
 
 
 ## No plan to support

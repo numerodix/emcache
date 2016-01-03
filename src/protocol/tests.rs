@@ -1,3 +1,4 @@
+use common::consts::get_version_string;
 use platform::process::get_pid;
 use platform::time::sleep_secs;
 use platform::time::time_now;
@@ -157,6 +158,8 @@ fn test_cmd_stats() {
     let st_pid = Stat::new("pid", get_pid().to_string());
     let st_bytes = Stat::new("bytes", "3".to_string());
     let st_uptime = Stat::new("uptime", "0".to_string());
+    let st_time = Stat::new("time", (time_now() as u64).to_string());
+    let st_version = Stat::new("version", get_version_string());
     let st_cmd_get = Stat::new("cmd_get", "1".to_string());
     let st_cmd_set = Stat::new("cmd_set", "1".to_string());
     let st_cmd_flush = Stat::new("cmd_flush", "0".to_string());
@@ -168,7 +171,6 @@ fn test_cmd_stats() {
     let st_bytes_read = Stat::new("bytes_read", "0".to_string());
     let st_bytes_written = Stat::new("bytes_written", "0".to_string());
     let st_limit_maxbytes = Stat::new("limit_maxbytes", "100".to_string());
-    let st_time = Stat::new("time", (time_now() as u64).to_string());
     let st_curr_items = Stat::new("curr_items", "1".to_string());
     let st_total_items = Stat::new("total_items", "1".to_string());
     let st_evictions = Stat::new("evictions", "0".to_string());
@@ -179,6 +181,7 @@ fn test_cmd_stats() {
                (vec![st_pid,
                      st_uptime,
                      st_time,
+                     st_version,
                      st_cmd_get,
                      st_cmd_set,
                      st_cmd_flush,
@@ -195,6 +198,17 @@ fn test_cmd_stats() {
                      st_total_items,
                      st_evictions,
                      st_reclaimed]));
+}
+
+#[test]
+fn test_cmd_version() {
+    let cache = Cache::new(100);
+    let mut driver = Driver::new(cache);
+
+    // Set a key
+    let cmd = Cmd::Version;
+    let resp = driver.run(cmd);
+    assert_eq!(resp, Resp::Version(get_version_string()));
 }
 
 // this is a slow test that relies on sleeps

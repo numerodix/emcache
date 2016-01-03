@@ -160,3 +160,15 @@ class MemcacheClient(object):
         self.stream.write('set 0 1\r\n')
         buf = self.stream.read(4096)
         return buf.strip()
+
+    def version(self):
+        # prepare command
+        command = 'version\r\n'
+
+        # execute command
+        self.stream.write(command)
+
+        # check for success
+        resp = self.stream.read_line()
+        kw, version = resp.split(' ', 1)
+        return version.strip()

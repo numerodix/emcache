@@ -133,6 +133,13 @@ class TestApi(TestCase):
         with self.assert_raises(ItemNotFoundError):
             self.client.get(key)
 
+    def test_get_stats(self):
+        self.client.print_stats()
+
+    def test_version(self):
+        version = self.client.version()
+        self.write(version)
+
 
     ## Failure cases
 

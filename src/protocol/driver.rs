@@ -1,3 +1,4 @@
+use common::consts::get_version_string;
 use platform::process::get_pid;
 use platform::time::time_now;
 use storage::Cache;
@@ -144,6 +145,7 @@ impl Driver {
         let pid = get_pid().to_string();
         let uptime = ((time_now() - self.time_start) as u64).to_string();
         let time = (time_now() as u64).to_string();
+        let version = get_version_string();
         let cmd_get = self.stats.cmd_get.to_string();
         let cmd_set = self.stats.cmd_set.to_string();
         let cmd_flush = self.stats.cmd_flush.to_string();
@@ -164,6 +166,7 @@ impl Driver {
         let st_pid = Stat::new("pid", pid);
         let st_uptime = Stat::new("uptime", uptime);
         let st_time = Stat::new("time", time);
+        let st_version = Stat::new("version", version);
         let st_cmd_get = Stat::new("cmd_get", cmd_get);
         let st_cmd_set = Stat::new("cmd_set", cmd_set);
         let st_cmd_flush = Stat::new("cmd_flush", cmd_flush);
@@ -184,6 +187,7 @@ impl Driver {
         Resp::Stats(vec![st_pid,
                          st_uptime,
                          st_time,
+                         st_version,
                          st_cmd_get,
                          st_cmd_set,
                          st_cmd_flush,
@@ -202,6 +206,10 @@ impl Driver {
                          st_reclaimed])
     }
 
+    pub fn do_version(&self) -> Resp {
+        Resp::Version(get_version_string())
+    }
+
 
     pub fn run(&mut self, cmd: Cmd) -> Resp {
         match cmd {
@@ -209,6 +217,7 @@ impl Driver {
             Cmd::Get(get) => self.do_get(get),
             Cmd::Set(set) => self.do_set(set),
             Cmd::Stats => self.do_stats(),
+            Cmd::Version => self.do_version(),
         }
     }
 
