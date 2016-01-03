@@ -172,7 +172,7 @@ fn test_cmd_relative_exptime() {
     // Retrieve the key again - it's gone
     let cmd = Cmd::Get(Get::one(key_name));
     let resp = driver.run(cmd);
-    assert_eq!(resp, Resp::Error);
+    assert_eq!(0, resp.get_values().unwrap().len());
 }
 
 // this is a slow test that relies on sleeps
@@ -203,5 +203,5 @@ fn test_cmd_absolute_exptime() {
     // Retrieve the key again - it's gone
     let cmd = Cmd::Get(Get::one(key_name));
     let resp = driver.run(cmd);
-    assert_eq!(resp, Resp::Error);
+    assert_eq!(0, resp.get_values().unwrap().len());
 }
