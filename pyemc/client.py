@@ -133,6 +133,15 @@ class MemcacheClient(object):
         except KeyError:
             raise ItemNotFoundError('The item with key %r was not found' % key)
 
+    def quit(self):
+        '''Tells the server to drop the connection.'''
+
+        # prepare command
+        command = 'quit\r\n'
+
+        # execute command
+        self.stream.write(command)
+
     def set(self, key, value, flags=0, exptime=0, noreply=False):
         # prepare command
         header = 'set %(key)s %(flags)d %(exptime)d %(bytelen)d %(noreply)s\r\n' % {

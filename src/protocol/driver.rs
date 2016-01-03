@@ -215,6 +215,7 @@ impl Driver {
         match cmd {
             Cmd::Delete(del) => self.do_delete(del),
             Cmd::Get(get) => self.do_get(get),
+            Cmd::Quit => Resp::Empty,  // handled at transport level
             Cmd::Set(set) => self.do_set(set),
             Cmd::Stats => self.do_stats(),
             Cmd::Version => self.do_version(),

@@ -136,6 +136,9 @@ class TestApi(TestCase):
     def test_get_stats(self):
         self.client.print_stats()
 
+    def test_quit(self):
+        self.client.quit()
+
     def test_version(self):
         version = self.client.version()
         self.write(version)

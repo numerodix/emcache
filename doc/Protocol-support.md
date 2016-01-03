@@ -7,6 +7,7 @@ We follow [the official protocol specification](https://github.com/memcached/mem
 
 * DELETE
 * GET
+* QUIT
 * SET
 * VERSION
 
@@ -23,7 +24,6 @@ We follow [the official protocol specification](https://github.com/memcached/mem
 * CAS/GETS
 * FLUSH_ALL
 * INCR/DECR
-* QUIT
 * TOUCH
 
 

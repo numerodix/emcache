@@ -258,6 +258,19 @@ fn test_read_cmd_get_malformed() {
 }
 
 
+// Command parsing: Quit
+
+#[test]
+fn test_read_cmd_quit() {
+    let cmd_str = "quit\r\n".to_string();
+    let ts = TestStream::new(cmd_str.into_bytes());
+    let mut transport = TcpTransport::new(ts);
+
+    let cmd = transport.read_cmd().unwrap();
+    assert_eq!(cmd, Cmd::Quit);
+}
+
+
 // Command parsing: Set
 
 #[test]

@@ -385,6 +385,9 @@ impl<T: Read + Write> TcpTransport<T> {
         } else if keyword_str == "version" {
             // TODO check for eol since nothing follows the keyword
             return Ok(Cmd::Version);
+        } else if keyword_str == "quit" {
+            // TODO check for eol since nothing follows the keyword
+            return Ok(Cmd::Quit);
         }
 
         Err(TcpTransportError::InvalidCmd)

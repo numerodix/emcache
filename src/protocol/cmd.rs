@@ -130,6 +130,7 @@ impl Value {
 pub enum Cmd {
     Delete(Delete),
     Get(Get),
+    Quit,
     Set(Set),
     Stats,
     Version,

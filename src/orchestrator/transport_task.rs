@@ -4,6 +4,7 @@ use std::sync::mpsc;
 use metrics::MetricsRecorder;
 use metrics::Timer;
 use options::MemcacheOptions;
+use protocol::cmd::Cmd;
 use protocol::cmd::Resp;
 use tcp_transport::TcpTransport;
 
@@ -58,11 +59,21 @@ impl TransportTask {
                     returning error (client disconnected?)",
                          rv.unwrap_err());
                 let _ = transport.write_resp(&Resp::Error);
-                return; // Here we just drop the connection
+                break; // Here we just drop the connection
+            }
+
+            let cmd = rv.unwrap();
+
+            // Special case commands handled directly by transport
+            match cmd {
+                Cmd::Quit => {
+                    println!("Client disconnected");
+                    break; // Drop the connection
+                }
+                _ => (),
             }
 
             // Send the command to the driver
-            let cmd = rv.unwrap();
             let resp_tx_clone = resp_tx.clone();
             let stats = transport.get_stats_clone();
             {
