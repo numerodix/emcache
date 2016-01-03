@@ -78,9 +78,11 @@ impl Driver {
 
         match delete.noreply {
             true => Resp::Empty,
-            false => match rv {
-                Ok(_) => Resp::Deleted,
-                Err(_) => Resp::NotFound,
+            false => {
+                match rv {
+                    Ok(_) => Resp::Deleted,
+                    Err(_) => Resp::NotFound,
+                }
             }
         }
     }
@@ -127,9 +129,11 @@ impl Driver {
 
         match set.noreply {
             true => Resp::Empty,
-            false => match rv {
-                Ok(_) => Resp::Stored,
-                Err(_) => Resp::Error,
+            false => {
+                match rv {
+                    Ok(_) => Resp::Stored,
+                    Err(_) => Resp::Error,
+                }
             }
         }
     }

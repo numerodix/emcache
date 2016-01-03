@@ -5,6 +5,7 @@ use bufstream::BufStream;
 
 use common::consts;
 use protocol::cmd::Cmd;
+use protocol::cmd::Delete;
 use protocol::cmd::Get;
 use protocol::cmd::Resp;
 use protocol::cmd::Set;
@@ -229,6 +230,39 @@ impl<T: Read + Write> TcpTransport<T> {
 
     // Parse individual commands
 
+    pub fn parse_cmd_delete(&mut self) -> TcpTransportResult<Cmd> {
+        // parse the key
+        let key_str = {
+            let (key, end_of_line) = try!(self.read_word_in_line());
+
+            if end_of_line {
+                return Err(TcpTransportError::CommandParseError);
+            }
+
+            try!(as_string(key))
+        };
+
+        // parse noreply
+        let noreply_flag = {
+            let (noreply, end_of_line) = try!(self.read_word_in_line());
+
+            if !end_of_line {
+                return Err(TcpTransportError::CommandParseError);
+            }
+
+            let noreply_str = try!(as_string(noreply));
+            match noreply_str == "noreply" {
+                true => true,
+                false => false,
+            }
+        };
+
+        Ok(Cmd::Delete(Delete {
+            key: key_str,
+            noreply: noreply_flag,
+        }))
+    }
+
     pub fn parse_cmd_get(&mut self) -> TcpTransportResult<Cmd> {
         let mut keys = vec![];
 
@@ -340,13 +374,13 @@ impl<T: Read + Write> TcpTransport<T> {
         };
 
         if keyword_str == "get" {
-            // TODO check for !eol
             return self.parse_cmd_get();
         } else if keyword_str == "set" {
-            // TODO check for !eol
             return self.parse_cmd_set();
+        } else if keyword_str == "delete" {
+            return self.parse_cmd_delete();
         } else if keyword_str == "stats" {
-            // TODO check for eol
+            // TODO check for eol since nothing follows the keyword
             return Ok(Cmd::Stats);
         }
 
@@ -356,8 +390,14 @@ impl<T: Read + Write> TcpTransport<T> {
     pub fn write_resp(&mut self, resp: &Resp) -> TcpTransportResult<()> {
         match *resp {
             Resp::Empty => (),
+            Resp::Deleted => {
+                try!(self.write_string("DELETED\r\n"));
+            }
             Resp::Error => {
                 try!(self.write_string("ERROR\r\n"));
+            }
+            Resp::NotFound => {
+                try!(self.write_string("NOT_FOUND\r\n"));
             }
             Resp::Stats(ref stats) => {
                 for stat in stats {

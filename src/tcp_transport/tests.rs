@@ -1,4 +1,5 @@
 use protocol::cmd::Cmd;
+use protocol::cmd::Delete;
 use protocol::cmd::Get;
 use protocol::cmd::Resp;
 use protocol::cmd::Set;
@@ -181,6 +182,29 @@ fn test_read_cmd_malterminated() {
 }
 
 
+// Command parsing: Delete
+
+#[test]
+fn test_read_cmd_delete() {
+    let cmd_str = "delete x \r\n".to_string();
+    let ts = TestStream::new(cmd_str.into_bytes());
+    let mut transport = TcpTransport::new(ts);
+
+    let cmd = transport.read_cmd().unwrap();
+    assert_eq!(cmd, Cmd::Delete(Delete::new("x", false)));
+}
+
+#[test]
+fn test_read_cmd_delete_noreply() {
+    let cmd_str = "delete x noreply\r\n".to_string();
+    let ts = TestStream::new(cmd_str.into_bytes());
+    let mut transport = TcpTransport::new(ts);
+
+    let cmd = transport.read_cmd().unwrap();
+    assert_eq!(cmd, Cmd::Delete(Delete::new("x", true)));
+}
+
+
 // Command parsing: Get
 
 #[test]
@@ -321,6 +345,20 @@ fn test_read_cmd_stats() {
 }
 
 
+// Response writing: Deleted
+
+#[test]
+fn test_write_resp_deleted() {
+    let ts = TestStream::new(vec![]);
+    let mut transport = TcpTransport::new(ts);
+
+    let resp = Resp::Deleted;
+    transport.write_resp(&resp).unwrap();
+    let expected = "DELETED\r\n".to_string().into_bytes();
+    assert_eq!(transport.get_stream().outgoing, expected);
+}
+
+
 // Response writing: Empty
 
 #[test]
@@ -345,6 +383,20 @@ fn test_write_resp_error() {
     let resp = Resp::Error;
     transport.write_resp(&resp).unwrap();
     let expected = "ERROR\r\n".to_string().into_bytes();
+    assert_eq!(transport.get_stream().outgoing, expected);
+}
+
+
+// Response writing: NotFound
+
+#[test]
+fn test_write_resp_not_found() {
+    let ts = TestStream::new(vec![]);
+    let mut transport = TcpTransport::new(ts);
+
+    let resp = Resp::NotFound;
+    transport.write_resp(&resp).unwrap();
+    let expected = "NOT_FOUND\r\n".to_string().into_bytes();
     assert_eq!(transport.get_stream().outgoing, expected);
 }
 
