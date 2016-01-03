@@ -62,14 +62,19 @@ class TestApi(TestCase):
         assert val1 == dct[key1].value
         assert val3 == dct[key3].value
 
-    def test_set_exptime_abs_1s(self):
+    def test_set_exptime_abs_2s(self):
         key = generate_random_key(10)
         val = generate_random_data(10)
 
-        self.client.set(key, val, exptime=int(math.floor(time.time()) + 1))
+        # we don't know if we have time sync with the server, so fetch the
+        # server's time first
+        stats = self.client.get_stats()
+        now = int(stats['time'])
+
+        self.client.set(key, val, exptime=now + 1)
         item = self.client.get(key)  # still there
 
-        time.sleep(1.1)
+        time.sleep(2.3)
         with self.assert_raises(ItemNotFoundError):
             item = self.client.get(key)  # expired
 
