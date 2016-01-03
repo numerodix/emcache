@@ -1,8 +1,8 @@
 from itertools import izip
 import time
 
-from pyperf.task_api import Task
-from pyperf.task_api import Tasklet
+from pyperf.abstractions.task_api import Task
+from pyperf.abstractions.task_api import Tasklet
 from pyperf.util import generate_random_data
 from pyperf.util import generate_random_key
 from pyperf.util import generate_random_key_uuid

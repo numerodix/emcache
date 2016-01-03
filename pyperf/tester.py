@@ -7,10 +7,13 @@ import socket
 import sys
 import time
 
+from pyperf.abstractions.test_api import TestRunner
 from pyperf.client import ItemNotFoundError
 from pyperf.client import MemcacheClient
 from pyperf.client import MemcacheClientParams
 from pyperf.task_filler import CacheFillerTask
+from pyperf.test_integration import TestApi
+from pyperf.test_stress import TestStress
 
 
 if __name__ == '__main__':
@@ -45,81 +48,21 @@ if __name__ == '__main__':
         filler.launch()
 
     elif options.stress_test:
-        client = cli_params.create_client()
-        # establish connection
-        client.get_stats()
+        runner = TestRunner(cli_params)
 
-        # measure set rate
-        start_time = time.time()
-        num = 50000  # should take about 2secs
-        for _ in range(num):
-            client.set('x', 'abc', noreply=True)
-        end_time = time.time()
-        set_interval = end_time - start_time
-        set_rate = float(num) / (set_interval) * 2
+        test_cases = [
+            TestStress,
+        ]
 
-        # measure set rate
-        start_time = time.time()
-        num = 50000  # should take about 2secs
-        for _ in range(num):
-            client.get('x')
-        end_time = time.time()
-        get_interval = end_time - start_time
-        get_rate = float(num) / (get_interval) * 2
-
-        # print stats afterwards
-        client.print_stats()
-
-        # display results
-        print("Made %d constant key set requests in %.2f seconds = %.2f requests/sec" %
-              (num, set_interval, set_rate))
-        print("Made %d constant key get requests in %.2f seconds = %.2f requests/sec" %
-              (num, get_interval, get_rate))
+        rv = runner.execute_all(test_cases)
+        sys.exit(not rv)
 
     else:
-        from pyperf.util import generate_random_key
-        from pyperf.util import generate_random_data
+        runner = TestRunner(cli_params)
 
-        client = cli_params.create_client()
+        test_cases = [
+            TestApi,
+        ]
 
-
-
-        key = generate_random_key(4)
-        val = generate_random_data(5, 8)
-
-        print("Setting small key:   %r -> %r" % (key, val))
-        client.set(key, val)
-
-        item = client.get(key)
-        val2 = item.value
-        print("Retrieved small key: %r -> %r" % (key, val2))
-
-        assert val == val2
-
-
-
-        key = generate_random_key(15)
-        val = generate_random_data(1 << 19)  # .5mb
-
-        print("Setting large key:   %r -> %r..." % (key, val[:10]))
-        client.set(key, val)
-
-        item = client.get(key)
-        val2 = item.value
-        print("Retrieved large key: %r -> %r..." % (key, val2[:10]))
-
-        assert val == val2
-
-
-
-        try:
-            key = 'y'
-            print('Trying to retrieve key %r... ' % key, end='')
-            value = client.get(key)
-        except ItemNotFoundError:
-            print('not found')
-
-        client.print_stats()
-
-        resp = client.send_malformed_cmd()
-        print("Sent malformed command, got '%s'" % resp)
+        rv = runner.execute_all(test_cases)
+        sys.exit(not rv)
