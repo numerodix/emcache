@@ -78,11 +78,9 @@ impl Driver {
 
         match delete.noreply {
             true => Resp::Empty,
-            false => {
-                match rv {
-                    Ok(_) => Resp::Deleted,
-                    Err(_) => Resp::NotFound,
-                }
+            false => match rv {
+                Ok(_) => Resp::Deleted,
+                Err(_) => Resp::NotFound,
             }
         }
     }
@@ -127,14 +125,12 @@ impl Driver {
 
         let rv = self.cache.set(key, value);
 
-        match rv {
-            Ok(_) => {
-                match set.noreply {
-                    true => Resp::Empty,
-                    false => Resp::Stored,
-                }
+        match set.noreply {
+            true => Resp::Empty,
+            false => match rv {
+                Ok(_) => Resp::Stored,
+                Err(_) => Resp::Error,
             }
-            Err(_) => Resp::Error,
         }
     }
 
