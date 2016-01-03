@@ -1,11 +1,11 @@
 import math
 import time
 
-from pyperf.abstractions.test_api import TestCase
-from pyperf.client import ItemNotFoundError
-from pyperf.client import SetFailedError
-from pyperf.util import generate_random_data
-from pyperf.util import generate_random_key
+from pyemc.abstractions.test_api import TestCase
+from pyemc.client import ItemNotFoundError
+from pyemc.client import SetFailedError
+from pyemc.util import generate_random_data
+from pyemc.util import generate_random_key
 
 
 class TestApi(TestCase):

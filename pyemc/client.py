@@ -1,7 +1,7 @@
 from collections import OrderedDict
 import re
 
-from pyperf.socket_stream import BufferedSocketStream
+from pyemc.socket_stream import BufferedSocketStream
 
 
 class MemcacheClientParams(object):

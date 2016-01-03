@@ -1,12 +1,12 @@
 from itertools import izip
 import time
 
-from pyperf.abstractions.task_api import Task
-from pyperf.abstractions.task_api import Tasklet
-from pyperf.util import generate_random_data
-from pyperf.util import generate_random_key
-from pyperf.util import generate_random_key_uuid
-from pyperf.util import insert_number_commas
+from pyemc.abstractions.task_api import Task
+from pyemc.abstractions.task_api import Tasklet
+from pyemc.util import generate_random_data
+from pyemc.util import generate_random_key
+from pyemc.util import generate_random_key_uuid
+from pyemc.util import insert_number_commas
 
 
 class CacheFillerTask(Task):

@@ -1,6 +1,6 @@
 import time
 
-from pyperf.abstractions.test_api import TestCase
+from pyemc.abstractions.test_api import TestCase
 
 
 class TestStress(TestCase):

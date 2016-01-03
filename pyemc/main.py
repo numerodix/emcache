@@ -1,19 +1,17 @@
 #!/usr/bin/env python
 
-from __future__ import print_function
-
 import re
 import socket
 import sys
 import time
 
-from pyperf.abstractions.test_api import TestRunner
-from pyperf.client import ItemNotFoundError
-from pyperf.client import MemcacheClient
-from pyperf.client import MemcacheClientParams
-from pyperf.task_filler import CacheFillerTask
-from pyperf.test_integration import TestApi
-from pyperf.test_stress import TestStress
+from pyemc.abstractions.test_api import TestRunner
+from pyemc.client import ItemNotFoundError
+from pyemc.client import MemcacheClient
+from pyemc.client import MemcacheClientParams
+from pyemc.task_filler import CacheFillerTask
+from pyemc.test_integration import TestApi
+from pyemc.test_stress import TestStress
 
 
 if __name__ == '__main__':
