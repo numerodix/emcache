@@ -70,6 +70,7 @@ impl<T: Read + Write> TcpTransport<T> {
         let mut iteration = 0;
 
         loop {
+            // Read as much as we can, hopefully the whole buffer
             let rv = self.stream.read(&mut bytes[cursor..]);
 
             // Something went wrong
@@ -77,27 +78,30 @@ impl<T: Read + Write> TcpTransport<T> {
                 return Err(TcpTransportError::StreamReadError);
             }
 
+            // How much we actually read
             let bytes_cnt = rv.unwrap();
 
             // Woops, there was nothing to read!
             if bytes_cnt == 0 {
                 if iteration == 0 {
                     // It's the first iteration, so there wasn't anything to
-                    // read at all, we were called in vain!
+                    // read in the first place, we were called in vain!
                     return Err(TcpTransportError::StreamReadError);
 
                 } else {
-                    // It turns out we read the very last byte the last
+                    // It turns out we read the very last byte on the last
                     // iteration, so nothing more to do at this point
                     break;
                 }
             }
 
+            // We advance the position in the buffer for next iteration
             cursor += bytes_cnt;
 
             // Update stats
             self.stats.bytes_read += bytes_cnt as u64;
 
+            // We've read as much as was requested already
             if (bytes_cnt as u64) >= len {
                 break;
             }
