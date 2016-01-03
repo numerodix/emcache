@@ -74,19 +74,19 @@ impl Driver {
         // Update stats
         self.stats.cmd_get += 1;
 
-        let key_str = get.key.clone();
-        let key = Key::new(get.key.into_bytes());
-
-        let rv = self.cache.get(&key);
+        let rv = {
+            let key = Key::new(get.keys[0].clone().into_bytes());
+            self.cache.get(&key)
+        };
 
         match rv {
             Ok(value) => {
                 Resp::Value(CmdValue {
-                    key: key_str,
+                    key: get.keys[0].clone(),
                     flags: value.flags,
                     data: value.item.clone(),
                 })
-            }
+            },
             Err(_) => Resp::Error,
         }
     }

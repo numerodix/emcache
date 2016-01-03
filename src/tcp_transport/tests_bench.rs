@@ -21,7 +21,7 @@ fn bench_transport_read_cmd_get(b: &mut Bencher) {
         let mut transport = TcpTransport::new(ts);
 
         let cmd = transport.read_cmd().unwrap();
-        assert_eq!(cmd, Cmd::Get(Get::new("x")));
+        assert_eq!(cmd, Cmd::Get(Get::one("x")));
     })
 }
 
@@ -47,9 +47,8 @@ fn bench_transport_write_resp_value(b: &mut Bencher) {
         let ts = TestStream::new(vec![]);
         let mut transport = TcpTransport::new(ts);
 
-        let resp = Resp::Value(Value::new("x",
-                                          15,
-                                          "abc".to_string().into_bytes()));
+        let val = Value::new("x", 15, "abc".to_string().into_bytes());
+        let resp = Resp::Value(val);
         transport.write_resp(&resp).unwrap();
         let expected = "VALUE x 15 3\r\nabc\r\nEND\r\n"
                            .to_string()

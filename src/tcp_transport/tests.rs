@@ -190,7 +190,7 @@ fn test_read_cmd_get_ok() {
     let mut transport = TcpTransport::new(ts);
 
     let cmd = transport.read_cmd().unwrap();
-    assert_eq!(cmd, Cmd::Get(Get::new("x")));
+    assert_eq!(cmd, Cmd::Get(Get::one("x")));
 }
 
 #[test]

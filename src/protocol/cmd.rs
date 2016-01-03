@@ -5,12 +5,16 @@
 
 #[derive(Debug, PartialEq, Clone)]
 pub struct Get {
-    pub key: String,
+    pub keys: Vec<String>,
 }
 
 impl Get {
-    pub fn new(key: &str) -> Get {
-        Get { key: key.to_string() }
+    pub fn new(keys: Vec<String>) -> Get {
+        Get { keys: keys }
+    }
+
+    pub fn one(key: &str) -> Get {
+        Get { keys: vec![key.to_string()] }
     }
 }
 

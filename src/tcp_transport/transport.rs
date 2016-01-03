@@ -236,7 +236,7 @@ impl<T: Read + Write> TcpTransport<T> {
             return Err(TcpTransportError::CommandParseError);
         }
 
-        Ok(Cmd::Get(Get { key: key_str }))
+        Ok(Cmd::Get(Get { keys: vec![key_str] }))
     }
 
     pub fn parse_cmd_set(&mut self) -> TcpTransportResult<Cmd> {

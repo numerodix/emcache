@@ -33,7 +33,7 @@ fn test_cmd_set_and_get_a_key() {
     let blob = vec![1, 2, 3];
 
     // Try to retrieve a key not set
-    let cmd = Cmd::Get(Get::new(key_name));
+    let cmd = Cmd::Get(Get::one(key_name));
     let resp = driver.run(cmd);
     assert_eq!(resp, Resp::Error);
 
@@ -44,7 +44,7 @@ fn test_cmd_set_and_get_a_key() {
     assert_eq!(resp, Resp::Stored);
 
     // Retrieve it
-    let cmd = Cmd::Get(Get::new(key_name));
+    let cmd = Cmd::Get(Get::one(key_name));
     let resp = driver.run(cmd);
     assert_eq!(15, get_resp_value(resp.clone()).flags);
     assert_eq!(blob, get_resp_value(resp).data);
@@ -56,7 +56,7 @@ fn test_cmd_set_and_get_a_key() {
     assert_eq!(resp, Resp::Empty);
 
     // Retrieve it
-    let cmd = Cmd::Get(Get::new("y"));
+    let cmd = Cmd::Get(Get::one("y"));
     let resp = driver.run(cmd);
     assert_eq!(15, get_resp_value(resp.clone()).flags);
     assert_eq!(blob, get_resp_value(resp).data);
@@ -74,7 +74,7 @@ fn test_cmd_stats() {
     assert_eq!(resp, Resp::Stored);
 
     // Retrieve it
-    let cmd = Cmd::Get(Get::new("x"));
+    let cmd = Cmd::Get(Get::one("x"));
     driver.run(cmd);
 
     // Run stats
@@ -140,7 +140,7 @@ fn test_cmd_relative_exptime() {
     assert_eq!(resp, Resp::Stored);
 
     // Retrieve it right away - succeeds
-    let cmd = Cmd::Get(Get::new(key_name));
+    let cmd = Cmd::Get(Get::one(key_name));
     let resp = driver.run(cmd);
     assert_eq!(blob, get_resp_value(resp).data);
 
@@ -148,7 +148,7 @@ fn test_cmd_relative_exptime() {
     sleep_secs(1.5);
 
     // Retrieve the key again - it's gone
-    let cmd = Cmd::Get(Get::new(key_name));
+    let cmd = Cmd::Get(Get::one(key_name));
     let resp = driver.run(cmd);
     assert_eq!(resp, Resp::Error);
 }
@@ -171,7 +171,7 @@ fn test_cmd_absolute_exptime() {
     assert_eq!(resp, Resp::Stored);
 
     // Retrieve it right away - succeeds
-    let cmd = Cmd::Get(Get::new(key_name));
+    let cmd = Cmd::Get(Get::one(key_name));
     let resp = driver.run(cmd);
     assert_eq!(blob, get_resp_value(resp).data);
 
@@ -179,7 +179,7 @@ fn test_cmd_absolute_exptime() {
     sleep_secs(2.5);
 
     // Retrieve the key again - it's gone
-    let cmd = Cmd::Get(Get::new(key_name));
+    let cmd = Cmd::Get(Get::one(key_name));
     let resp = driver.run(cmd);
     assert_eq!(resp, Resp::Error);
 }
