@@ -63,8 +63,8 @@ class TestApi(TestCase):
         assert val3 == dct[key3].value
 
     def test_set_exptime_abs_1s(self):
-        key = generate_random_key(4)
-        val = generate_random_data(5, 8)
+        key = generate_random_key(10)
+        val = generate_random_data(10)
 
         self.client.set(key, val, exptime=int(math.floor(time.time()) + 1))
         item = self.client.get(key)  # still there
@@ -74,8 +74,8 @@ class TestApi(TestCase):
             item = self.client.get(key)  # expired
 
     def test_set_exptime_rel_1s(self):
-        key = generate_random_key(4)
-        val = generate_random_data(5, 8)
+        key = generate_random_key(10)
+        val = generate_random_data(10)
 
         self.client.set(key, val, exptime=1)
         item = self.client.get(key)  # still there
@@ -85,8 +85,8 @@ class TestApi(TestCase):
             item = self.client.get(key)  # expired
 
     def test_set_flags(self):
-        key = generate_random_key(4)
-        val = generate_random_data(5, 8)
+        key = generate_random_key(10)
+        val = generate_random_data(10)
         flags = 15
 
         self.client.set(key, val, flags=flags)
@@ -99,8 +99,8 @@ class TestApi(TestCase):
         assert flags == flags2
 
     def test_set_noreply(self):
-        key = generate_random_key(4)
-        val = generate_random_data(5, 8)
+        key = generate_random_key(10)
+        val = generate_random_data(10)
 
         # set without requesting confirmation
         self.client.set(key, val, noreply=True)
@@ -113,7 +113,7 @@ class TestApi(TestCase):
 
     def test_delete(self):
         key = generate_random_key(8)
-        val = generate_random_data(5, 8)
+        val = generate_random_data(10)
 
         self.client.set(key, val)
         self.client.delete(key)
@@ -126,7 +126,7 @@ class TestApi(TestCase):
 
     def test_delete_noreply(self):
         key = generate_random_key(8)
-        val = generate_random_data(5, 8)
+        val = generate_random_data(10)
 
         self.client.set(key, val)
         self.client.delete(key, noreply=True)
@@ -137,9 +137,10 @@ class TestApi(TestCase):
     ## Failure cases
 
     def test_get_invalid_key(self):
-        key = generate_random_key(4)
+        key = generate_random_key(10)
 
         self.write("Trying to get invalid key...")
+        self.client.delete(key, noreply=True)
         with self.assert_raises(ItemNotFoundError):
             item = self.client.get(key)
 
