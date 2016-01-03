@@ -135,5 +135,28 @@ pub enum Resp {
     Touched, // The item was touched successfully
 
     Stats(Vec<Stat>),
-    Value(Value),
+    Values(Vec<Value>),
+}
+
+impl Resp {
+    pub fn get_stats(&self) -> Option<&Vec<Stat>> {
+        match *self {
+            Resp::Stats(ref stats) => Some(&stats),
+            _ => None,
+        }
+    }
+
+    pub fn get_values(&self) -> Option<&Vec<Value>> {
+        match *self {
+            Resp::Values(ref values) => Some(&values),
+            _ => None,
+        }
+    }
+
+    pub fn get_first_value(&self) -> Option<&Value> {
+        match self.get_values() {
+            Some(ref values) => Some(&values[0]),
+            _ => None,
+        }
+    }
 }

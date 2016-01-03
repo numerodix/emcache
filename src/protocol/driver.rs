@@ -74,21 +74,29 @@ impl Driver {
         // Update stats
         self.stats.cmd_get += 1;
 
-        let rv = {
-            let key = Key::new(get.keys[0].clone().into_bytes());
-            self.cache.get(&key)
-        };
+        let mut values = vec![];
 
-        match rv {
-            Ok(value) => {
-                Resp::Value(CmdValue {
-                    key: get.keys[0].clone(),
-                    flags: value.flags,
-                    data: value.item.clone(),
-                })
-            },
-            Err(_) => Resp::Error,
+        for key in get.keys {
+            let key_str = key.clone();
+
+            let key_st = Key::new(key.into_bytes());
+            let rv = self.cache.get(&key_st);
+
+            match rv {
+                Ok(value) => {
+                    let val_st = CmdValue {
+                        key: key_str,
+                        flags: value.flags,
+                        data: value.item.clone(),
+                    };
+                    values.push(val_st);
+                },
+                // Keys that were not found are skipped, no error given
+                Err(_) => (),
+            }
         }
+
+        Resp::Values(values)
     }
 
     fn do_set(&mut self, set: Set) -> Resp {

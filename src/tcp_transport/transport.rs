@@ -366,15 +366,15 @@ impl<T: Read + Write> TcpTransport<T> {
             Resp::Stored => {
                 try!(self.write_string("STORED\r\n"));
             }
-            Resp::Value(ref value) => {
+            Resp::Values(ref values) => {
                 try!(self.write_string("VALUE ")); // keyword
-                try!(self.write_string(&value.key)); // key
+                try!(self.write_string(&values[0].key)); // key
                 try!(self.write_string(" ")); // space
-                try!(self.write_string(&value.flags.to_string())); // flags
+                try!(self.write_string(&values[0].flags.to_string())); // flags
                 try!(self.write_string(" ")); // space
-                try!(self.write_string(&value.data.len().to_string())); // bytelen
+                try!(self.write_string(&values[0].data.len().to_string())); // bytelen
                 try!(self.write_string(&"\r\n".to_string())); // newline
-                try!(self.write_bytes(&value.data)); // data block
+                try!(self.write_bytes(&values[0].data)); // data block
                 try!(self.write_string(&"\r\n".to_string())); // newline
                 try!(self.write_string(&"END\r\n".to_string())); // END + newline
             }

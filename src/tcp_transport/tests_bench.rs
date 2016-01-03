@@ -48,7 +48,7 @@ fn bench_transport_write_resp_value(b: &mut Bencher) {
         let mut transport = TcpTransport::new(ts);
 
         let val = Value::new("x", 15, "abc".to_string().into_bytes());
-        let resp = Resp::Value(val);
+        let resp = Resp::Values(vec![val]);
         transport.write_resp(&resp).unwrap();
         let expected = "VALUE x 15 3\r\nabc\r\nEND\r\n"
                            .to_string()

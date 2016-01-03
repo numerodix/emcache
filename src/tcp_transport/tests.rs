@@ -374,9 +374,8 @@ fn test_write_resp_value() {
     let ts = TestStream::new(vec![]);
     let mut transport = TcpTransport::new(ts);
 
-    let resp = Resp::Value(Value::new("x",
-                                      15,
-                                      "abc".to_string().into_bytes()));
+    let val = Value::new("x", 15, "abc".to_string().into_bytes());
+    let resp = Resp::Values(vec![val]);
     transport.write_resp(&resp).unwrap();
     let expected = "VALUE x 15 3\r\nabc\r\nEND\r\n".to_string().into_bytes();
     assert_eq!(transport.get_stream().outgoing, expected);

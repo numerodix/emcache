@@ -13,17 +13,6 @@ use super::cmd::Stat;
 use super::cmd::Value;
 
 
-// Deconstruct Resp to a Value, panic if unsuccessful
-fn get_resp_value(resp: Resp) -> Value {
-    match resp {
-        Resp::Value(value) => value,
-        _ => {
-            panic!("Could not match Resp::Value");
-        }
-    }
-}
-
-
 #[test]
 fn test_cmd_set_and_get_a_key() {
     let cache = Cache::new(100);
@@ -35,7 +24,7 @@ fn test_cmd_set_and_get_a_key() {
     // Try to retrieve a key not set
     let cmd = Cmd::Get(Get::one(key_name));
     let resp = driver.run(cmd);
-    assert_eq!(resp, Resp::Error);
+    assert_eq!(0, resp.get_values().unwrap().len());
 
     // Set a key
     let set = Set::new(SetInstr::Set, key_name, 15, 0, blob.clone(), false);
@@ -46,8 +35,8 @@ fn test_cmd_set_and_get_a_key() {
     // Retrieve it
     let cmd = Cmd::Get(Get::one(key_name));
     let resp = driver.run(cmd);
-    assert_eq!(15, get_resp_value(resp.clone()).flags);
-    assert_eq!(blob, get_resp_value(resp).data);
+    assert_eq!(15, resp.get_first_value().unwrap().flags);
+    assert_eq!(blob, resp.get_first_value().unwrap().data);
 
     // Set a key with noreply flag
     let set = Set::new(SetInstr::Set, "y", 15, 0, blob.clone(), true);
@@ -58,8 +47,40 @@ fn test_cmd_set_and_get_a_key() {
     // Retrieve it
     let cmd = Cmd::Get(Get::one("y"));
     let resp = driver.run(cmd);
-    assert_eq!(15, get_resp_value(resp.clone()).flags);
-    assert_eq!(blob, get_resp_value(resp).data);
+    assert_eq!(15, resp.get_first_value().unwrap().flags);
+    assert_eq!(blob, resp.get_first_value().unwrap().data);
+}
+
+#[test]
+fn test_cmd_set_and_get_multiple_keys() {
+    let cache = Cache::new(100);
+    let mut driver = Driver::new(cache);
+
+    let val1 = vec![1];
+    let val3 = vec![3];
+
+    // Set two keys
+    let set = Set::new(SetInstr::Set, "a", 15, 0, val1.clone(), false);
+    let cmd = Cmd::Set(set);
+    let resp = driver.run(cmd);
+    assert_eq!(resp, Resp::Stored);
+
+    let set = Set::new(SetInstr::Set, "c", 17, 0, val3.clone(), false);
+    let cmd = Cmd::Set(set);
+    let resp = driver.run(cmd);
+    assert_eq!(resp, Resp::Stored);
+
+    // Try to retrieve three keys - get two
+    let keys = vec!["a".to_string(), "b".to_string(), "c".to_string()];
+    let cmd = Cmd::Get(Get::new(keys));
+    let resp = driver.run(cmd);
+
+    let values = resp.get_values().unwrap();
+    let val1 = Value::new("a", 15, val1);
+    let val3 = Value::new("c", 17, val3);
+    assert_eq!(2, values.len());
+    assert_eq!(val1, values[0]);
+    assert_eq!(val3, values[1]);
 }
 
 #[test]
@@ -101,8 +122,9 @@ fn test_cmd_stats() {
     let st_evictions = Stat::new("evictions", "0".to_string());
     let st_reclaimed = Stat::new("reclaimed", "0".to_string());
 
-    assert_eq!(resp,
-               Resp::Stats(vec![st_pid,
+    let stats = resp.get_stats().unwrap();
+    assert_eq!(*stats,
+               (vec![st_pid,
                                 st_uptime,
                                 st_time,
                                 st_cmd_get,
@@ -142,7 +164,7 @@ fn test_cmd_relative_exptime() {
     // Retrieve it right away - succeeds
     let cmd = Cmd::Get(Get::one(key_name));
     let resp = driver.run(cmd);
-    assert_eq!(blob, get_resp_value(resp).data);
+    assert_eq!(blob, resp.get_first_value().unwrap().data);
 
     // sleep 1.5 secs - long enough to expire key
     sleep_secs(1.5);
@@ -173,7 +195,7 @@ fn test_cmd_absolute_exptime() {
     // Retrieve it right away - succeeds
     let cmd = Cmd::Get(Get::one(key_name));
     let resp = driver.run(cmd);
-    assert_eq!(blob, get_resp_value(resp).data);
+    assert_eq!(blob, resp.get_first_value().unwrap().data);
 
     // sleep 2.5 secs - long enough to expire key
     sleep_secs(2.5);
