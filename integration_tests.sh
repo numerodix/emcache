@@ -26,6 +26,6 @@ python -m pyperf.main -p $PORT
 exit_code=$?
 
 # Kill the server
-ps axf | grep 'target\/.*\/memcache' | awk '{print $1}' | xargs kill || true
+ps axf | grep 'target\/.*\/emcache' | awk '{print $1}' | xargs kill || true
 
 exit $exit_code

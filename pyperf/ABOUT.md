@@ -20,7 +20,7 @@ memcached:
 * 10,000x get (constant key): 67k/s
 * 10,000x set (constant key): 65k/s
 
-memcache.rs:
+emcache:
 
 * 10,000x get (constant key): 49k/s
 * 10,000x set (constant key): 41k/s
@@ -37,6 +37,6 @@ memcached:
 
 * 55k items/s - 31mb/s
 
-memcache.rs:
+emcache:
 
 * 50k items/s - 28mb/s

@@ -1,5 +1,5 @@
 [root]
-name = "memcache"
+name = "emcache"
 version = "0.1.0"
 dependencies = [
  "bufstream 0.1.1 (registry+https://github.com/rust-lang/crates.io-index)",

@@ -4,7 +4,7 @@ use docopt::Docopt;
 // Write the Docopt usage string.
 const USAGE: &'static str = "
 Usage:
-    memcache [options]
+    emcache [options]
 
 Options:
     --host HOST         Interface to listen on (ie. ip hostname/ip).

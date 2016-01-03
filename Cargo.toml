@@ -1,5 +1,5 @@
 [package]
-name = "memcache"
+name = "emcache"
 version = "0.1.0"
 authors = ["Martin Matusiak"]
 
