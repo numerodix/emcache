@@ -98,7 +98,7 @@ class CacheFillerTasklet(Tasklet):
                 if not self._runnable:
                     return
 
-                client.set(key, value)
+                client.set(key, value, noreply=True)
 
                 metrics.bytes_cum += len(key) + len(value)
 

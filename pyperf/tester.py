@@ -1,10 +1,13 @@
 #!/usr/bin/env python
 
+from __future__ import print_function
+
 import re
 import socket
 import sys
 import time
 
+from pyperf.client import ItemNotFoundError
 from pyperf.client import MemcacheClient
 from pyperf.client import MemcacheClientParams
 from pyperf.task_filler import CacheFillerTask
@@ -44,20 +47,20 @@ if __name__ == '__main__':
     elif options.stress_test:
         client = cli_params.create_client()
         # establish connection
-        client.get('invalid')
+        client.get_stats()
 
         # measure set rate
         start_time = time.time()
-        num = 10000  # should take about 2secs
+        num = 50000  # should take about 2secs
         for _ in range(num):
-            client.set('x', 'abc')
+            client.set('x', 'abc', noreply=True)
         end_time = time.time()
         set_interval = end_time - start_time
         set_rate = float(num) / (set_interval) * 2
 
         # measure set rate
         start_time = time.time()
-        num = 10000  # should take about 2secs
+        num = 50000  # should take about 2secs
         for _ in range(num):
             client.get('x')
         end_time = time.time()
@@ -87,7 +90,8 @@ if __name__ == '__main__':
         print("Setting small key:   %r -> %r" % (key, val))
         client.set(key, val)
 
-        val2 = client.get(key)
+        item = client.get(key)
+        val2 = item.value
         print("Retrieved small key: %r -> %r" % (key, val2))
 
         assert val == val2
@@ -97,18 +101,23 @@ if __name__ == '__main__':
         key = generate_random_key(15)
         val = generate_random_data(1 << 19)  # .5mb
 
-        print("Setting large key:   %r -> %r..." % (key, val[:20]))
+        print("Setting large key:   %r -> %r..." % (key, val[:10]))
         client.set(key, val)
 
-        val2 = client.get(key)
-        print("Retrieved large key: %r -> %r..." % (key, val2[:20]))
+        item = client.get(key)
+        val2 = item.value
+        print("Retrieved large key: %r -> %r..." % (key, val2[:10]))
 
         assert val == val2
 
 
 
-        value = client.get('y')
-        print("Retrieved 'y' -> '%s'" % value)
+        try:
+            key = 'y'
+            print('Trying to retrieve key %r... ' % key, end='')
+            value = client.get(key)
+        except ItemNotFoundError:
+            print('not found')
 
         client.print_stats()
 

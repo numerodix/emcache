@@ -1,6 +1,7 @@
 from collections import OrderedDict
 import re
-import socket
+
+from pyperf.socket_stream import BufferedSocketStream
 
 
 class MemcacheClientParams(object):
@@ -15,41 +16,52 @@ class MemcacheClientParams(object):
         )
 
 
-def connected(func):
-    def new_func(self, *args, **kwargs):
-        if self.sock is None:
-            self.connect()
-        return func(self, *args, **kwargs)
-    return new_func
+class ItemNotFoundError(Exception):
+    pass
+
+class SetFailedError(Exception):
+    pass
+
+
+class Item(object):
+    def __init__(self, key, flags, value):
+        self.key = key
+        self.flags = flags
+        self.value = value
+
+    def __repr__(self):
+        return '<%s key=%r, flags=%r, value=%r>' % (
+            self.__class__.__name__,
+            self.key,
+            self.flags,
+            self.value,
+        )
 
 
 class MemcacheClient(object):
-    rx_get_resp = re.compile('VALUE (?P<key>[^ ]*) \d+ (?P<len>\d+)')
+    rx_value = re.compile('VALUE (?P<key>[^ ]*) (?P<flags>\d+) (?P<len>\d+)')
 
     def __init__(self, host, port):
-        self.host = host
-        self.port = port
+        self.stream = BufferedSocketStream(host, port)
 
-        self.sock = None
-
-    def connect(self):
-        self.sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        self.sock.connect((self.host, self.port))
-        self.sock.setsockopt(socket.IPPROTO_TCP, socket.TCP_NODELAY, 1)
-
-    @connected
     def get_stats(self):
-        self.sock.send('stats\r\n')
-        buf = self.sock.recv(4096)
-        # remove the terminator
-        end_pos = buf.find('END')
-        buf = buf[:end_pos]
-
         dct = OrderedDict()
-        lines = buf.splitlines()
-        for line in lines:
+
+        # prepare command
+        command = 'stats\r\n'
+
+        # execute command
+        self.stream.write(command)
+
+        # read response line by line
+        stream_terminator = 'END\r\n'
+
+        line = self.stream.read_line()
+        while line != stream_terminator:
             kw, key, value = line.split(' ', 2)
-            dct[key] = value
+            dct[key] = value.strip()
+
+            line = self.stream.read_line()
 
         return dct
 
@@ -58,42 +70,74 @@ class MemcacheClient(object):
         for (key, value) in dct.items():
             print('%s: %s' % (key, value))
 
-    @connected
-    def set(self, key, value):
-        # execute set
-        self.sock.send(
-            'set %s 0 0 %s \r\n' % (key, len(value))
-            + value + '\r\n')
-        buf = self.sock.recv(4096)
+    def get_multi(self, keys):
+        # prepare command
+        keys = ' '.join(keys)
+        command = 'get %s\r\n' % keys
 
-        # parse response
-        if not buf == 'STORED\r\n':
-            raise Exception("Failed to store %s: %s" % (key, buf))
+        # execute command
+        self.stream.write(command)
 
-    @connected
+        # parse the response
+        dct = OrderedDict()
+        stream_terminator = 'END\r\n'
+
+        while True:
+            line = self.stream.read_line()
+            try:
+                key, flags, bytelen = self.rx_value.findall(line)[0]
+                flags = int(flags)
+                bytelen = int(bytelen)
+            except IndexError:
+                # no items were returned at all
+                if line == stream_terminator:
+                    break
+
+            # read value + line terminator
+            data = self.stream.read_exact(bytelen + 2)
+
+            data = data[:-2]
+            item = Item(key, flags, data)
+            dct[key] = item
+
+            if self.stream.peek_contains(stream_terminator, consume=True):
+                break
+
+        return dct
+
     def get(self, key):
-        # execute get
-        self.sock.send('get %s\r\n' % key)
-        buf = self.sock.recv(4096)
+        keys = (key,)
+        dct = self.get_multi(keys)
 
-        # parse response
-        header, rest = buf.split('\r\n', 1)
         try:
-            _, bytelen = self.rx_get_resp.findall(header)[0]
-            bytelen = int(bytelen)
+            return dct[key]
+        except KeyError:
+            raise ItemNotFoundError('The item with key %r was not found' % key)
 
-            value = rest[:bytelen]
+    def set(self, key, value, flags=0, exptime=0, noreply=False):
+        # prepare command
+        header = 'set %(key)s %(flags)d %(exptime)d %(bytelen)d %(noreply)s\r\n' % {
+            'key': key,
+            'flags': flags,
+            'exptime': exptime,
+            'bytelen': len(value),
+            'noreply': 'noreply' if noreply else '',
+        }
+        command = header + value + '\r\n'
 
-            while len(value) < bytelen:
-                buf = self.sock.recv(4096)
-                value += buf
-                value = value[:bytelen]
+        # execute command
+        self.stream.write(command)
 
-            return value
-        except IndexError:
-            return buf.strip()
+        # check for success
+        if not noreply:
+            resp = self.stream.read_line()
+            if not resp == 'STORED\r\n':
+                raise SetFailedError('Could not set key %r to %r...' % (key, value[:10]))
 
     def send_malformed_cmd(self):
-        self.sock.send('set 0 0\r\n')
-        buf = self.sock.recv(4096)
+        '''Sends an invalid command - causes the server to drop the
+        connection'''
+
+        self.stream.write('set 0 1\r\n')
+        buf = self.stream.read(4096)
         return buf.strip()
