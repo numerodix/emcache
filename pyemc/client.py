@@ -16,6 +16,9 @@ class MemcacheClientParams(object):
         )
 
 
+class DeleteFailedError(Exception):
+    pass
+
 class ItemNotFoundError(Exception):
     pass
 
@@ -69,6 +72,22 @@ class MemcacheClient(object):
         dct = self.get_stats()
         for (key, value) in dct.items():
             print('%s: %s' % (key, value))
+
+    def delete(self, key, noreply=False):
+        # prepare command
+        command = 'delete %(key)s %(noreply)s\r\n' % {
+            'key': key,
+            'noreply': 'noreply' if noreply else '',
+        }
+
+        # execute command
+        self.stream.write(command)
+
+        # parse the response
+        if not noreply:
+            resp = self.stream.read_line()
+            if not resp == 'DELETED\r\n':
+                raise DeleteFailedError('Could not delete key %r' % key)
 
     def get_multi(self, keys):
         # prepare command

@@ -2,6 +2,7 @@ import math
 import time
 
 from pyemc.abstractions.test_api import TestCase
+from pyemc.client import DeleteFailedError
 from pyemc.client import ItemNotFoundError
 from pyemc.client import SetFailedError
 from pyemc.util import generate_random_data
@@ -39,13 +40,13 @@ class TestApi(TestCase):
         assert val == val2
 
     def test_get_multiple(self):
-        key1 = 'a'
-        val1 = '1'
+        key1 = generate_random_key(10)
+        val1 = generate_random_data(10)
 
-        key2 = 'b'
+        key2 = generate_random_key(10)
 
-        key3 = 'c'
-        val3 = '3'
+        key3 = generate_random_key(10)
+        val3 = generate_random_data(10)
 
         self.write("Setting key %r -> %r" % (key1, val1))
         self.client.set(key1, val1)
@@ -109,6 +110,28 @@ class TestApi(TestCase):
         val2 = item.value
 
         assert val == val2
+
+    def test_delete(self):
+        key = generate_random_key(8)
+        val = generate_random_data(5, 8)
+
+        self.client.set(key, val)
+        self.client.delete(key)
+        with self.assert_raises(ItemNotFoundError):
+            self.client.get(key)
+
+        key = generate_random_key(8)
+        with self.assert_raises(DeleteFailedError):
+            self.client.delete(key)
+
+    def test_delete_noreply(self):
+        key = generate_random_key(8)
+        val = generate_random_data(5, 8)
+
+        self.client.set(key, val)
+        self.client.delete(key, noreply=True)
+        with self.assert_raises(ItemNotFoundError):
+            self.client.get(key)
 
 
     ## Failure cases
