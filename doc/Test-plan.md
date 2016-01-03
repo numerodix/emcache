@@ -3,7 +3,7 @@
 
 ## Correctness
 
-The primary vehicle for correctness testing is *unit tests*. Almost every
+The primary vehicle for correctness testing is **unit tests**. Almost every
 component in emcache is unit tested, including the storage, protocol and
 transport.
 
@@ -16,7 +16,7 @@ As a practical matter, we try to avoid time based unit tests when possible and
 mark tests that require sleeping as `ignore` so they are excluded from the
 default unit test run. All unit tests must run in Travis CI.
 
-We also use *integration tests* to verify that all the trusted pieces have been
+We also use **integration tests** to verify that all the trusted pieces have been
 wired up correctly. The integration tests must cover the entire protocol. When
 extending integration tests the suite must also be run against memcached to
 verify that the tests themselves work correctly.
