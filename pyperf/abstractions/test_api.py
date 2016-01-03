@@ -76,10 +76,10 @@ class TestRunner(object):
         dur = time_stop - time_start
 
         if exc is None:
-            self.write("SUCCEEDED: %s in %.2fs" % (test_name, dur))
+            self.write("SUCCEEDED: %s in %.4fs" % (test_name, dur))
             return True
         else:
-            self.write("FAILED: %s in %.2fs: %r" % (test_name, dur, exc))
+            self.write("FAILED: %s in %.4fs: %r" % (test_name, dur, exc))
             return False
 
     def write(self, msg):

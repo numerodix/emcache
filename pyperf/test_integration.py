@@ -1,3 +1,6 @@
+import math
+import time
+
 from pyperf.abstractions.test_api import TestCase
 from pyperf.client import ItemNotFoundError
 from pyperf.client import SetFailedError
@@ -6,14 +9,21 @@ from pyperf.util import generate_random_key
 
 
 class TestApi(TestCase):
-    def test_get_invalid_key(self):
+
+    ## Happy path
+
+    def test_set_and_get_small_key(self):
         key = generate_random_key(4)
+        val = generate_random_data(5, 8)
 
-        self.write("Trying to get invalid key...")
-        with self.assert_raises(ItemNotFoundError):
-            item = self.client.get(key)
+        self.write("Setting small key:   %r -> %r" % (key, val))
+        self.client.set(key, val)
 
-        self.write("...key not found")
+        item = self.client.get(key)
+        val2 = item.value
+        self.write("Retrieved small key: %r -> %r" % (key, val2))
+
+        assert val == val2
 
     def test_set_and_get_large_value(self):
         key = generate_random_key(10)
@@ -28,7 +38,7 @@ class TestApi(TestCase):
 
         assert val == val2
 
-    def test_set_and_get_multiple(self):
+    def test_get_multiple(self):
         key1 = 'a'
         val1 = '1'
 
@@ -51,18 +61,69 @@ class TestApi(TestCase):
         assert val1 == dct[key1].value
         assert val3 == dct[key3].value
 
-    def test_set_and_get_small_key(self):
+    def test_set_exptime_abs_1s(self):
         key = generate_random_key(4)
         val = generate_random_data(5, 8)
 
-        self.write("Setting small key:   %r -> %r" % (key, val))
-        self.client.set(key, val)
+        self.client.set(key, val, exptime=int(math.floor(time.time()) + 1))
+        item = self.client.get(key)  # still there
 
+        time.sleep(1.1)
+        with self.assert_raises(ItemNotFoundError):
+            item = self.client.get(key)  # expired
+
+    def test_set_exptime_rel_1s(self):
+        key = generate_random_key(4)
+        val = generate_random_data(5, 8)
+
+        self.client.set(key, val, exptime=1)
+        item = self.client.get(key)  # still there
+
+        time.sleep(1.1)
+        with self.assert_raises(ItemNotFoundError):
+            item = self.client.get(key)  # expired
+
+    def test_set_flags(self):
+        key = generate_random_key(4)
+        val = generate_random_data(5, 8)
+        flags = 15
+
+        self.client.set(key, val, flags=flags)
+        item = self.client.get(key)
+
+        flags2 = item.flags
+        val2 = item.value
+
+        assert val == val2
+        assert flags == flags2
+
+    def test_set_noreply(self):
+        key = generate_random_key(4)
+        val = generate_random_data(5, 8)
+
+        # set without requesting confirmation
+        self.client.set(key, val, noreply=True)
+
+        # verify that it worked
         item = self.client.get(key)
         val2 = item.value
-        self.write("Retrieved small key: %r -> %r" % (key, val2))
 
-        assert val == val2, 'value read does not match value set'
+        assert val == val2
+
+
+    ## Failure cases
+
+    def test_get_invalid_key(self):
+        key = generate_random_key(4)
+
+        self.write("Trying to get invalid key...")
+        with self.assert_raises(ItemNotFoundError):
+            item = self.client.get(key)
+
+        self.write("...key not found")
+
+
+    ## Exceed limits
 
     def test_set_too_large_key(self):
         key = generate_random_key(251)  # limit is 250b
