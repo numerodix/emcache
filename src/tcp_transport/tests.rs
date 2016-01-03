@@ -53,7 +53,7 @@ fn test_read_bytes() {
     let ts = TestStream::new(vec![93, 13, 10]);
     let mut transport = TcpTransport::new(ts);
 
-    let bytes = transport.read_bytes(3).unwrap();
+    let bytes = transport.read_bytes_exact(3).unwrap();
     assert_eq!(bytes, [93, 13, 10]);
 }
 
@@ -63,8 +63,18 @@ fn test_read_bytes_too_few() {
     let ts = TestStream::new(vec![93]);
     let mut transport = TcpTransport::new(ts);
 
-    let bytes = transport.read_bytes(2).unwrap();
+    let bytes = transport.read_bytes_exact(2).unwrap();
     assert_eq!(bytes, [93]);
+}
+
+#[test]
+fn test_read_bytes_many() {
+    // "a" * 1mb
+    let ts = TestStream::new(vec![93; 1 << 20]);
+    let mut transport = TcpTransport::new(ts);
+
+    let bytes = transport.read_bytes_exact(1 << 20).unwrap();
+    assert_eq!(bytes, vec![93; 1 << 20]);
 }
 
 

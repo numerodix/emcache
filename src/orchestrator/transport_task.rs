@@ -54,7 +54,9 @@ impl TransportTask {
 
             // If we couldn't parse the command return an error
             if !rv.is_ok() {
-                println!("Failed to read command, returning error (client disconnected?)");
+                println!(
+                    "Failed to read command: {:?}, \
+                    returning error (client disconnected?)", rv.unwrap_err());
                 let _ = transport.write_resp(&Resp::Error);
                 return; // Here we just drop the connection
             }

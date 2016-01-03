@@ -64,23 +64,52 @@ impl<T: Read + Write> TcpTransport<T> {
 
     // Basic bytes manipulation and reading from the stream
 
-    pub fn read_bytes(&mut self, len: u64) -> TcpTransportResult<Vec<u8>> {
-        // TODO: test large values >4kb
+    pub fn read_bytes_exact(&mut self, len: u64) -> TcpTransportResult<Vec<u8>> {
         let mut bytes = vec![0; len as usize];
+        let mut cursor: usize = 0;
+        let mut iteration = 0;
 
-        match self.stream.read(&mut bytes[..]) {
-            Ok(n) => {
-                // Update stats
-                self.stats.bytes_read += n as u64;
+        loop {
+            let rv = self.stream.read(&mut bytes[cursor..]);
 
-                if (n as u64) < len {
-                    bytes.truncate(n);
-                }
-
-                Ok(bytes)
+            // Something went wrong
+            if rv.is_err() {
+                return Err(TcpTransportError::StreamReadError);
             }
-            _ => Err(TcpTransportError::StreamReadError),
+
+            let bytes_cnt = rv.unwrap();
+
+            // Woops, there was nothing to read!
+            if bytes_cnt == 0 {
+                if iteration == 0 {
+                    // It's the first iteration, so there wasn't anything to
+                    // read at all, we were called in vain!
+                    return Err(TcpTransportError::StreamReadError);
+
+                } else {
+                    // It turns out we read the very last byte the last
+                    // iteration, so nothing more to do at this point
+                    break;
+                }
+            }
+
+            cursor += bytes_cnt;
+
+            // Update stats
+            self.stats.bytes_read += bytes_cnt as u64;
+
+            if (bytes_cnt as u64) >= len {
+                break;
+            }
+
+            iteration += 1;
         }
+
+        if (cursor as u64) < len {
+            bytes.truncate(cursor);
+        }
+
+        Ok(bytes)
     }
 
     pub fn read_word_in_line(&mut self) -> TcpTransportResult<(Vec<u8>, bool)> {
@@ -267,7 +296,7 @@ impl<T: Read + Write> TcpTransport<T> {
         };
 
         // We now know the byte length, so read the value
-        let value = try!(self.read_bytes(bytelen_num));
+        let value = try!(self.read_bytes_exact(bytelen_num));
 
         // The value is the wrong size
         if value.len() as u64 != bytelen_num {
@@ -275,7 +304,7 @@ impl<T: Read + Write> TcpTransport<T> {
         }
 
         // Verify that we found the line terminator
-        let terminator = try!(self.read_bytes(2));
+        let terminator = try!(self.read_bytes_exact(2));
         if !terminator.ends_with(&[consts::BYTE_CARRIAGE_RETURN,
                                    consts::BYTE_LINE_FEED]) {
             return Err(TcpTransportError::CommandParseError);

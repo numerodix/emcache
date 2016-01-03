@@ -79,16 +79,32 @@ if __name__ == '__main__':
 
         client = cli_params.create_client()
 
+
+
         key = generate_random_key(4)
         val = generate_random_data(5, 8)
 
-        print("Setting key:   %r -> %r" % (key, val))
+        print("Setting small key:   %r -> %r" % (key, val))
         client.set(key, val)
 
         val2 = client.get(key)
-        print("Retrieved key: %r -> %r" % (key, val2))
+        print("Retrieved small key: %r -> %r" % (key, val2))
 
         assert val == val2
+
+
+
+        key = generate_random_key(15)
+        val = generate_random_data(1 << 19)  # .5mb
+
+        print("Setting large key:   %r -> %r..." % (key, val[:20]))
+        client.set(key, val)
+
+        val2 = client.get(key)
+        print("Retrieved large key: %r -> %r..." % (key, val2[:20]))
+
+        assert val == val2
+
 
 
         value = client.get('y')

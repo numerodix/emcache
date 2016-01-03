@@ -83,6 +83,12 @@ class MemcacheClient(object):
             bytelen = int(bytelen)
 
             value = rest[:bytelen]
+
+            while len(value) < bytelen:
+                buf = self.sock.recv(4096)
+                value += buf
+                value = value[:bytelen]
+
             return value
         except IndexError:
             return buf.strip()
