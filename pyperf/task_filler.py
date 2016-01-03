@@ -87,6 +87,7 @@ class CacheFillerTasklet(Tasklet):
                         insert_number_commas(str(int(rate)))))
 
             # Pre-generate keys and values to avoid timing this work
+            # TODO allow tuning the sizes of keys and values
             keys = [generate_random_key(10)
                     for _ in xrange(metrics.batch_size)]
             values = [generate_random_data(100, 1000)
