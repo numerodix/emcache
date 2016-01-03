@@ -228,15 +228,19 @@ impl<T: Read + Write> TcpTransport<T> {
     // Parse individual commands
 
     pub fn parse_cmd_get(&mut self) -> TcpTransportResult<Cmd> {
-        // parse the key
-        let (key, end_of_line) = try!(self.read_word_in_line());
-        let key_str = try!(as_string(key));
+        let mut keys = vec![];
 
-        if !end_of_line {
-            return Err(TcpTransportError::CommandParseError);
+        loop {
+            let (key, end_of_line) = try!(self.read_word_in_line());
+            let key_str = try!(as_string(key));
+            keys.push(key_str);
+
+            if end_of_line {
+                break;
+            }
         }
 
-        Ok(Cmd::Get(Get { keys: vec![key_str] }))
+        Ok(Cmd::Get(Get { keys: keys }))
     }
 
     pub fn parse_cmd_set(&mut self) -> TcpTransportResult<Cmd> {
@@ -367,15 +371,17 @@ impl<T: Read + Write> TcpTransport<T> {
                 try!(self.write_string("STORED\r\n"));
             }
             Resp::Values(ref values) => {
-                try!(self.write_string("VALUE ")); // keyword
-                try!(self.write_string(&values[0].key)); // key
-                try!(self.write_string(" ")); // space
-                try!(self.write_string(&values[0].flags.to_string())); // flags
-                try!(self.write_string(" ")); // space
-                try!(self.write_string(&values[0].data.len().to_string())); // bytelen
-                try!(self.write_string(&"\r\n".to_string())); // newline
-                try!(self.write_bytes(&values[0].data)); // data block
-                try!(self.write_string(&"\r\n".to_string())); // newline
+                for value in values {
+                    try!(self.write_string("VALUE ")); // keyword
+                    try!(self.write_string(&value.key)); // key
+                    try!(self.write_string(" ")); // space
+                    try!(self.write_string(&value.flags.to_string())); // flags
+                    try!(self.write_string(" ")); // space
+                    try!(self.write_string(&value.data.len().to_string())); // bytelen
+                    try!(self.write_string(&"\r\n".to_string())); // newline
+                    try!(self.write_bytes(&value.data)); // data block
+                    try!(self.write_string(&"\r\n".to_string())); // newline
+                }
                 try!(self.write_string(&"END\r\n".to_string())); // END + newline
             }
             _ => {

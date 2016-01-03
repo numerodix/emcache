@@ -184,13 +184,24 @@ fn test_read_cmd_malterminated() {
 // Command parsing: Get
 
 #[test]
-fn test_read_cmd_get_ok() {
+fn test_read_cmd_get_one_key() {
     let cmd_str = "get x\r\n".to_string();
     let ts = TestStream::new(cmd_str.into_bytes());
     let mut transport = TcpTransport::new(ts);
 
     let cmd = transport.read_cmd().unwrap();
     assert_eq!(cmd, Cmd::Get(Get::one("x")));
+}
+
+#[test]
+fn test_read_cmd_get_two_keys() {
+    let cmd_str = "get x y\r\n".to_string();
+    let ts = TestStream::new(cmd_str.into_bytes());
+    let mut transport = TcpTransport::new(ts);
+
+    let cmd = transport.read_cmd().unwrap();
+    let keys = vec!["x".to_string(), "y".to_string()];
+    assert_eq!(cmd, Cmd::Get(Get::new(keys)));
 }
 
 #[test]
@@ -370,13 +381,28 @@ fn test_write_resp_stored() {
 // Response writing: Value
 
 #[test]
-fn test_write_resp_value() {
+fn test_write_resp_value_one() {
     let ts = TestStream::new(vec![]);
     let mut transport = TcpTransport::new(ts);
 
-    let val = Value::new("x", 15, "abc".to_string().into_bytes());
-    let resp = Resp::Values(vec![val]);
+    let val1 = Value::new("x", 15, "abc".to_string().into_bytes());
+    let resp = Resp::Values(vec![val1]);
     transport.write_resp(&resp).unwrap();
-    let expected = "VALUE x 15 3\r\nabc\r\nEND\r\n".to_string().into_bytes();
-    assert_eq!(transport.get_stream().outgoing, expected);
+    let expected = "VALUE x 15 3\r\nabc\r\nEND\r\n";
+    let exp_bytes = expected.to_string().into_bytes();
+    assert_eq!(transport.get_stream().outgoing, exp_bytes);
+}
+
+#[test]
+fn test_write_resp_value_two() {
+    let ts = TestStream::new(vec![]);
+    let mut transport = TcpTransport::new(ts);
+
+    let val1 = Value::new("x", 15, "abc".to_string().into_bytes());
+    let val2 = Value::new("y", 17, "def".to_string().into_bytes());
+    let resp = Resp::Values(vec![val1, val2]);
+    transport.write_resp(&resp).unwrap();
+    let expected = "VALUE x 15 3\r\nabc\r\nVALUE y 17 3\r\ndef\r\nEND\r\n";
+    let exp_bytes = expected.to_string().into_bytes();
+    assert_eq!(transport.get_stream().outgoing, exp_bytes);
 }
