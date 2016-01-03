@@ -8,9 +8,10 @@ Usage:
 
 Options:
     --host HOST         Interface to listen on (ie. ip hostname/ip).
-    --port PORT         Port to bind to.
-    --mem MEMSIZE       Max memory to use (in megabytes).
+    -p --port PORT      Port to bind to.
+    -m --mem MEMSIZE    Max memory to use (in megabytes).
     --metrics           Collect server performance metrics.
+    -V --version        Print version info and exit
     -h --help           Show this screen.
 ";
 
@@ -21,6 +22,7 @@ pub struct MemcacheOptions {
     pub flag_port: Option<u16>,
     pub flag_mem: Option<u64>,
     pub flag_metrics: bool,
+    pub flag_version: bool,
 }
 
 impl MemcacheOptions {
@@ -53,8 +55,6 @@ pub fn parse_args() -> MemcacheOptions {
     let mut opts: MemcacheOptions = Docopt::new(USAGE)
                                         .and_then(|d| d.decode())
                                         .unwrap_or_else(|e| e.exit());
-
-    // println!("{:?}", opts);
 
     if opts.flag_host.is_none() {
         opts.flag_host = Some("127.0.0.1".to_string());

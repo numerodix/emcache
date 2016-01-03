@@ -23,18 +23,27 @@ mod storage;
 mod tcp_transport;
 mod testlib;
 
+use common::consts;
 use options::parse_args;
 use orchestrator::ListenerTask;
 
 
+fn print_version() {
+    println!("{} {}", consts::APP_NAME, consts::APP_VERSION);
+}
+
 fn main() {
+    print_version();
+
     let opts = parse_args();
+    if opts.flag_version {
+        // We're done here :)
+        return;
+    }
 
-    let mut listener_task = ListenerTask::new(opts.clone());
-
-    println!("Launching tcp server on {} with {}mb capacity...",
+    println!("Running tcp server on {} with {}mb capacity...",
              opts.get_bind_string(),
              opts.get_mem_limit());
-
+    let mut listener_task = ListenerTask::new(opts.clone());
     listener_task.run();
 }
