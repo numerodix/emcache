@@ -19,9 +19,8 @@ We follow [the official protocol specification](https://github.com/memcached/mem
 
 * ADD/REPLACE
 * APPEND/PREPEND
-* CAS
+* CAS/GETS
 * FLUSH_ALL
-* GETS
 * INCR/DECR
 * QUIT
 * TOUCH
