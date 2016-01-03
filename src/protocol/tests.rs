@@ -5,6 +5,7 @@ use storage::Cache;
 
 use super::Driver;
 use super::cmd::Cmd;
+use super::cmd::Delete;
 use super::cmd::Get;
 use super::cmd::Resp;
 use super::cmd::Set;
@@ -84,6 +85,57 @@ fn test_cmd_set_and_get_multiple_keys() {
 }
 
 #[test]
+fn test_cmd_delete() {
+    let cache = Cache::new(100);
+    let mut driver = Driver::new(cache);
+
+    let key_name = "x";
+    let blob = vec![1, 2, 3];
+
+    // Try to delete a key that does not exist
+    let cmd = Cmd::Delete(Delete::new("z", false));
+    let resp = driver.run(cmd);
+    assert_eq!(Resp::NotFound, resp);
+
+    // Again, but now with noreply flag
+    let cmd = Cmd::Delete(Delete::new("z", true));
+    let resp = driver.run(cmd);
+    assert_eq!(Resp::Empty, resp);
+
+    // Set a key we can delete later
+    let set = Set::new(SetInstr::Set, "x", 0, 0, vec![8, 9], false);
+    let cmd = Cmd::Set(set);
+    let resp = driver.run(cmd);
+    assert_eq!(resp, Resp::Stored);
+
+    // And another
+    let set = Set::new(SetInstr::Set, "y", 0, 0, vec![8, 9], false);
+    let cmd = Cmd::Set(set);
+    let resp = driver.run(cmd);
+    assert_eq!(resp, Resp::Stored);
+
+    // Delete the first one
+    let cmd = Cmd::Delete(Delete::new("x", false));
+    let resp = driver.run(cmd);
+    assert_eq!(Resp::Deleted, resp);
+
+    // Make sure it's gone
+    let cmd = Cmd::Get(Get::one("x"));
+    let resp = driver.run(cmd);
+    assert_eq!(0, resp.get_values().unwrap().len());
+
+    // Delete the second - with noreply
+    let cmd = Cmd::Delete(Delete::new("y", true));
+    let resp = driver.run(cmd);
+    assert_eq!(Resp::Empty, resp);
+
+    // Make sure it's gone
+    let cmd = Cmd::Get(Get::one("y"));
+    let resp = driver.run(cmd);
+    assert_eq!(0, resp.get_values().unwrap().len());
+}
+
+#[test]
 fn test_cmd_stats() {
     let cache = Cache::new(100);
     let mut driver = Driver::new(cache);
@@ -125,24 +177,24 @@ fn test_cmd_stats() {
     let stats = resp.get_stats().unwrap();
     assert_eq!(*stats,
                (vec![st_pid,
-                                st_uptime,
-                                st_time,
-                                st_cmd_get,
-                                st_cmd_set,
-                                st_cmd_flush,
-                                st_cmd_touch,
-                                st_get_hits,
-                                st_get_misses,
-                                st_delete_hits,
-                                st_delete_misses,
-                                st_bytes_read,
-                                st_bytes_written,
-                                st_limit_maxbytes,
-                                st_bytes,
-                                st_curr_items,
-                                st_total_items,
-                                st_evictions,
-                                st_reclaimed]));
+                     st_uptime,
+                     st_time,
+                     st_cmd_get,
+                     st_cmd_set,
+                     st_cmd_flush,
+                     st_cmd_touch,
+                     st_get_hits,
+                     st_get_misses,
+                     st_delete_hits,
+                     st_delete_misses,
+                     st_bytes_read,
+                     st_bytes_written,
+                     st_limit_maxbytes,
+                     st_bytes,
+                     st_curr_items,
+                     st_total_items,
+                     st_evictions,
+                     st_reclaimed]));
 }
 
 // this is a slow test that relies on sleeps

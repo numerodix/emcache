@@ -6,6 +6,7 @@ use storage::Value;
 use tcp_transport::stats::TransportStats;
 
 use super::cmd::Cmd;
+use super::cmd::Delete;
 use super::cmd::Get;
 use super::cmd::Resp;
 use super::cmd::Set;
@@ -70,6 +71,22 @@ impl Driver {
     }
 
 
+    fn do_delete(&mut self, delete: Delete) -> Resp {
+        let key = Key::new(delete.key.clone().into_bytes());
+
+        let rv = self.cache.remove(&key);
+
+        match delete.noreply {
+            true => Resp::Empty,
+            false => {
+                match rv {
+                    Ok(_) => Resp::Deleted,
+                    Err(_) => Resp::NotFound,
+                }
+            }
+        }
+    }
+
     fn do_get(&mut self, get: Get) -> Resp {
         // Update stats
         self.stats.cmd_get += 1;
@@ -90,7 +107,7 @@ impl Driver {
                         data: value.item.clone(),
                     };
                     values.push(val_st);
-                },
+                }
                 // Keys that were not found are skipped, no error given
                 Err(_) => (),
             }
@@ -188,6 +205,7 @@ impl Driver {
 
     pub fn run(&mut self, cmd: Cmd) -> Resp {
         match cmd {
+            Cmd::Delete(del) => self.do_delete(del),
             Cmd::Get(get) => self.do_get(get),
             Cmd::Set(set) => self.do_set(set),
             Cmd::Stats => self.do_stats(),

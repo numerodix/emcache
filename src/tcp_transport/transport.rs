@@ -64,7 +64,9 @@ impl<T: Read + Write> TcpTransport<T> {
 
     // Basic bytes manipulation and reading from the stream
 
-    pub fn read_bytes_exact(&mut self, len: u64) -> TcpTransportResult<Vec<u8>> {
+    pub fn read_bytes_exact(&mut self,
+                            len: u64)
+                            -> TcpTransportResult<Vec<u8>> {
         let mut bytes = vec![0; len as usize];
         let mut cursor: usize = 0;
         let mut iteration = 0;

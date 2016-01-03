@@ -4,6 +4,22 @@
 // Request structs
 
 #[derive(Debug, PartialEq, Clone)]
+pub struct Delete {
+    pub key: String,
+    pub noreply: bool, // Indicates whether the server should reply to the delete
+}
+
+impl Delete {
+    pub fn new(key: &str, noreply: bool) -> Delete {
+        Delete {
+            key: key.to_string(),
+            noreply: noreply,
+        }
+    }
+}
+
+
+#[derive(Debug, PartialEq, Clone)]
 pub struct Get {
     pub keys: Vec<String>,
 }
@@ -112,6 +128,7 @@ impl Value {
 
 #[derive(Debug, PartialEq, Clone)]
 pub enum Cmd {
+    Delete(Delete),
     Get(Get),
     Set(Set),
     Stats,
