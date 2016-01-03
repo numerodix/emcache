@@ -7,18 +7,13 @@ from pyperf.util import generate_random_key
 
 class TestApi(TestCase):
     def test_get_invalid_key(self):
-        exc = None
         key = generate_random_key(4)
 
         self.write("Trying to get invalid key...")
-        try:
-            # TODO delete first just in case?
+        with self.assert_raises(ItemNotFoundError):
             item = self.client.get(key)
-        except ItemNotFoundError as e:
-            exc = e
-            self.write("...key not found")
 
-        assert exc is not None, "getting the key did not fail"
+        self.write("...key not found")
 
     def test_set_and_get_large_value(self):
         key = generate_random_key(10)
@@ -70,31 +65,21 @@ class TestApi(TestCase):
         assert val == val2, 'value read does not match value set'
 
     def test_set_too_large_key(self):
-        exc = None
-
         key = generate_random_key(251)  # limit is 250b
         val = generate_random_data(1)
 
         self.write("Trying to set too large key (%s):   %r -> %r..." % (len(key), key[:7], val))
-        try:
+        with self.assert_raises(SetFailedError):
             self.client.set(key, val)
-        except SetFailedError as e:
-            exc = e
-            self.write("...set failed")
 
-        assert exc is not None, "setting the key did not fail"
+        self.write("...set failed")
 
     def test_set_too_large_value(self):
-        exc = None
-
         key = generate_random_key(10)
         val = generate_random_data(1 << 21)  # 2mb, limit is 1mb
 
         self.write("Trying to set too large value (%s):   %r -> %r..." % (len(val), key, val[:7]))
-        try:
+        with self.assert_raises(SetFailedError):
             self.client.set(key, val)
-        except SetFailedError as e:
-            exc = e
-            self.write("...set failed")
 
-        assert exc is not None, "setting the value did not fail"
+        self.write("...set failed")

@@ -1,4 +1,6 @@
+from contextlib import contextmanager
 import time
+import traceback
 import sys
 
 
@@ -6,6 +8,10 @@ def write(msg):
     msg = msg + '\n' if not msg.endswith('\n') else msg
     sys.stdout.write(msg)
     sys.stdout.flush()
+
+
+class TestFailedError(Exception):
+    pass
 
 
 class TestRunner(object):
@@ -55,6 +61,7 @@ class TestRunner(object):
         try:
             test_case.set_up(self.client_params)
         except Exception as e:
+            traceback.print_exc()
             self.write("Test %s set_up FAILED: %r" % e)
             return
 
@@ -63,6 +70,7 @@ class TestRunner(object):
             method()
         except Exception as e:
             exc = e
+            traceback.print_exc()
 
         time_stop = time.time()
         dur = time_stop - time_start
@@ -85,6 +93,18 @@ class TestCase(object):
 
     def set_up(self, client_params):
         self.client = client_params.create_client()
+
+    @contextmanager
+    def assert_raises(self, exc_class):
+        raised = False
+        try:
+            yield
+
+        except exc_class:
+            raised = True
+
+        if not raised:
+            raise AssertionError("%s not raised" % exc_class.__name__)
 
     def write(self, msg):
         msg = '[test%s] %s' % (self.id, msg)
