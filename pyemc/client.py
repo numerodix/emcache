@@ -148,6 +148,9 @@ class MemcacheClient(object):
         # execute command
         self.stream.write(command)
 
+    def prepend(self, key, value, flags=0, exptime=0, noreply=False):
+        return self._set_family('prepend', key, value, flags, exptime, noreply)
+
     def replace(self, key, value, flags=0, exptime=0, noreply=False):
         return self._set_family('replace', key, value, flags, exptime, noreply)
 

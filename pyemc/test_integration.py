@@ -195,6 +195,32 @@ class TestApi(TestCase):
     def test_quit(self):
         self.client.quit()
 
+    # Prepend
+
+    def test_prepend(self):
+        key = generate_random_key(8)
+        val = generate_random_data(10)
+        val2 = generate_random_data(10)
+
+        # try to prepend to an invalid key
+        with self.assert_raises(StoreFailedError):
+            self.client.prepend(key, val)
+
+        self.client.set(key, val)
+        self.client.prepend(key, val2)
+        item = self.client.get(key)
+        assert val2 + val == item.value
+
+    def test_prepend_noreply(self):
+        key = generate_random_key(8)
+        val = generate_random_data(10)
+        val2 = generate_random_data(10)
+
+        self.client.set(key, val)
+        self.client.prepend(key, val2, noreply=True)
+        item = self.client.get(key)
+        assert val2 + val == item.value
+
     # Replace
 
     def test_replace(self):
