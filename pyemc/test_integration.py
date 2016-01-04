@@ -272,6 +272,7 @@ class TestApi(TestCase):
         time.sleep(1.5)
 
         # keep it alive another 3s
+        # TODO: what should happen if exptime is unset?
         self.client.touch(key, exptime=3)
 
         time.sleep(1.5)
