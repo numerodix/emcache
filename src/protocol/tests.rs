@@ -15,6 +15,105 @@ use super::cmd::Stat;
 use super::cmd::Value;
 
 
+// Add
+
+#[test]
+fn test_cmd_add() {
+    let cache = Cache::new(100);
+    let mut driver = Driver::new(cache);
+
+    // Add a new key
+    let set = Set::new(SetInstr::Add, "x", 4, 0, vec![8, 9], false);
+    let cmd = Cmd::Set(set);
+    let resp = driver.run(cmd);
+    assert_eq!(resp, Resp::Stored);
+
+    // Make sure it was added
+    let cmd = Cmd::Get(Get::one("x"));
+    let resp = driver.run(cmd);
+    assert_eq!(vec![8, 9], resp.get_first_value().unwrap().data);
+    assert_eq!(4, resp.get_first_value().unwrap().flags);
+
+    // Try using add to overwrite an existing key
+    let set = Set::new(SetInstr::Add, "x", 5, 0, vec![11], false);
+    let cmd = Cmd::Set(set);
+    let resp = driver.run(cmd);
+    assert_eq!(resp, Resp::NotStored);
+
+    // Make sure it was not overwritten
+    let cmd = Cmd::Get(Get::one("x"));
+    let resp = driver.run(cmd);
+    assert_eq!(vec![8, 9], resp.get_first_value().unwrap().data);
+    assert_eq!(4, resp.get_first_value().unwrap().flags);
+
+    // Add with noreply
+    let set = Set::new(SetInstr::Add, "y", 5, 0, vec![11], true);
+    let cmd = Cmd::Set(set);
+    let resp = driver.run(cmd);
+    assert_eq!(resp, Resp::Empty);
+
+    // Make sure it was added
+    let cmd = Cmd::Get(Get::one("y"));
+    let resp = driver.run(cmd);
+    assert_eq!(vec![11], resp.get_first_value().unwrap().data);
+    assert_eq!(5, resp.get_first_value().unwrap().flags);
+}
+
+
+// Delete
+
+#[test]
+fn test_cmd_delete() {
+    let cache = Cache::new(100);
+    let mut driver = Driver::new(cache);
+
+    let key_name = "x";
+    let blob = vec![1, 2, 3];
+
+    // Try to delete a key that does not exist
+    let cmd = Cmd::Delete(Delete::new("z", false));
+    let resp = driver.run(cmd);
+    assert_eq!(Resp::NotFound, resp);
+
+    // Again, but now with noreply flag
+    let cmd = Cmd::Delete(Delete::new("z", true));
+    let resp = driver.run(cmd);
+    assert_eq!(Resp::Empty, resp);
+
+    // Set a key we can delete later
+    let set = Set::new(SetInstr::Set, "x", 0, 0, vec![8, 9], false);
+    let cmd = Cmd::Set(set);
+    let resp = driver.run(cmd);
+    assert_eq!(resp, Resp::Stored);
+
+    // And another
+    let set = Set::new(SetInstr::Set, "y", 0, 0, vec![8, 9], false);
+    let cmd = Cmd::Set(set);
+    let resp = driver.run(cmd);
+    assert_eq!(resp, Resp::Stored);
+
+    // Delete the first one
+    let cmd = Cmd::Delete(Delete::new("x", false));
+    let resp = driver.run(cmd);
+    assert_eq!(Resp::Deleted, resp);
+
+    // Make sure it's gone
+    let cmd = Cmd::Get(Get::one("x"));
+    let resp = driver.run(cmd);
+    assert_eq!(0, resp.get_values().unwrap().len());
+
+    // Delete the second - with noreply
+    let cmd = Cmd::Delete(Delete::new("y", true));
+    let resp = driver.run(cmd);
+    assert_eq!(Resp::Empty, resp);
+
+    // Make sure it's gone
+    let cmd = Cmd::Get(Get::one("y"));
+    let resp = driver.run(cmd);
+    assert_eq!(0, resp.get_values().unwrap().len());
+}
+
+
 // Get and Set
 
 #[test]
@@ -85,105 +184,6 @@ fn test_cmd_set_and_get_multiple_keys() {
     assert_eq!(2, values.len());
     assert_eq!(val1, values[0]);
     assert_eq!(val3, values[1]);
-}
-
-
-// Delete
-
-#[test]
-fn test_cmd_delete() {
-    let cache = Cache::new(100);
-    let mut driver = Driver::new(cache);
-
-    let key_name = "x";
-    let blob = vec![1, 2, 3];
-
-    // Try to delete a key that does not exist
-    let cmd = Cmd::Delete(Delete::new("z", false));
-    let resp = driver.run(cmd);
-    assert_eq!(Resp::NotFound, resp);
-
-    // Again, but now with noreply flag
-    let cmd = Cmd::Delete(Delete::new("z", true));
-    let resp = driver.run(cmd);
-    assert_eq!(Resp::Empty, resp);
-
-    // Set a key we can delete later
-    let set = Set::new(SetInstr::Set, "x", 0, 0, vec![8, 9], false);
-    let cmd = Cmd::Set(set);
-    let resp = driver.run(cmd);
-    assert_eq!(resp, Resp::Stored);
-
-    // And another
-    let set = Set::new(SetInstr::Set, "y", 0, 0, vec![8, 9], false);
-    let cmd = Cmd::Set(set);
-    let resp = driver.run(cmd);
-    assert_eq!(resp, Resp::Stored);
-
-    // Delete the first one
-    let cmd = Cmd::Delete(Delete::new("x", false));
-    let resp = driver.run(cmd);
-    assert_eq!(Resp::Deleted, resp);
-
-    // Make sure it's gone
-    let cmd = Cmd::Get(Get::one("x"));
-    let resp = driver.run(cmd);
-    assert_eq!(0, resp.get_values().unwrap().len());
-
-    // Delete the second - with noreply
-    let cmd = Cmd::Delete(Delete::new("y", true));
-    let resp = driver.run(cmd);
-    assert_eq!(Resp::Empty, resp);
-
-    // Make sure it's gone
-    let cmd = Cmd::Get(Get::one("y"));
-    let resp = driver.run(cmd);
-    assert_eq!(0, resp.get_values().unwrap().len());
-}
-
-
-// Add
-
-#[test]
-fn test_cmd_add() {
-    let cache = Cache::new(100);
-    let mut driver = Driver::new(cache);
-
-    // Add a new key
-    let set = Set::new(SetInstr::Add, "x", 4, 0, vec![8, 9], false);
-    let cmd = Cmd::Set(set);
-    let resp = driver.run(cmd);
-    assert_eq!(resp, Resp::Stored);
-
-    // Make sure it was added
-    let cmd = Cmd::Get(Get::one("x"));
-    let resp = driver.run(cmd);
-    assert_eq!(vec![8, 9], resp.get_first_value().unwrap().data);
-    assert_eq!(4, resp.get_first_value().unwrap().flags);
-
-    // Try using add to overwrite an existing key
-    let set = Set::new(SetInstr::Add, "x", 5, 0, vec![11], false);
-    let cmd = Cmd::Set(set);
-    let resp = driver.run(cmd);
-    assert_eq!(resp, Resp::NotStored);
-
-    // Make sure it was not overwritten
-    let cmd = Cmd::Get(Get::one("x"));
-    let resp = driver.run(cmd);
-    assert_eq!(vec![8, 9], resp.get_first_value().unwrap().data);
-    assert_eq!(4, resp.get_first_value().unwrap().flags);
-
-    // Add with noreply
-    let set = Set::new(SetInstr::Add, "y", 5, 0, vec![11], true);
-    let cmd = Cmd::Set(set);
-    let resp = driver.run(cmd);
-    assert_eq!(resp, Resp::Empty);
-
-    // Make sure it was added
-    let cmd = Cmd::Get(Get::one("y"));
-    let resp = driver.run(cmd);
-    assert_eq!(vec![11], resp.get_first_value().unwrap().data);
-    assert_eq!(5, resp.get_first_value().unwrap().flags);
 }
 
 
