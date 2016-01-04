@@ -41,6 +41,12 @@ fn test_cmd_add() {
     let resp = driver.run(cmd);
     assert_eq!(resp, Resp::NotStored);
 
+    // Try using add to overwrite an existing key - noreply
+    let set = Set::new(SetInstr::Add, "x", 5, 0, vec![11], true);
+    let cmd = Cmd::Set(set);
+    let resp = driver.run(cmd);
+    assert_eq!(resp, Resp::Empty);
+
     // Make sure it was not overwritten
     let cmd = Cmd::Get(Get::one("x"));
     let resp = driver.run(cmd);

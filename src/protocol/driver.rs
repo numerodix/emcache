@@ -17,20 +17,66 @@ use super::cmd::Touch;
 use super::cmd::Value as CmdValue;
 
 
-// if_reply!(!noreply, Resp::Stored) ->
+// For use to get an early exit from a function. The first parameter is a bool
+// to indicate whether to omit responses (returns Resp::Empty instead). The
+// second parameter is an expression that evaluates to Option<Resp>. In case
+// of None no return is made ie. execution continues. In case of Some(resp) we
+// perform return resp;
 //
-// if !noreply {
-//     Resp::Stored
-// } else {
-//     return Resp::Empty;
+// maybe_reply_stmt!(!noreply, match rv {
+//     Ok(_) => None,   // do not return
+//     Err(_) => Some(Resp::Error),
+// });
+//
+// ->
+//
+// let opt = expr_provided;
+// if !opt.is_none() {
+//     if !noreply {
+//         return opt.unwrap();
+//     } else {
+//         return Resp::Empty;
+//     }
 // }
-macro_rules! if_reply {
-    ( $cond:expr, $this:expr ) => {
+macro_rules! maybe_reply_stmt {
+    ( $cond:expr, $opt:expr ) => {
+        {
+            if !$opt.is_none() {
+                if $cond {
+                    return $opt.unwrap();
+                } else {
+                    return Resp::Empty;
+                }
+            };
+        }
+    };
+}
+
+
+// For use to conditionally produce a return value. The first parameter is used
+// to indicate whether to omit responses (returns Resp::Empty instead). The
+// second parameter is an expression that evaluates to Resp.
+//
+// maybe_reply_expr!(!noreply, match rv {
+//     Ok(_) => Resp::Stored,
+//     Err(_) => Resp::Error,
+// });
+//
+// ->
+//
+// let resp = expr_provided;
+// if !noreply {
+//     resp
+// } else {
+//     Resp::Empty
+// }
+macro_rules! maybe_reply_expr {
+    ( $cond:expr, $resp:expr ) => {
         {
             if $cond {
-                $this
+                $resp
             } else {
-                return Resp::Empty;
+                Resp::Empty
             }
         }
     };
@@ -99,15 +145,15 @@ impl Driver {
 
         // Do we store this item already? If so it's an early exit.
         let rv = self.cache.contains_key(&key);
-        match rv {
+        maybe_reply_stmt!(!set.noreply, match rv {
             Ok(true) => {
-                return Resp::NotStored;
+                Some(Resp::NotStored)
             },
-            Ok(false) => (),
+            Ok(false) => None,
             Err(_) => {
-                return Resp::Error;
+                Some(Resp::Error)
             }
-        }
+        });
 
         let mut value = Value::new(set.data);
         value.with_flags(set.flags);
@@ -115,15 +161,10 @@ impl Driver {
 
         let rv = self.cache.set(key, value);
 
-        match set.noreply {
-            true => Resp::Empty,
-            false => {
-                match rv {
-                    Ok(_) => Resp::Stored,
-                    Err(_) => Resp::Error,
-                }
-            }
-        }
+        maybe_reply_expr!(!set.noreply, match rv {
+            Ok(_) => Resp::Stored,
+            Err(_) => Resp::Error,
+        })
     }
 
     fn do_append(&mut self, set: Set) -> Resp {
@@ -135,7 +176,7 @@ impl Driver {
         // If if it's not there we error out
         if rv.is_err() {
             return Resp::Error;
-        }
+        };
 
         // Update the value
         let mut value = rv.unwrap();
@@ -366,23 +407,17 @@ impl Driver {
         let rv = self.cache.contains_key(&key);
 
         // If if it's not there we error out
-        if_reply!(!touch.noreply, match rv {
-            Ok(true) => (),
-            Ok(false) => {
-                return Resp::NotFound;
-            }
-            Err(_) => {
-                return Resp::Error;
-            }
+        maybe_reply_stmt!(!touch.noreply, match rv {
+            Ok(true) => None,
+            Ok(false) => Some(Resp::NotFound),
+            Err(_) => Some(Resp::Error),
         });
 
         // Load the value
         let rv = self.cache.remove(&key);
-        if_reply!(!touch.noreply, match rv {
-            Ok(_) => (),
-            Err(_) => {
-                return Resp::Error;
-            }
+        maybe_reply_stmt!(!touch.noreply, match rv {
+            Ok(_) => None,
+            Err(_) => Some(Resp::Error),
         });
 
         // Update the value
@@ -392,7 +427,7 @@ impl Driver {
         // Set it
         let rv = self.cache.set(key, value);
 
-        if_reply!(!touch.noreply, match rv {
+        maybe_reply_expr!(!touch.noreply, match rv {
             Ok(_) => Resp::Touched,
             Err(_) => Resp::Error,
         })
