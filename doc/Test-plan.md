@@ -33,8 +33,8 @@ order of 200 nanoseconds. So theoretically we can store 5M keys per second.
 Even tacking on a protocol layer only takes it up to about 300-400ns.
 
 And yet **tcp based stress testing** over 127.0.0.1 shows a much lower rate of
-300k/s for key insertion in `noreply` mode where the client just spits out set
-commands without receiving an acknowledgment, and an even lower rate of 30k
+150k/s for key insertion in `noreply` mode where the client just spits out set
+commands without receiving an acknowledgment, and an even lower rate of 15k
 without `noreply` when each request is followed by a response before making the
 next one.
 
