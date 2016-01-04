@@ -250,7 +250,9 @@ class TestApi(TestCase):
     # Stats
 
     def test_get_stats(self):
-        self.client.print_stats()
+        dct = self.client.get_stats()
+        for (key, value) in dct.items():
+            self.write('%s: %s' % (key, value))
 
     # Version
 

@@ -53,32 +53,6 @@ class MemcacheClient(object):
     def append(self, key, value, flags=0, exptime=0, noreply=False):
         return self._set_family('append', key, value, flags, exptime, noreply)
 
-    def get_stats(self):
-        dct = OrderedDict()
-
-        # prepare command
-        command = 'stats\r\n'
-
-        # execute command
-        self.stream.write(command)
-
-        # read response line by line
-        stream_terminator = 'END\r\n'
-
-        line = self.stream.read_line()
-        while line != stream_terminator:
-            kw, key, value = line.split(' ', 2)
-            dct[key] = value.strip()
-
-            line = self.stream.read_line()
-
-        return dct
-
-    def print_stats(self):
-        dct = self.get_stats()
-        for (key, value) in dct.items():
-            print('%s: %s' % (key, value))
-
     def delete(self, key, noreply=False):
         # prepare command
         command = 'delete %(key)s %(noreply)s\r\n' % {
@@ -138,6 +112,27 @@ class MemcacheClient(object):
             return dct[key]
         except KeyError:
             raise ItemNotFoundError('The item with key %r was not found' % key)
+
+    def get_stats(self):
+        dct = OrderedDict()
+
+        # prepare command
+        command = 'stats\r\n'
+
+        # execute command
+        self.stream.write(command)
+
+        # read response line by line
+        stream_terminator = 'END\r\n'
+
+        line = self.stream.read_line()
+        while line != stream_terminator:
+            kw, key, value = line.split(' ', 2)
+            dct[key] = value.strip()
+
+            line = self.stream.read_line()
+
+        return dct
 
     def quit(self):
         '''Tells the server to drop the connection.'''
