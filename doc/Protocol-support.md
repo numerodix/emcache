@@ -6,6 +6,7 @@ We follow [the official protocol specification](https://github.com/memcached/mem
 ## Fully supported
 
 * ADD
+* APPEND
 * DELETE
 * GET
 * QUIT
@@ -21,7 +22,7 @@ We follow [the official protocol specification](https://github.com/memcached/mem
 
 ## Plan to support
 
-* APPEND/PREPEND
+* PREPEND
 * CAS/GETS
 * FLUSH_ALL
 * INCR/DECR
