@@ -299,6 +299,20 @@ fn test_read_cmd_quit() {
 }
 
 
+// Command parsing: Prepend
+
+#[test]
+fn test_read_cmd_prepend() {
+    let cmd_str = "prepend x 15 0 3 \r\nabc\r\n".to_string();
+    let ts = TestStream::new(cmd_str.into_bytes());
+    let mut transport = TcpTransport::new(ts);
+
+    let cmd = transport.read_cmd().unwrap();
+    let exp = Set::new(SetInstr::Prepend, "x", 15, 0, vec![97, 98, 99], false);
+    assert_eq!(cmd, Cmd::Set(exp));
+}
+
+
 // Command parsing: Replace
 
 #[test]
