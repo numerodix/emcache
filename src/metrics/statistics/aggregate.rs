@@ -55,6 +55,7 @@ pub fn compute_p999(samples: &Vec<f64>) -> Option<f64> {
 pub fn aggregate_metric(name: &str, samples: &Vec<f64>) -> AggregatedMetric {
     AggregatedMetric {
         name: name.to_string(),
+        n: samples.len() as u64,
         avg: compute_average(&samples),
         p0: compute_p0(&samples),
         p90: compute_p90(&samples),

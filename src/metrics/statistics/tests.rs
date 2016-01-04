@@ -111,6 +111,7 @@ fn test_compute_metric() {
 
     let expected = AggregatedMetric {
         name: "latency".to_string(),
+        n: 1000,
         avg: Some(500.5),
         p0: Some(1.0),
         p90: Some(901.0),
