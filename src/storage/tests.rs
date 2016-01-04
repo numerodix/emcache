@@ -37,7 +37,8 @@ fn test_set_one_key() {
     }
 
     // Now remove it
-    cache.remove(&key).unwrap();
+    let value_popped = cache.remove(&key).unwrap();
+    assert_eq!(value, value_popped);
 
     // Now test for it
     let rv = cache.contains_key(&key);

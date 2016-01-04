@@ -192,7 +192,7 @@ impl Cache {
         self.storage.len()
     }
 
-    pub fn remove(&mut self, key: &Key) -> CacheResult<()> {
+    pub fn remove(&mut self, key: &Key) -> CacheResult<Value> {
         // Check key size
         if !self.check_key_len(key) {
             return Err(CacheError::KeyTooLong);
@@ -206,7 +206,7 @@ impl Cache {
                 self.stats.delete_hits += 1;
                 self.stats.bytes_subtract(key, &value);
 
-                Ok(())
+                Ok((value))
             }
             None => {
                 // Update stats
