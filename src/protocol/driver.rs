@@ -217,6 +217,9 @@ impl Driver {
     }
 
     fn do_flush_all(&mut self, flush_all: FlushAll) -> Resp {
+        // Update stats
+        self.stats.cmd_flush += 1;
+
         let exptime: f64 = match flush_all.exptime {
             Some(exptime) => convert_exptime(flush_all.exptime.unwrap()).unwrap(),
             None => time_now(),
