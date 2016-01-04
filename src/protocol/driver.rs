@@ -73,6 +73,38 @@ impl Driver {
     }
 
 
+    fn do_add(&mut self, set: Set) -> Resp {
+        let key = Key::new(set.key.into_bytes());
+
+        // Do we store this item already? If so it's an early exit.
+        let rv = self.cache.contains_key(&key);
+        match rv {
+            Ok(true) => {
+                return Resp::NotStored;
+            },
+            Ok(false) => (),
+            Err(_) => {
+                return Resp::Error;
+            }
+        }
+
+        let mut value = Value::new(set.data);
+        value.with_flags(set.flags);
+        self.set_exptime(&mut value, set.exptime);
+
+        let rv = self.cache.set(key, value);
+
+        match set.noreply {
+            true => Resp::Empty,
+            false => {
+                match rv {
+                    Ok(_) => Resp::Stored,
+                    Err(_) => Resp::Error,
+                }
+            }
+        }
+    }
+
     fn do_delete(&mut self, delete: Delete) -> Resp {
         let key = Key::new(delete.key.clone().into_bytes());
 
@@ -250,6 +282,7 @@ impl Driver {
             Cmd::Get(get) => self.do_get(get),
             Cmd::Quit => Resp::Empty,  // handled at transport level
             Cmd::Set(set) => match set.instr {
+                SetInstr::Add => self.do_add(set),
                 SetInstr::Replace => self.do_replace(set),
                 SetInstr::Set => self.do_set(set),
                 _ => Resp::Error,  // TODO

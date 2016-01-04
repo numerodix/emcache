@@ -15,6 +15,8 @@ use super::cmd::Stat;
 use super::cmd::Value;
 
 
+// Get and Set
+
 #[test]
 fn test_cmd_set_and_get_a_key() {
     let cache = Cache::new(100);
@@ -85,6 +87,9 @@ fn test_cmd_set_and_get_multiple_keys() {
     assert_eq!(val3, values[1]);
 }
 
+
+// Delete
+
 #[test]
 fn test_cmd_delete() {
     let cache = Cache::new(100);
@@ -136,6 +141,54 @@ fn test_cmd_delete() {
     assert_eq!(0, resp.get_values().unwrap().len());
 }
 
+
+// Add
+
+#[test]
+fn test_cmd_add() {
+    let cache = Cache::new(100);
+    let mut driver = Driver::new(cache);
+
+    // Add a new key
+    let set = Set::new(SetInstr::Add, "x", 4, 0, vec![8, 9], false);
+    let cmd = Cmd::Set(set);
+    let resp = driver.run(cmd);
+    assert_eq!(resp, Resp::Stored);
+
+    // Make sure it was added
+    let cmd = Cmd::Get(Get::one("x"));
+    let resp = driver.run(cmd);
+    assert_eq!(vec![8, 9], resp.get_first_value().unwrap().data);
+    assert_eq!(4, resp.get_first_value().unwrap().flags);
+
+    // Try using add to overwrite an existing key
+    let set = Set::new(SetInstr::Add, "x", 5, 0, vec![11], false);
+    let cmd = Cmd::Set(set);
+    let resp = driver.run(cmd);
+    assert_eq!(resp, Resp::NotStored);
+
+    // Make sure it was not overwritten
+    let cmd = Cmd::Get(Get::one("x"));
+    let resp = driver.run(cmd);
+    assert_eq!(vec![8, 9], resp.get_first_value().unwrap().data);
+    assert_eq!(4, resp.get_first_value().unwrap().flags);
+
+    // Add with noreply
+    let set = Set::new(SetInstr::Add, "y", 5, 0, vec![11], true);
+    let cmd = Cmd::Set(set);
+    let resp = driver.run(cmd);
+    assert_eq!(resp, Resp::Empty);
+
+    // Make sure it was added
+    let cmd = Cmd::Get(Get::one("y"));
+    let resp = driver.run(cmd);
+    assert_eq!(vec![11], resp.get_first_value().unwrap().data);
+    assert_eq!(5, resp.get_first_value().unwrap().flags);
+}
+
+
+// Replace
+
 #[test]
 fn test_cmd_replace() {
     let cache = Cache::new(100);
@@ -177,6 +230,9 @@ fn test_cmd_replace() {
     assert_eq!(vec![11], resp.get_first_value().unwrap().data);
     assert_eq!(6, resp.get_first_value().unwrap().flags);
 }
+
+
+// Stats
 
 #[test]
 fn test_cmd_stats() {
@@ -242,6 +298,9 @@ fn test_cmd_stats() {
                      st_reclaimed]));
 }
 
+
+// Version
+
 #[test]
 fn test_cmd_version() {
     let cache = Cache::new(100);
@@ -252,6 +311,9 @@ fn test_cmd_version() {
     let resp = driver.run(cmd);
     assert_eq!(resp, Resp::Version(get_version_string()));
 }
+
+
+// Item expiration cases
 
 // this is a slow test that relies on sleeps
 #[ignore]
