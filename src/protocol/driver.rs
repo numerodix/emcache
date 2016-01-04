@@ -13,7 +13,28 @@ use super::cmd::Resp;
 use super::cmd::Set;
 use super::cmd::SetInstr;
 use super::cmd::Stat;
+use super::cmd::Touch;
 use super::cmd::Value as CmdValue;
+
+
+// if_reply!(!noreply, Resp::Stored) ->
+//
+// if !noreply {
+//     Resp::Stored
+// } else {
+//     return Resp::Empty;
+// }
+macro_rules! if_reply {
+    ( $cond:expr, $this:expr ) => {
+        {
+            if $cond {
+                $this
+            } else {
+                return Resp::Empty;
+            }
+        }
+    };
+}
 
 
 struct DriverStats {
@@ -338,6 +359,45 @@ impl Driver {
                          st_reclaimed])
     }
 
+    pub fn do_touch(&mut self, touch: Touch) -> Resp {
+        let key = Key::new(touch.key.into_bytes());
+
+        // See if the key is set
+        let rv = self.cache.contains_key(&key);
+
+        // If if it's not there we error out
+        if_reply!(!touch.noreply, match rv {
+            Ok(true) => (),
+            Ok(false) => {
+                return Resp::NotFound;
+            }
+            Err(_) => {
+                return Resp::Error;
+            }
+        });
+
+        // Load the value
+        let rv = self.cache.remove(&key);
+        if_reply!(!touch.noreply, match rv {
+            Ok(_) => (),
+            Err(_) => {
+                return Resp::Error;
+            }
+        });
+
+        // Update the value
+        let mut value = rv.unwrap();
+        self.set_exptime(&mut value, touch.exptime);
+
+        // Set it
+        let rv = self.cache.set(key, value);
+
+        if_reply!(!touch.noreply, match rv {
+            Ok(_) => Resp::Touched,
+            Err(_) => Resp::Error,
+        })
+    }
+
     pub fn do_version(&self) -> Resp {
         Resp::Version(get_version_string())
     }
@@ -357,6 +417,7 @@ impl Driver {
                 _ => Resp::Error,  // TODO
             },
             Cmd::Stats => self.do_stats(),
+            Cmd::Touch(touch) => self.do_touch(touch),
             Cmd::Version => self.do_version(),
         }
     }

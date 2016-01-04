@@ -76,6 +76,24 @@ impl Set {
 }
 
 
+#[derive(Debug, PartialEq, Clone)]
+pub struct Touch {
+    pub key: String,
+    pub exptime: u32,
+    pub noreply: bool,
+}
+
+impl Touch {
+    pub fn new(key: &str, exptime: u32, noreply: bool) -> Touch {
+        Touch {
+            key: key.to_string(),
+            exptime: exptime,
+            noreply: noreply,
+        }
+    }
+}
+
+
 // Response structs
 
 #[derive(Debug, PartialEq, Clone)]
@@ -133,6 +151,7 @@ pub enum Cmd {
     Quit,
     Set(Set),
     Stats,
+    Touch(Touch),
     Version,
 }
 

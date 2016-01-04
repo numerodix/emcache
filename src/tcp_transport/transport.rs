@@ -20,8 +20,8 @@ use super::typedefs::TcpTransportResult;
 
 // return_err_if!(end_of_line, TcpTransportError::StreamReadError) =>
 //
-// if <cond> {
-//     return Err(<err>)
+// if end_of_line {
+//     return Err(TcpTransportError::StreamReadError);
 // }
 macro_rules! return_err_if {
     ( $cond:expr, $val:expr ) => {

@@ -12,6 +12,7 @@ use super::cmd::Resp;
 use super::cmd::Set;
 use super::cmd::SetInstr;
 use super::cmd::Stat;
+use super::cmd::Touch;
 use super::cmd::Value;
 
 
@@ -386,6 +387,66 @@ fn test_cmd_stats() {
                      st_total_items,
                      st_evictions,
                      st_reclaimed]));
+}
+
+
+// Touch
+
+// this is a slow test that relies on sleeps
+#[ignore]
+#[test]
+fn test_cmd_touch() {
+    let cache = Cache::new(100);
+    let mut driver = Driver::new(cache);
+
+    // Try to touch an invalid key
+    let touch = Touch::new("x", 0, false);
+    let cmd = Cmd::Touch(touch);
+    let resp = driver.run(cmd);
+    assert_eq!(resp, Resp::NotFound);
+
+    // Try to touch an invalid key - noreply
+    let touch = Touch::new("x", 0, true);
+    let cmd = Cmd::Touch(touch);
+    let resp = driver.run(cmd);
+    assert_eq!(resp, Resp::Empty);
+
+    // Set a key that expires in 3s
+    let set = Set::new(SetInstr::Set, "x", 0, 3, vec![8, 9], false);
+    let cmd = Cmd::Set(set);
+    let resp = driver.run(cmd);
+    assert_eq!(resp, Resp::Stored);
+
+    // sleep 1.5 secs - not long enough to expire key
+    sleep_secs(1.5);
+
+    // Touch the key to keep it alive (set same exptime)
+    let touch = Touch::new("x", 3, false);
+    let cmd = Cmd::Touch(touch);
+    let resp = driver.run(cmd);
+    assert_eq!(resp, Resp::Touched);
+
+    // Touch it again - noreply
+    let touch = Touch::new("x", 3, true);
+    let cmd = Cmd::Touch(touch);
+    let resp = driver.run(cmd);
+    assert_eq!(resp, Resp::Empty);
+
+    // sleep 1.5 secs - the key would have expired by now without being touched
+    sleep_secs(1.5);
+
+    // It's still there
+    let cmd = Cmd::Get(Get::one("x"));
+    let resp = driver.run(cmd);
+    assert_eq!(1, resp.get_values().unwrap().len());
+
+    // sleep 2.5 secs - long enough to expire after the touch
+    sleep_secs(2.5);
+
+    // It's gone
+    let cmd = Cmd::Get(Get::one("x"));
+    let resp = driver.run(cmd);
+    assert_eq!(0, resp.get_values().unwrap().len());
 }
 
 
