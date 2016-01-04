@@ -10,6 +10,7 @@ use protocol::cmd::Get;
 use protocol::cmd::Resp;
 use protocol::cmd::Set;
 use protocol::cmd::SetInstr;
+use protocol::cmd::Touch;
 
 use super::conversions::as_number;
 use super::conversions::as_string;
@@ -353,6 +354,40 @@ impl<T: Read + Write> TcpTransport<T> {
         }));
     }
 
+    pub fn parse_cmd_touch(&mut self) -> TcpTransportResult<Cmd> {
+        // parse the key
+        let key_str = {
+            let (key, end_of_line) = try!(self.read_word_in_line());
+            return_err_if!(end_of_line, TcpTransportError::CommandParseError);
+            try!(as_string(key))
+        };
+
+        // parse the exptime
+        let exptime_num = {
+            let (exptime, end_of_line) = try!(self.read_word_in_line());
+            return_err_if!(end_of_line, TcpTransportError::CommandParseError);
+            try!(as_number::<u32>(exptime))
+        };
+
+        // parse noreply
+        let noreply_flag = {
+            let (noreply, end_of_line) = try!(self.read_word_in_line());
+            return_err_if!(!end_of_line, TcpTransportError::CommandParseError);
+            let noreply_str = try!(as_string(noreply));
+            match noreply_str == "noreply" {
+                true => true,
+                false => false,
+            }
+        };
+
+        // We got all the values we expected and there is nothing left
+        return Ok(Cmd::Touch(Touch {
+            key: key_str,
+            exptime: exptime_num,
+            noreply: noreply_flag,
+        }));
+    }
+
     // High level functions
 
     pub fn read_cmd(&mut self) -> TcpTransportResult<Cmd> {
@@ -373,6 +408,8 @@ impl<T: Read + Write> TcpTransport<T> {
             return self.parse_cmd_set(SetInstr::Append);
         } else if keyword_str == "prepend" {
             return self.parse_cmd_set(SetInstr::Prepend);
+        } else if keyword_str == "touch" {
+            return self.parse_cmd_touch();
         } else if keyword_str == "delete" {
             return self.parse_cmd_delete();
         } else if keyword_str == "stats" {

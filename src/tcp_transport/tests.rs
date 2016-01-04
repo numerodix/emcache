@@ -5,6 +5,7 @@ use protocol::cmd::Resp;
 use protocol::cmd::Set;
 use protocol::cmd::SetInstr;
 use protocol::cmd::Stat;
+use protocol::cmd::Touch;
 use protocol::cmd::Value;
 use testlib::test_stream::TestStream;
 
@@ -411,6 +412,31 @@ fn test_read_cmd_stats() {
 
     let cmd = transport.read_cmd().unwrap();
     assert_eq!(cmd, Cmd::Stats);
+}
+
+
+// Command parsing: Touch
+
+#[test]
+fn test_read_cmd_touch() {
+    let cmd_str = "touch x 0 \r\n".to_string();
+    let ts = TestStream::new(cmd_str.into_bytes());
+    let mut transport = TcpTransport::new(ts);
+
+    let cmd = transport.read_cmd().unwrap();
+    let touch = Touch::new("x", 0, false);
+    assert_eq!(cmd, Cmd::Touch(touch));
+}
+
+#[test]
+fn test_read_cmd_touch_noreply() {
+    let cmd_str = "touch x 0 noreply\r\n".to_string();
+    let ts = TestStream::new(cmd_str.into_bytes());
+    let mut transport = TcpTransport::new(ts);
+
+    let cmd = transport.read_cmd().unwrap();
+    let touch = Touch::new("x", 0, true);
+    assert_eq!(cmd, Cmd::Touch(touch));
 }
 
 
