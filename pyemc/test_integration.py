@@ -12,6 +12,54 @@ from pyemc.util import generate_random_key
 class TestApi(TestCase):
 
     ## Happy path
+    
+    # Add
+
+    def test_add(self):
+        key = generate_random_key(8)
+        val = generate_random_data(10)
+
+        self.client.add(key, val)
+        item = self.client.get(key)
+        assert val == item.value
+
+        # try to add an existing key
+        with self.assert_raises(StoreFailedError):
+            self.client.add(key, val)
+
+    def test_add_noreply(self):
+        key = generate_random_key(8)
+        val = generate_random_data(10)
+
+        self.client.add(key, val, noreply=True)
+        item = self.client.get(key)
+        assert val == item.value
+
+    # Delete
+
+    def test_delete(self):
+        key = generate_random_key(8)
+        val = generate_random_data(10)
+
+        self.client.set(key, val)
+        self.client.delete(key)
+        with self.assert_raises(ItemNotFoundError):
+            self.client.get(key)
+
+        key = generate_random_key(8)
+        with self.assert_raises(DeleteFailedError):
+            self.client.delete(key)
+
+    def test_delete_noreply(self):
+        key = generate_random_key(8)
+        val = generate_random_data(10)
+
+        self.client.set(key, val)
+        self.client.delete(key, noreply=True)
+        with self.assert_raises(ItemNotFoundError):
+            self.client.get(key)
+
+    # Get and Set
 
     def test_set_and_get_small_key(self):
         key = generate_random_key(4)
@@ -116,27 +164,12 @@ class TestApi(TestCase):
 
         assert val == val2
 
-    def test_delete(self):
-        key = generate_random_key(8)
-        val = generate_random_data(10)
+    # Quit
 
-        self.client.set(key, val)
-        self.client.delete(key)
-        with self.assert_raises(ItemNotFoundError):
-            self.client.get(key)
+    def test_quit(self):
+        self.client.quit()
 
-        key = generate_random_key(8)
-        with self.assert_raises(DeleteFailedError):
-            self.client.delete(key)
-
-    def test_delete_noreply(self):
-        key = generate_random_key(8)
-        val = generate_random_data(10)
-
-        self.client.set(key, val)
-        self.client.delete(key, noreply=True)
-        with self.assert_raises(ItemNotFoundError):
-            self.client.get(key)
+    # Replace
 
     def test_replace(self):
         key = generate_random_key(8)
@@ -162,11 +195,12 @@ class TestApi(TestCase):
         item = self.client.get(key)
         assert val2 == item.value
 
+    # Stats
+
     def test_get_stats(self):
         self.client.print_stats()
 
-    def test_quit(self):
-        self.client.quit()
+    # Version
 
     def test_version(self):
         version = self.client.version()

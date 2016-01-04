@@ -47,6 +47,9 @@ class MemcacheClient(object):
     def __init__(self, host, port):
         self.stream = BufferedSocketStream(host, port)
 
+    def add(self, key, value, flags=0, exptime=0, noreply=False):
+        return self._set_family('add', key, value, flags, exptime, noreply)
+
     def get_stats(self):
         dct = OrderedDict()
 
