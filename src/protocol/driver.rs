@@ -83,6 +83,18 @@ macro_rules! maybe_reply_expr {
     };
 }
 
+fn from_cache_err(err: &CacheError) -> Resp {
+    match *err {
+        CacheError::KeyTooLong => {
+            Resp::ClientError("bad command line format".to_string())
+        }
+        CacheError::ValueTooLong => {
+            Resp::ServerError("object too large for cache".to_string())
+        }
+        _ => Resp::Error,
+    }
+}
+
 
 struct DriverStats {
     cmd_get: u64,
@@ -146,15 +158,12 @@ impl Driver {
 
         // Do we store this item already? If so it's an early exit.
         let rv = self.cache.contains_key(&key);
-        maybe_reply_stmt!(!set.noreply, match rv {
-            Ok(true) => {
-                Some(Resp::NotStored)
-            },
-            Ok(false) => None,
-            Err(_) => {
-                Some(Resp::Error)
-            }
-        });
+        maybe_reply_stmt!(!set.noreply,
+                          match rv {
+                              Ok(true) => Some(Resp::NotStored),
+                              Ok(false) => None,
+                              Err(ref err) => Some(from_cache_err(err)),
+                          });
 
         let mut value = Value::new(set.data);
         value.with_flags(set.flags);
@@ -162,10 +171,11 @@ impl Driver {
 
         let rv = self.cache.set(key, value);
 
-        maybe_reply_expr!(!set.noreply, match rv {
-            Ok(_) => Resp::Stored,
-            Err(_) => Resp::Error,
-        })
+        maybe_reply_expr!(!set.noreply,
+                          match rv {
+                              Ok(_) => Resp::Stored,
+                              Err(ref err) => from_cache_err(err),
+                          })
     }
 
     fn do_append(&mut self, set: Set) -> Resp {
@@ -175,11 +185,14 @@ impl Driver {
         let rv = self.cache.remove(&key);
 
         // If if it's not there we error out
-        maybe_reply_stmt!(!set.noreply, match rv {
-            Err(CacheError::KeyNotFound) => Some(Resp::NotStored),
-            Err(_) => Some(Resp::Error),
-            _ => None,
-        });
+        maybe_reply_stmt!(!set.noreply,
+                          match rv {
+                              Err(CacheError::KeyNotFound) => {
+                                  Some(Resp::NotStored)
+                              }
+                              Err(ref err) => Some(from_cache_err(err)),
+                              _ => None,
+                          });
 
         // Update the value
         let mut value = rv.unwrap();
@@ -191,10 +204,11 @@ impl Driver {
 
         let rv = self.cache.set(key, value);
 
-        maybe_reply_expr!(!set.noreply, match rv {
-            Ok(_) => Resp::Stored,
-            Err(_) => Resp::Error,
-        })
+        maybe_reply_expr!(!set.noreply,
+                          match rv {
+                              Ok(_) => Resp::Stored,
+                              Err(ref err) => from_cache_err(err),
+                          })
     }
 
     fn do_delete(&mut self, delete: Delete) -> Resp {
@@ -202,10 +216,12 @@ impl Driver {
 
         let rv = self.cache.remove(&key);
 
-        maybe_reply_expr!(!delete.noreply, match rv {
-            Ok(_) => Resp::Deleted,
-            Err(_) => Resp::NotFound,
-        })
+        maybe_reply_expr!(!delete.noreply,
+                          match rv {
+                              Ok(_) => Resp::Deleted,
+                              Err(CacheError::KeyNotFound) => Resp::NotFound,
+                              Err(ref err) => from_cache_err(err),
+                          })
     }
 
     fn do_get(&mut self, get: Get) -> Resp {
@@ -244,11 +260,14 @@ impl Driver {
         let rv = self.cache.remove(&key);
 
         // If if it's not there we error out
-        maybe_reply_stmt!(!set.noreply, match rv {
-            Ok(_) => None,
-            Err(CacheError::KeyNotFound) => Some(Resp::NotStored),
-            Err(_) => Some(Resp::Error),
-        });
+        maybe_reply_stmt!(!set.noreply,
+                          match rv {
+                              Ok(_) => None,
+                              Err(CacheError::KeyNotFound) => {
+                                  Some(Resp::NotStored)
+                              }
+                              Err(ref err) => Some(from_cache_err(err)),
+                          });
 
         // Update the value
         let mut value = rv.unwrap();
@@ -256,17 +275,19 @@ impl Driver {
         self.set_exptime(&mut value, set.exptime);
 
         // Prepend the data we just received to the blob that is there
-        let mut new_item = Vec::with_capacity(set.data.len() + value.item.len());
+        let mut new_item = Vec::with_capacity(set.data.len() +
+                                              value.item.len());
         new_item.extend(set.data);
         new_item.extend(value.item);
         value.item = new_item;
 
         let rv = self.cache.set(key, value);
 
-        maybe_reply_expr!(!set.noreply, match rv {
-            Ok(_) => Resp::Stored,
-            Err(_) => Resp::Error,
-        })
+        maybe_reply_expr!(!set.noreply,
+                          match rv {
+                              Ok(_) => Resp::Stored,
+                              Err(ref err) => from_cache_err(err),
+                          })
     }
 
     fn do_replace(&mut self, set: Set) -> Resp {
@@ -274,11 +295,12 @@ impl Driver {
 
         // Do we store this item already? If not it's an early exit.
         let rv = self.cache.contains_key(&key);
-        maybe_reply_stmt!(!set.noreply, match rv {
-            Ok(true) => None,
-            Ok(false) => Some(Resp::NotStored),
-            Err(_) => Some(Resp::Error),
-        });
+        maybe_reply_stmt!(!set.noreply,
+                          match rv {
+                              Ok(true) => None,
+                              Ok(false) => Some(Resp::NotStored),
+                              Err(ref err) => Some(from_cache_err(err)),
+                          });
 
         let mut value = Value::new(set.data);
         value.with_flags(set.flags);
@@ -286,10 +308,11 @@ impl Driver {
 
         let rv = self.cache.set(key, value);
 
-        maybe_reply_expr!(!set.noreply, match rv {
-            Ok(_) => Resp::Stored,
-            Err(_) => Resp::Error,
-        })
+        maybe_reply_expr!(!set.noreply,
+                          match rv {
+                              Ok(_) => Resp::Stored,
+                              Err(ref err) => from_cache_err(err),
+                          })
     }
 
     fn do_set(&mut self, set: Set) -> Resp {
@@ -303,10 +326,11 @@ impl Driver {
 
         let rv = self.cache.set(key, value);
 
-        maybe_reply_expr!(!set.noreply, match rv {
-            Ok(_) => Resp::Stored,
-            Err(_) => Resp::Error,
-        })
+        maybe_reply_expr!(!set.noreply,
+                          match rv {
+                              Ok(_) => Resp::Stored,
+                              Err(ref err) => from_cache_err(err),
+                          })
     }
 
     fn do_stats(&self) -> Resp {
@@ -386,18 +410,20 @@ impl Driver {
         let rv = self.cache.contains_key(&key);
 
         // If if it's not there we error out
-        maybe_reply_stmt!(!touch.noreply, match rv {
-            Ok(true) => None,
-            Ok(false) => Some(Resp::NotFound),
-            Err(_) => Some(Resp::Error),
-        });
+        maybe_reply_stmt!(!touch.noreply,
+                          match rv {
+                              Ok(true) => None,
+                              Ok(false) => Some(Resp::NotFound),
+                              Err(ref err) => Some(from_cache_err(err)),
+                          });
 
         // Load the value
         let rv = self.cache.remove(&key);
-        maybe_reply_stmt!(!touch.noreply, match rv {
-            Ok(_) => None,
-            Err(_) => Some(Resp::Error),
-        });
+        maybe_reply_stmt!(!touch.noreply,
+                          match rv {
+                              Ok(_) => None,
+                              Err(ref err) => Some(from_cache_err(err)),
+                          });
 
         // Update the value
         let mut value = rv.unwrap();
@@ -406,10 +432,11 @@ impl Driver {
         // Set it
         let rv = self.cache.set(key, value);
 
-        maybe_reply_expr!(!touch.noreply, match rv {
-            Ok(_) => Resp::Touched,
-            Err(_) => Resp::Error,
-        })
+        maybe_reply_expr!(!touch.noreply,
+                          match rv {
+                              Ok(_) => Resp::Touched,
+                              Err(ref err) => from_cache_err(err),
+                          })
     }
 
     pub fn do_version(&self) -> Resp {
@@ -422,14 +449,16 @@ impl Driver {
             Cmd::Delete(del) => self.do_delete(del),
             Cmd::Get(get) => self.do_get(get),
             Cmd::Quit => Resp::Empty,  // handled at transport level
-            Cmd::Set(set) => match set.instr {
-                SetInstr::Add => self.do_add(set),
-                SetInstr::Append => self.do_append(set),
-                SetInstr::Prepend => self.do_prepend(set),
-                SetInstr::Replace => self.do_replace(set),
-                SetInstr::Set => self.do_set(set),
-                _ => Resp::Error,  // TODO
-            },
+            Cmd::Set(set) => {
+                match set.instr {
+                    SetInstr::Add => self.do_add(set),
+                    SetInstr::Append => self.do_append(set),
+                    SetInstr::Prepend => self.do_prepend(set),
+                    SetInstr::Replace => self.do_replace(set),
+                    SetInstr::Set => self.do_set(set),
+                    _ => Resp::Error,  // TODO
+                }
+            }
             Cmd::Stats => self.do_stats(),
             Cmd::Touch(touch) => self.do_touch(touch),
             Cmd::Version => self.do_version(),

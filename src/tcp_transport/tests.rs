@@ -453,6 +453,20 @@ fn test_read_cmd_version() {
 }
 
 
+// Response writing: ClientError
+
+#[test]
+fn test_write_resp_clienterror() {
+    let ts = TestStream::new(vec![]);
+    let mut transport = TcpTransport::new(ts);
+
+    let resp = Resp::ClientError("woops my bad".to_string());
+    transport.write_resp(&resp).unwrap();
+    let expected = "CLIENT_ERROR woops my bad\r\n".to_string().into_bytes();
+    assert_eq!(transport.get_stream().outgoing, expected);
+}
+
+
 // Response writing: Deleted
 
 #[test]
@@ -519,6 +533,20 @@ fn test_write_resp_not_stored() {
     let resp = Resp::NotStored;
     transport.write_resp(&resp).unwrap();
     let expected = "NOT_STORED\r\n".to_string().into_bytes();
+    assert_eq!(transport.get_stream().outgoing, expected);
+}
+
+
+// Response writing: ServerError
+
+#[test]
+fn test_write_resp_servererror() {
+    let ts = TestStream::new(vec![]);
+    let mut transport = TcpTransport::new(ts);
+
+    let resp = Resp::ServerError("woops my bad".to_string());
+    transport.write_resp(&resp).unwrap();
+    let expected = "SERVER_ERROR woops my bad\r\n".to_string().into_bytes();
     assert_eq!(transport.get_stream().outgoing, expected);
 }
 

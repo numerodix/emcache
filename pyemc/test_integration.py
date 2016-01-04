@@ -318,13 +318,14 @@ class TestApi(TestCase):
 
 
     ## Exceed limits
+    # TODO try key/val too large for each command
 
     def test_set_too_large_key(self):
         key = generate_random_key(251)  # limit is 250b
         val = generate_random_data(1)
 
         self.write("Trying to set too large key (%s):   %r -> %r..." % (len(key), key[:7], val))
-        with self.assert_raises(ServerError):
+        with self.assert_raises(ClientError):
             self.client.set(key, val)
 
         self.write("...set failed")

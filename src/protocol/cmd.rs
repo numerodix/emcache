@@ -97,18 +97,6 @@ impl Touch {
 // Response structs
 
 #[derive(Debug, PartialEq, Clone)]
-pub struct ClientError {
-    pub error: String,
-}
-
-
-#[derive(Debug, PartialEq, Clone)]
-pub struct ServerError {
-    pub error: String,
-}
-
-
-#[derive(Debug, PartialEq, Clone)]
 pub struct Stat {
     pub key: String,
     pub value: String,
@@ -162,8 +150,8 @@ pub enum Resp {
     Empty,
 
     Error,
-    ClientError(ClientError),
-    ServerError(ServerError),
+    ClientError(String),
+    ServerError(String),
 
     Deleted, // The item was deleted successfully
     Exists, // The cas item has been modified

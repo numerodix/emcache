@@ -288,7 +288,9 @@ impl<T: Read + Write> TcpTransport<T> {
         Ok(Cmd::Get(Get { keys: keys }))
     }
 
-    pub fn parse_cmd_set(&mut self, instr: SetInstr) -> TcpTransportResult<Cmd> {
+    pub fn parse_cmd_set(&mut self,
+                         instr: SetInstr)
+                         -> TcpTransportResult<Cmd> {
         // parse the key
         let key_str = {
             let (key, end_of_line) = try!(self.read_word_in_line());
@@ -426,6 +428,11 @@ impl<T: Read + Write> TcpTransport<T> {
     pub fn write_resp(&mut self, resp: &Resp) -> TcpTransportResult<()> {
         match *resp {
             Resp::Empty => (),
+            Resp::ClientError(ref err) => {
+                try!(self.write_string("CLIENT_ERROR "));
+                try!(self.write_string(&err));
+                try!(self.write_string("\r\n"));
+            }
             Resp::Deleted => {
                 try!(self.write_string("DELETED\r\n"));
             }
@@ -437,6 +444,11 @@ impl<T: Read + Write> TcpTransport<T> {
             }
             Resp::NotStored => {
                 try!(self.write_string("NOT_STORED\r\n"));
+            }
+            Resp::ServerError(ref err) => {
+                try!(self.write_string("SERVER_ERROR "));
+                try!(self.write_string(&err));
+                try!(self.write_string("\r\n"));
             }
             Resp::Stats(ref stats) => {
                 for stat in stats {
