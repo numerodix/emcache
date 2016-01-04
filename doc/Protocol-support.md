@@ -19,13 +19,13 @@ We follow [the official protocol specification](https://github.com/memcached/mem
 
 ## Partial support
 
+* FLUSH_ALL (without options)
 * STATS (not all stats are present)
 
 
 ## Plan to support
 
 * CAS/GETS
-* FLUSH_ALL
 * INCR/DECR
 
 
