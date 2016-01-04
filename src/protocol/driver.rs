@@ -303,15 +303,10 @@ impl Driver {
 
         let rv = self.cache.set(key, value);
 
-        match set.noreply {
-            true => Resp::Empty,
-            false => {
-                match rv {
-                    Ok(_) => Resp::Stored,
-                    Err(_) => Resp::Error,
-                }
-            }
-        }
+        maybe_reply_expr!(!set.noreply, match rv {
+            Ok(_) => Resp::Stored,
+            Err(_) => Resp::Error,
+        })
     }
 
     fn do_stats(&self) -> Resp {
