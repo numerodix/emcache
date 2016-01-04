@@ -202,15 +202,10 @@ impl Driver {
 
         let rv = self.cache.remove(&key);
 
-        match delete.noreply {
-            true => Resp::Empty,
-            false => {
-                match rv {
-                    Ok(_) => Resp::Deleted,
-                    Err(_) => Resp::NotFound,
-                }
-            }
-        }
+        maybe_reply_expr!(!delete.noreply, match rv {
+            Ok(_) => Resp::Deleted,
+            Err(_) => Resp::NotFound,
+        })
     }
 
     fn do_get(&mut self, get: Get) -> Resp {
