@@ -2,6 +2,7 @@ use common::consts::get_version_string;
 use platform::process::get_pid;
 use platform::time::time_now;
 use storage::Cache;
+use storage::CacheError;
 use storage::Key;
 use storage::Value;
 use tcp_transport::stats::TransportStats;
@@ -174,9 +175,11 @@ impl Driver {
         let rv = self.cache.remove(&key);
 
         // If if it's not there we error out
-        if rv.is_err() {
-            return Resp::Error;
-        };
+        maybe_reply_stmt!(!set.noreply, match rv {
+            Err(CacheError::KeyNotFound) => Some(Resp::NotStored),
+            Err(_) => Some(Resp::Error),
+            _ => None,
+        });
 
         // Update the value
         let mut value = rv.unwrap();
@@ -188,15 +191,10 @@ impl Driver {
 
         let rv = self.cache.set(key, value);
 
-        match set.noreply {
-            true => Resp::Empty,
-            false => {
-                match rv {
-                    Ok(_) => Resp::Stored,
-                    Err(_) => Resp::Error,
-                }
-            }
-        }
+        maybe_reply_expr!(!set.noreply, match rv {
+            Ok(_) => Resp::Stored,
+            Err(_) => Resp::Error,
+        })
     }
 
     fn do_delete(&mut self, delete: Delete) -> Resp {
