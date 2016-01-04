@@ -254,6 +254,42 @@ class TestApi(TestCase):
         for (key, value) in dct.items():
             self.write('%s: %s' % (key, value))
 
+    # Touch
+
+    def test_touch(self):
+        key = generate_random_key(8)
+        val = generate_random_data(10)
+
+        # expires in 3s
+        self.client.set(key, val, exptime=3)
+
+        time.sleep(1.5)
+
+        # keep it alive another 3s
+        self.client.touch(key, exptime=3)
+
+        time.sleep(1.5)
+
+        item = self.client.get(key)
+        assert val == item.value
+
+    def test_touch_noreply(self):
+        key = generate_random_key(8)
+        val = generate_random_data(10)
+
+        # expires in 3s
+        self.client.set(key, val, exptime=3)
+
+        time.sleep(1.5)
+
+        # keep it alive another 3s
+        self.client.touch(key, exptime=3, noreply=True)
+
+        time.sleep(1.5)
+
+        item = self.client.get(key)
+        assert val == item.value
+
     # Version
 
     def test_version(self):

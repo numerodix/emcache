@@ -552,6 +552,20 @@ fn test_write_resp_stored() {
 }
 
 
+// Response writing: Touched
+
+#[test]
+fn test_write_resp_touched() {
+    let ts = TestStream::new(vec![]);
+    let mut transport = TcpTransport::new(ts);
+
+    let resp = Resp::Touched;
+    transport.write_resp(&resp).unwrap();
+    let expected = "TOUCHED\r\n".to_string().into_bytes();
+    assert_eq!(transport.get_stream().outgoing, expected);
+}
+
+
 // Response writing: Value
 
 #[test]

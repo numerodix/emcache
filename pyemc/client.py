@@ -182,6 +182,23 @@ class MemcacheClient(object):
         buf = self.stream.read(4096)
         return buf.strip()
 
+    def touch(self, key, exptime=0, noreply=False):
+        # prepare command
+        command = 'touch %(key)s %(exptime)d %(noreply)s\r\n' % {
+            'key': key,
+            'exptime': exptime,
+            'noreply': 'noreply' if noreply else '',
+        }
+
+        # execute command
+        self.stream.write(command)
+
+        # check for success
+        if not noreply:
+            resp = self.stream.read_line()
+            if not resp == 'TOUCHED\r\n':
+                raise StoreFailedError('Could not touch key %r...' % key)
+
     def version(self):
         # prepare command
         command = 'version\r\n'

@@ -451,6 +451,9 @@ impl<T: Read + Write> TcpTransport<T> {
             Resp::Stored => {
                 try!(self.write_string("STORED\r\n"));
             }
+            Resp::Touched => {
+                try!(self.write_string("TOUCHED\r\n"));
+            }
             Resp::Values(ref values) => {
                 for value in values {
                     try!(self.write_string("VALUE ")); // keyword
