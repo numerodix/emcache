@@ -6,7 +6,6 @@ import sys
 import time
 
 from pyemc.abstractions.test_api import TestRunner
-from pyemc.client import ItemNotFoundError
 from pyemc.client import MemcacheClient
 from pyemc.client import MemcacheClientParams
 from pyemc.task_filler import CacheFillerTask

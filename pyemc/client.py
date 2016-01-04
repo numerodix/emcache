@@ -16,14 +16,42 @@ class MemcacheClientParams(object):
         )
 
 
+class ClientError(Exception):
+    pass
+
 class DeleteFailedError(Exception):
     pass
 
-class ItemNotFoundError(Exception):
+class NotFoundError(Exception):
     pass
 
-class StoreFailedError(Exception):
+class NotStoredError(Exception):
     pass
+
+class ServerError(Exception):
+    pass
+
+
+_exc_map = {
+    'ERROR': ServerError,
+    'NOT_FOUND': NotFoundError,
+    'NOT_STORED': NotStoredError,
+}
+def create_exc(server_resp, exc_msg):
+    if server_resp.startswith('CLIENT_ERROR'):
+        msg = server_resp.split(' ', 1)[-1]
+        return ClientError(msg)
+
+    elif server_resp.startswith('SERVER_ERROR'):
+        msg = server_resp.split(' ', 1)[-1]
+        return ServerError(msg)
+
+    exc_cls = _exc_map.get(server_resp.strip())
+
+    if exc_cls is None:
+        raise Exception("Could not create exception for: %s" % server_resp)
+
+    return exc_cls(exc_msg)
 
 
 class Item(object):
@@ -67,7 +95,7 @@ class MemcacheClient(object):
         if not noreply:
             resp = self.stream.read_line()
             if not resp == 'DELETED\r\n':
-                raise DeleteFailedError('Could not delete key %r' % key)
+                raise create_exc(resp, 'Could not delete key %r' % key)
 
     def get_multi(self, keys):
         # prepare command
@@ -111,7 +139,7 @@ class MemcacheClient(object):
         try:
             return dct[key]
         except KeyError:
-            raise ItemNotFoundError('The item with key %r was not found' % key)
+            raise NotFoundError('The item with key %r was not found' % key)
 
     def get_stats(self):
         dct = OrderedDict()
@@ -171,8 +199,8 @@ class MemcacheClient(object):
         if not noreply:
             resp = self.stream.read_line()
             if not resp == 'STORED\r\n':
-                raise StoreFailedError('Could not %s key %r to %r...' %
-                                       (instr, key, value[:10]))
+                raise create_exc(resp, 'Could not %s key %r to %r...' %
+                                 (instr, key, value[:10]))
 
     def send_malformed_cmd(self):
         '''Sends an invalid command - causes the server to drop the
@@ -197,7 +225,7 @@ class MemcacheClient(object):
         if not noreply:
             resp = self.stream.read_line()
             if not resp == 'TOUCHED\r\n':
-                raise StoreFailedError('Could not touch key %r...' % key)
+                raise create_exc(resp, 'Could not touch key %r' % key)
 
     def version(self):
         # prepare command

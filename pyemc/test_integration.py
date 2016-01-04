@@ -2,9 +2,11 @@ import math
 import time
 
 from pyemc.abstractions.test_api import TestCase
+from pyemc.client import ClientError
 from pyemc.client import DeleteFailedError
-from pyemc.client import ItemNotFoundError
-from pyemc.client import StoreFailedError
+from pyemc.client import NotFoundError
+from pyemc.client import NotStoredError
+from pyemc.client import ServerError
 from pyemc.util import generate_random_data
 from pyemc.util import generate_random_key
 
@@ -24,7 +26,7 @@ class TestApi(TestCase):
         assert val == item.value
 
         # try to add an existing key
-        with self.assert_raises(StoreFailedError):
+        with self.assert_raises(NotStoredError):
             self.client.add(key, val)
 
     def test_add_noreply(self):
@@ -43,7 +45,7 @@ class TestApi(TestCase):
         val2 = generate_random_data(10)
 
         # try to append to an invalid key
-        with self.assert_raises(StoreFailedError):
+        with self.assert_raises(NotStoredError):
             self.client.append(key, val)
 
         self.client.set(key, val)
@@ -67,14 +69,14 @@ class TestApi(TestCase):
         key = generate_random_key(8)
         val = generate_random_data(10)
 
+        # try to delete invalid key
+        with self.assert_raises(NotFoundError):
+            self.client.delete(key)
+
         self.client.set(key, val)
         self.client.delete(key)
-        with self.assert_raises(ItemNotFoundError):
+        with self.assert_raises(NotFoundError):
             self.client.get(key)
-
-        key = generate_random_key(8)
-        with self.assert_raises(DeleteFailedError):
-            self.client.delete(key)
 
     def test_delete_noreply(self):
         key = generate_random_key(8)
@@ -82,7 +84,7 @@ class TestApi(TestCase):
 
         self.client.set(key, val)
         self.client.delete(key, noreply=True)
-        with self.assert_raises(ItemNotFoundError):
+        with self.assert_raises(NotFoundError):
             self.client.get(key)
 
     # Get and Set
@@ -149,7 +151,7 @@ class TestApi(TestCase):
         item = self.client.get(key)  # still there
 
         time.sleep(2.3)
-        with self.assert_raises(ItemNotFoundError):
+        with self.assert_raises(NotFoundError):
             item = self.client.get(key)  # expired
 
     def test_set_exptime_rel_1s(self):
@@ -160,7 +162,7 @@ class TestApi(TestCase):
         item = self.client.get(key)  # still there
 
         time.sleep(1.1)
-        with self.assert_raises(ItemNotFoundError):
+        with self.assert_raises(NotFoundError):
             item = self.client.get(key)  # expired
 
     def test_set_flags(self):
@@ -203,7 +205,7 @@ class TestApi(TestCase):
         val2 = generate_random_data(10)
 
         # try to prepend to an invalid key
-        with self.assert_raises(StoreFailedError):
+        with self.assert_raises(NotStoredError):
             self.client.prepend(key, val)
 
         self.client.set(key, val)
@@ -229,7 +231,7 @@ class TestApi(TestCase):
         val2 = generate_random_data(10)
 
         # try to replace an invalid key
-        with self.assert_raises(StoreFailedError):
+        with self.assert_raises(NotStoredError):
             self.client.replace(key, val)
 
         self.client.set(key, val)
@@ -259,6 +261,10 @@ class TestApi(TestCase):
     def test_touch(self):
         key = generate_random_key(8)
         val = generate_random_data(10)
+
+        # try to touch an invalid key
+        with self.assert_raises(NotFoundError):
+            self.client.touch(key)
 
         # expires in 3s
         self.client.set(key, val, exptime=3)
@@ -304,7 +310,7 @@ class TestApi(TestCase):
 
         self.write("Trying to get invalid key...")
         self.client.delete(key, noreply=True)
-        with self.assert_raises(ItemNotFoundError):
+        with self.assert_raises(NotFoundError):
             item = self.client.get(key)
 
         self.write("...key not found")
@@ -317,7 +323,7 @@ class TestApi(TestCase):
         val = generate_random_data(1)
 
         self.write("Trying to set too large key (%s):   %r -> %r..." % (len(key), key[:7], val))
-        with self.assert_raises(StoreFailedError):
+        with self.assert_raises(ServerError):
             self.client.set(key, val)
 
         self.write("...set failed")
@@ -327,7 +333,7 @@ class TestApi(TestCase):
         val = generate_random_data(1 << 21)  # 2mb, limit is 1mb
 
         self.write("Trying to set too large value (%s):   %r -> %r..." % (len(val), key, val[:7]))
-        with self.assert_raises(StoreFailedError):
+        with self.assert_raises(ServerError):
             self.client.set(key, val)
 
         self.write("...set failed")
