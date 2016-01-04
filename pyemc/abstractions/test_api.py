@@ -92,7 +92,12 @@ class TestCase(object):
         self.id = id
 
     def set_up(self, client_params):
+        '''Subclasses should implement both set_up and get_client so the runner
+        can get access to the client.'''
         self.client = client_params.create_client()
+
+    def get_client(self):
+        return self.client
 
     @contextmanager
     def assert_raises(self, exc_class):
