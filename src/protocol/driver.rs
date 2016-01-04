@@ -116,11 +116,13 @@ impl Driver {
             return Resp::Error;
         }
 
-        // Append the data we just received to the blob that is there
+        // Update the value
         let mut value = rv.unwrap();
-        value.item.extend(set.data);
         value.with_flags(set.flags);
         self.set_exptime(&mut value, set.exptime);
+
+        // Append the data we just received to the blob that is there
+        value.item.extend(set.data);
 
         let rv = self.cache.set(key, value);
 
@@ -178,6 +180,41 @@ impl Driver {
         }
 
         Resp::Values(values)
+    }
+
+    fn do_prepend(&mut self, set: Set) -> Resp {
+        let key = Key::new(set.key.into_bytes());
+
+        // Load the value
+        let rv = self.cache.remove(&key);
+
+        // If if it's not there we error out
+        if rv.is_err() {
+            return Resp::Error;
+        }
+
+        // Update the value
+        let mut value = rv.unwrap();
+        value.with_flags(set.flags);
+        self.set_exptime(&mut value, set.exptime);
+
+        // Prepend the data we just received to the blob that is there
+        let mut new_item = Vec::with_capacity(set.data.len() + value.item.len());
+        new_item.extend(set.data);
+        new_item.extend(value.item);
+        value.item = new_item;
+
+        let rv = self.cache.set(key, value);
+
+        match set.noreply {
+            true => Resp::Empty,
+            false => {
+                match rv {
+                    Ok(_) => Resp::Stored,
+                    Err(_) => Resp::Error,
+                }
+            }
+        }
     }
 
     fn do_replace(&mut self, set: Set) -> Resp {
@@ -314,6 +351,7 @@ impl Driver {
             Cmd::Set(set) => match set.instr {
                 SetInstr::Add => self.do_add(set),
                 SetInstr::Append => self.do_append(set),
+                SetInstr::Prepend => self.do_prepend(set),
                 SetInstr::Replace => self.do_replace(set),
                 SetInstr::Set => self.do_set(set),
                 _ => Resp::Error,  // TODO

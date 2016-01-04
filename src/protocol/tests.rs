@@ -232,6 +232,51 @@ fn test_cmd_set_and_get_multiple_keys() {
 }
 
 
+// Prepend
+
+#[test]
+fn test_cmd_prepend() {
+    let cache = Cache::new(100);
+    let mut driver = Driver::new(cache);
+
+    // Try to prepend to an invalid key
+    let set = Set::new(SetInstr::Prepend, "x", 4, 0, vec![8, 9], false);
+    let cmd = Cmd::Set(set);
+    let resp = driver.run(cmd);
+    assert_eq!(resp, Resp::Error);
+
+    // Set a key we can prepend to
+    let set = Set::new(SetInstr::Set, "x", 0, 0, vec![8, 9], false);
+    let cmd = Cmd::Set(set);
+    let resp = driver.run(cmd);
+    assert_eq!(resp, Resp::Stored);
+
+    // Prepend to it
+    let set = Set::new(SetInstr::Prepend, "x", 4, 0, vec![10], false);
+    let cmd = Cmd::Set(set);
+    let resp = driver.run(cmd);
+    assert_eq!(resp, Resp::Stored);
+
+    // Make sure it was updated
+    let cmd = Cmd::Get(Get::one("x"));
+    let resp = driver.run(cmd);
+    assert_eq!(vec![10, 8, 9], resp.get_first_value().unwrap().data);
+    assert_eq!(4, resp.get_first_value().unwrap().flags);
+
+    // Prepend again, in noreply mode
+    let set = Set::new(SetInstr::Prepend, "x", 5, 0, vec![11], true);
+    let cmd = Cmd::Set(set);
+    let resp = driver.run(cmd);
+    assert_eq!(resp, Resp::Empty);
+
+    // Make sure it was updated again
+    let cmd = Cmd::Get(Get::one("x"));
+    let resp = driver.run(cmd);
+    assert_eq!(vec![11, 10, 8, 9], resp.get_first_value().unwrap().data);
+    assert_eq!(5, resp.get_first_value().unwrap().flags);
+}
+
+
 // Replace
 
 #[test]
