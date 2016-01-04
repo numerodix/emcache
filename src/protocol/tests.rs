@@ -309,6 +309,12 @@ fn test_cmd_replace() {
     let resp = driver.run(cmd);
     assert_eq!(resp, Resp::NotStored);
 
+    // Try to replace an non-existent key - noreply
+    let set = Set::new(SetInstr::Replace, "x", 0, 0, vec![8, 9], true);
+    let cmd = Cmd::Set(set);
+    let resp = driver.run(cmd);
+    assert_eq!(resp, Resp::Empty);
+
     // Set a key
     let set = Set::new(SetInstr::Set, "x", 0, 0, vec![8, 9], false);
     let cmd = Cmd::Set(set);

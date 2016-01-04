@@ -274,15 +274,11 @@ impl Driver {
 
         // Do we store this item already? If not it's an early exit.
         let rv = self.cache.contains_key(&key);
-        match rv {
-            Ok(true) => (),
-            Ok(false) => {
-                return Resp::NotStored;
-            }
-            Err(_) => {
-                return Resp::Error;
-            }
-        }
+        maybe_reply_stmt!(!set.noreply, match rv {
+            Ok(true) => None,
+            Ok(false) => Some(Resp::NotStored),
+            Err(_) => Some(Resp::Error),
+        });
 
         let mut value = Value::new(set.data);
         value.with_flags(set.flags);
@@ -290,15 +286,10 @@ impl Driver {
 
         let rv = self.cache.set(key, value);
 
-        match set.noreply {
-            true => Resp::Empty,
-            false => {
-                match rv {
-                    Ok(_) => Resp::Stored,
-                    Err(_) => Resp::Error,
-                }
-            }
-        }
+        maybe_reply_expr!(!set.noreply, match rv {
+            Ok(_) => Resp::Stored,
+            Err(_) => Resp::Error,
+        })
     }
 
     fn do_set(&mut self, set: Set) -> Resp {
