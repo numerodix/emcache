@@ -16,33 +16,21 @@ use super::TcpTransport;
 use platform::time::sleep_secs;
 #[bench]
 fn bench_transport_read_cmd_get(b: &mut Bencher) {
-    // Prepare a stream "long enough" since we can't tell iter() how many
-    // iterations to use
-    let mut input = vec![];
-    for _ in 0..1000000 {
-        let cmd_str = "get variable\r\n".to_string();
-        input.extend(cmd_str.into_bytes());
-    }
-
-    let ts = TestStream::new(input);
+    let cmd_str = "get variable1 variable2\r\n".to_string().into_bytes();
+    let mut ts = TestStream::new(vec![]);
+    ts.set_incoming_rep(cmd_str);  // set stream to repeating mode
     let mut transport = TcpTransport::new(ts);
 
-    b.iter(|| {
-        transport.read_cmd().unwrap();
-    })
+    b.iter(|| transport.read_cmd().unwrap())
 }
 
 #[bench]
 fn bench_transport_read_cmd_set(b: &mut Bencher) {
-    // Prepare a stream "long enough" since we can't tell iter() how many
-    // iterations to use
-    let mut input = vec![];
-    for _ in 0..1000000 {
-        let cmd_str = "set variable 13 1 10 noreply\r\n0123456789\r\n".to_string();
-        input.extend(cmd_str.into_bytes());
-    }
-
-    let ts = TestStream::new(input);
+    let cmd_str = "set variable 13 1 10 noreply\r\n0123456789\r\n"
+                      .to_string()
+                      .into_bytes();
+    let mut ts = TestStream::new(vec![]);
+    ts.set_incoming_rep(cmd_str);  // set stream to repeating mode
     let mut transport = TcpTransport::new(ts);
 
     b.iter(|| {

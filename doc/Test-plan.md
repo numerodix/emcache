@@ -30,7 +30,10 @@ storage layer is.
 
 **Rust level mirco benchmarks** show that setting or getting a key runs on the
 order of 200 nanoseconds. So theoretically we can store 5M keys per second.
-Even tacking on a protocol layer only takes it up to about 300-400ns.
+Even tacking on a protocol layer only takes it up to about 300-400ns. The
+transport layer is much slower, showing about 1000ns for reading
+commands/writing responses. So that gives a total upper bound of 1400ns per
+operation.
 
 And yet **tcp based stress testing** over 127.0.0.1 shows a much lower rate of
 150k/s for key insertion in `noreply` mode where the client just spits out set

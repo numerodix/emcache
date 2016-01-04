@@ -275,7 +275,7 @@ impl<T: Read + Write> TcpTransport<T> {
 
     pub fn parse_cmd_flush_all(&mut self) -> TcpTransportResult<Cmd> {
         // consume the line
-        //try!(self.read_line_as_words());
+        // try!(self.read_line_as_words());
 
         // TODO hardcoded - need better parser primitives
         Ok(Cmd::FlushAll(FlushAll {
