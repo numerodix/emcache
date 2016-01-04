@@ -105,6 +105,36 @@ impl Driver {
         }
     }
 
+    fn do_append(&mut self, set: Set) -> Resp {
+        let key = Key::new(set.key.into_bytes());
+
+        // Load the value
+        let rv = self.cache.remove(&key);
+
+        // If if it's not there we error out
+        if rv.is_err() {
+            return Resp::Error;
+        }
+
+        // Append the data we just received to the blob that is there
+        let mut value = rv.unwrap();
+        value.item.extend(set.data);
+        value.with_flags(set.flags);
+        self.set_exptime(&mut value, set.exptime);
+
+        let rv = self.cache.set(key, value);
+
+        match set.noreply {
+            true => Resp::Empty,
+            false => {
+                match rv {
+                    Ok(_) => Resp::Stored,
+                    Err(_) => Resp::Error,
+                }
+            }
+        }
+    }
+
     fn do_delete(&mut self, delete: Delete) -> Resp {
         let key = Key::new(delete.key.clone().into_bytes());
 
@@ -283,6 +313,7 @@ impl Driver {
             Cmd::Quit => Resp::Empty,  // handled at transport level
             Cmd::Set(set) => match set.instr {
                 SetInstr::Add => self.do_add(set),
+                SetInstr::Append => self.do_append(set),
                 SetInstr::Replace => self.do_replace(set),
                 SetInstr::Set => self.do_set(set),
                 _ => Resp::Error,  // TODO

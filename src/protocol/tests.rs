@@ -60,6 +60,51 @@ fn test_cmd_add() {
 }
 
 
+// Append
+
+#[test]
+fn test_cmd_append() {
+    let cache = Cache::new(100);
+    let mut driver = Driver::new(cache);
+
+    // Try to append to an invalid key
+    let set = Set::new(SetInstr::Append, "x", 4, 0, vec![8, 9], false);
+    let cmd = Cmd::Set(set);
+    let resp = driver.run(cmd);
+    assert_eq!(resp, Resp::Error);
+
+    // Set a key we can append to
+    let set = Set::new(SetInstr::Set, "x", 0, 0, vec![8, 9], false);
+    let cmd = Cmd::Set(set);
+    let resp = driver.run(cmd);
+    assert_eq!(resp, Resp::Stored);
+
+    // Append to it
+    let set = Set::new(SetInstr::Append, "x", 4, 0, vec![10], false);
+    let cmd = Cmd::Set(set);
+    let resp = driver.run(cmd);
+    assert_eq!(resp, Resp::Stored);
+
+    // Make sure it was updated
+    let cmd = Cmd::Get(Get::one("x"));
+    let resp = driver.run(cmd);
+    assert_eq!(vec![8, 9, 10], resp.get_first_value().unwrap().data);
+    assert_eq!(4, resp.get_first_value().unwrap().flags);
+
+    // Append again, in noreply mode
+    let set = Set::new(SetInstr::Append, "x", 5, 0, vec![11], true);
+    let cmd = Cmd::Set(set);
+    let resp = driver.run(cmd);
+    assert_eq!(resp, Resp::Empty);
+
+    // Make sure it was updated again
+    let cmd = Cmd::Get(Get::one("x"));
+    let resp = driver.run(cmd);
+    assert_eq!(vec![8, 9, 10, 11], resp.get_first_value().unwrap().data);
+    assert_eq!(5, resp.get_first_value().unwrap().flags);
+}
+
+
 // Delete
 
 #[test]
