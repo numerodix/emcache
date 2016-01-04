@@ -256,7 +256,13 @@ fn test_cmd_prepend() {
     let set = Set::new(SetInstr::Prepend, "x", 4, 0, vec![8, 9], false);
     let cmd = Cmd::Set(set);
     let resp = driver.run(cmd);
-    assert_eq!(resp, Resp::Error);
+    assert_eq!(resp, Resp::NotStored);
+
+    // Try to prepend to an invalid key - noreply
+    let set = Set::new(SetInstr::Prepend, "x", 4, 0, vec![8, 9], true);
+    let cmd = Cmd::Set(set);
+    let resp = driver.run(cmd);
+    assert_eq!(resp, Resp::Empty);
 
     // Set a key we can prepend to
     let set = Set::new(SetInstr::Set, "x", 0, 0, vec![8, 9], false);

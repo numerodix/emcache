@@ -244,9 +244,11 @@ impl Driver {
         let rv = self.cache.remove(&key);
 
         // If if it's not there we error out
-        if rv.is_err() {
-            return Resp::Error;
-        }
+        maybe_reply_stmt!(!set.noreply, match rv {
+            Ok(_) => None,
+            Err(CacheError::KeyNotFound) => Some(Resp::NotStored),
+            Err(_) => Some(Resp::Error),
+        });
 
         // Update the value
         let mut value = rv.unwrap();
@@ -261,15 +263,10 @@ impl Driver {
 
         let rv = self.cache.set(key, value);
 
-        match set.noreply {
-            true => Resp::Empty,
-            false => {
-                match rv {
-                    Ok(_) => Resp::Stored,
-                    Err(_) => Resp::Error,
-                }
-            }
-        }
+        maybe_reply_expr!(!set.noreply, match rv {
+            Ok(_) => Resp::Stored,
+            Err(_) => Resp::Error,
+        })
     }
 
     fn do_replace(&mut self, set: Set) -> Resp {
