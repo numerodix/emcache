@@ -267,6 +267,15 @@ fn test_flush_all() {
     // access both keys - both have expired
     assert!(cache.get(&key1).is_err());
     assert!(cache.get(&key2).is_err());
+
+    // set a new item that came after flush_all
+    let key3 = key!(3);
+    let mut value3 = value!(7);
+    let rv = cache.set(key3.clone(), value3.clone());
+    assert!(rv.is_ok());
+
+    // it was not expired
+    assert!(cache.get(&key3).is_ok());
 }
 
 #[test]

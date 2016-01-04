@@ -116,16 +116,23 @@ impl Cache {
     }
 
     fn value_is_alive(&self, value: &Value) -> bool {
-        // if we have a global exptime set, that takes precedence
+        // If we have a global exptime set, then any item touched before it is
+        // dead
         if self.global_exptime > 0.0 {
-            if self.global_exptime < time_now() {
+            if value.atime < self.global_exptime {
                 return false;
             }
         }
 
-        // otherwise, if the value has an exptime set, that determines lifetime
+        // If the value has an exptime set, that determines lifetime
         // regardless of item_lifetime in the cache
         if value.exptime > 0.0 {
+            if self.global_exptime > 0.0 {
+                if value.exptime < self.global_exptime {
+                    return false;
+                }
+            }
+
             if value.exptime < time_now() {
                 return false;
             } else {

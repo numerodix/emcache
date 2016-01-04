@@ -97,6 +97,20 @@ class MemcacheClient(object):
             if not resp == 'DELETED\r\n':
                 raise create_exc(resp, 'Could not delete key %r' % key)
 
+    def flush_all(self, exptime=None, noreply=False):
+        # prepare command
+        # TODO no support for parameters yet
+        command = 'flush_all\r\n'
+
+        # execute command
+        self.stream.write(command)
+
+        # parse the response
+        if not noreply:
+            resp = self.stream.read_line()
+            if not resp == 'OK\r\n':
+                raise create_exc(resp, 'Could not perform flush_all')
+
     def get_multi(self, keys):
         # prepare command
         keys = ' '.join(keys)

@@ -87,6 +87,29 @@ class TestApi(TestCase):
         with self.assert_raises(NotFoundError):
             self.client.get(key)
 
+    # FlushAll
+
+    def test_flush_all(self):
+        key = generate_random_key(4)
+        val = generate_random_data(5, 8)
+
+        # key set before flush is expired
+        self.client.set(key, val)
+        self.client.flush_all()
+        with self.assert_raises(NotFoundError):
+            self.client.get(key)
+
+        # sleep a bit to make sure we don't get any rounding errors on the
+        # exact flush timestamp
+        time.sleep(1.5)
+
+        # key set after flush works as expected
+        key2 = generate_random_key(4)
+        val2 = generate_random_data(5, 8)
+        self.client.set(key2, val2)
+        item = self.client.get(key2)
+        assert item.value == val2
+
     # Get and Set
 
     def test_set_and_get_small_key(self):
