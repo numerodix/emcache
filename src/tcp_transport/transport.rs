@@ -18,6 +18,22 @@ use super::stats::TransportStats;
 use super::typedefs::TcpTransportResult;
 
 
+// return_err_if!(end_of_line, TcpTransportError::StreamReadError) =>
+//
+// if <cond> {
+//     return Err(<err>)
+// }
+macro_rules! return_err_if {
+    ( $cond:expr, $val:expr ) => {
+        {
+            if $cond {
+                return Err($val);
+            }
+        }
+    };
+}
+
+
 pub struct TcpTransport<T: Read + Write> {
     stream: BufStream<T>,
 
@@ -234,22 +250,14 @@ impl<T: Read + Write> TcpTransport<T> {
         // parse the key
         let key_str = {
             let (key, end_of_line) = try!(self.read_word_in_line());
-
-            if end_of_line {
-                return Err(TcpTransportError::CommandParseError);
-            }
-
+            return_err_if!(end_of_line, TcpTransportError::CommandParseError);
             try!(as_string(key))
         };
 
         // parse noreply
         let noreply_flag = {
             let (noreply, end_of_line) = try!(self.read_word_in_line());
-
-            if !end_of_line {
-                return Err(TcpTransportError::CommandParseError);
-            }
-
+            return_err_if!(!end_of_line, TcpTransportError::CommandParseError);
             let noreply_str = try!(as_string(noreply));
             match noreply_str == "noreply" {
                 true => true,
@@ -283,55 +291,35 @@ impl<T: Read + Write> TcpTransport<T> {
         // parse the key
         let key_str = {
             let (key, end_of_line) = try!(self.read_word_in_line());
-
-            if end_of_line {
-                return Err(TcpTransportError::CommandParseError);
-            }
-
+            return_err_if!(end_of_line, TcpTransportError::CommandParseError);
             try!(as_string(key))
         };
 
         // parse the flags
         let flags_num = {
             let (flags, end_of_line) = try!(self.read_word_in_line());
-
-            if end_of_line {
-                return Err(TcpTransportError::CommandParseError);
-            }
-
+            return_err_if!(end_of_line, TcpTransportError::CommandParseError);
             try!(as_number::<u16>(flags))
         };
 
         // parse the exptime
         let exptime_num = {
             let (exptime, end_of_line) = try!(self.read_word_in_line());
-
-            if end_of_line {
-                return Err(TcpTransportError::CommandParseError);
-            }
-
+            return_err_if!(end_of_line, TcpTransportError::CommandParseError);
             try!(as_number::<u32>(exptime))
         };
 
         // parse the bytelen
         let bytelen_num = {
             let (bytelen, end_of_line) = try!(self.read_word_in_line());
-
-            if end_of_line {
-                return Err(TcpTransportError::CommandParseError);
-            }
-
+            return_err_if!(end_of_line, TcpTransportError::CommandParseError);
             try!(as_number::<u64>(bytelen))
         };
 
         // parse noreply
         let noreply_flag = {
             let (noreply, end_of_line) = try!(self.read_word_in_line());
-
-            if !end_of_line {
-                return Err(TcpTransportError::CommandParseError);
-            }
-
+            return_err_if!(!end_of_line, TcpTransportError::CommandParseError);
             let noreply_str = try!(as_string(noreply));
             match noreply_str == "noreply" {
                 true => true,
@@ -380,13 +368,10 @@ impl<T: Read + Write> TcpTransport<T> {
         } else if keyword_str == "delete" {
             return self.parse_cmd_delete();
         } else if keyword_str == "stats" {
-            // TODO check for eol since nothing follows the keyword
             return Ok(Cmd::Stats);
         } else if keyword_str == "version" {
-            // TODO check for eol since nothing follows the keyword
             return Ok(Cmd::Version);
         } else if keyword_str == "quit" {
-            // TODO check for eol since nothing follows the keyword
             return Ok(Cmd::Quit);
         }
 
