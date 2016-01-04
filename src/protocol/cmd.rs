@@ -20,6 +20,22 @@ impl Delete {
 
 
 #[derive(Debug, PartialEq, Clone)]
+pub struct FlushAll {
+    pub exptime: Option<u32>, // Relative (secs) or absolute (unixtime) expiry time
+    pub noreply: bool, // Indicates whether the server should reply to the flush
+}
+
+impl FlushAll {
+    pub fn new(exptime: Option<u32>, noreply: bool) -> FlushAll {
+        FlushAll {
+            exptime: exptime,
+            noreply: noreply,
+        }
+    }
+}
+
+
+#[derive(Debug, PartialEq, Clone)]
 pub struct Get {
     pub keys: Vec<String>,
 }
@@ -135,6 +151,7 @@ impl Value {
 #[derive(Debug, PartialEq, Clone)]
 pub enum Cmd {
     Delete(Delete),
+    FlushAll(FlushAll),
     Get(Get),
     Quit,
     Set(Set),
@@ -155,6 +172,7 @@ pub enum Resp {
 
     Deleted, // The item was deleted successfully
     Exists, // The cas item has been modified
+    Ok, // FlushAll succeeded
     NotFound, // The cas item does not exist
     NotStored, // Precondition not met
     Stored, // The item was stored successfully

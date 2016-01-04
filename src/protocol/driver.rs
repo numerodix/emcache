@@ -9,6 +9,7 @@ use tcp_transport::stats::TransportStats;
 
 use super::cmd::Cmd;
 use super::cmd::Delete;
+use super::cmd::FlushAll;
 use super::cmd::Get;
 use super::cmd::Resp;
 use super::cmd::Set;
@@ -16,6 +17,8 @@ use super::cmd::SetInstr;
 use super::cmd::Stat;
 use super::cmd::Touch;
 use super::cmd::Value as CmdValue;
+use super::util::convert_exptime;
+use super::util::from_cache_err;
 
 
 // For use to get an early exit from a function. The first parameter is a bool
@@ -83,18 +86,6 @@ macro_rules! maybe_reply_expr {
     };
 }
 
-fn from_cache_err(err: &CacheError) -> Resp {
-    match *err {
-        CacheError::KeyTooLong => {
-            Resp::ClientError("bad command line format".to_string())
-        }
-        CacheError::ValueTooLong => {
-            Resp::ServerError("object too large for cache".to_string())
-        }
-        _ => Resp::Error,
-    }
-}
-
 
 struct DriverStats {
     cmd_get: u64,
@@ -132,6 +123,7 @@ impl Driver {
             transport_stats: TransportStats::new(),
         }
     }
+
 
 
     fn set_exptime(&self, value: &mut Value, exptime: u32) {
@@ -220,6 +212,21 @@ impl Driver {
                           match rv {
                               Ok(_) => Resp::Deleted,
                               Err(CacheError::KeyNotFound) => Resp::NotFound,
+                              Err(ref err) => from_cache_err(err),
+                          })
+    }
+
+    fn do_flush_all(&mut self, flush_all: FlushAll) -> Resp {
+        let exptime: f64 = match flush_all.exptime {
+            Some(exptime) => convert_exptime(flush_all.exptime.unwrap()).unwrap(),
+            None => time_now(),
+        };
+
+        let rv = self.cache.flush_all(exptime);
+
+        maybe_reply_expr!(!flush_all.noreply,
+                          match rv {
+                              Ok(_) => Resp::Ok,
                               Err(ref err) => from_cache_err(err),
                           })
     }
@@ -447,6 +454,7 @@ impl Driver {
     pub fn run(&mut self, cmd: Cmd) -> Resp {
         match cmd {
             Cmd::Delete(del) => self.do_delete(del),
+            Cmd::FlushAll(flush_all) => self.do_flush_all(flush_all),
             Cmd::Get(get) => self.do_get(get),
             Cmd::Quit => Resp::Empty,  // handled at transport level
             Cmd::Set(set) => {

@@ -1,6 +1,7 @@
 // Declare sub modules
 pub mod cmd;
 pub mod driver;
+pub mod util;
 
 // internal stuff
 mod tests;  // needed to be part of the compilation unit in test mode

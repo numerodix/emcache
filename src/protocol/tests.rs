@@ -7,6 +7,7 @@ use storage::Cache;
 use super::Driver;
 use super::cmd::Cmd;
 use super::cmd::Delete;
+use super::cmd::FlushAll;
 use super::cmd::Get;
 use super::cmd::Resp;
 use super::cmd::Set;
@@ -167,6 +168,52 @@ fn test_cmd_delete() {
 
     // Make sure it's gone
     let cmd = Cmd::Get(Get::one("y"));
+    let resp = driver.run(cmd);
+    assert_eq!(0, resp.get_values().unwrap().len());
+}
+
+
+// FlushAll
+
+#[test]
+fn test_flush_all() {
+    let cache = Cache::new(100);
+    let mut driver = Driver::new(cache);
+
+    let key_name = "x";
+    let blob = vec![1, 2, 3];
+
+
+    // Set a key
+    let set = Set::new(SetInstr::Set, key_name, 15, 0, blob.clone(), false);
+    let cmd = Cmd::Set(set);
+    let resp = driver.run(cmd);
+    assert_eq!(resp, Resp::Stored);
+
+    // Do a flush
+    let cmd = Cmd::FlushAll(FlushAll::new(None, false));
+    let resp = driver.run(cmd);
+    assert_eq!(resp, Resp::Ok);
+
+    // The key is dead
+    let cmd = Cmd::Get(Get::one(key_name));
+    let resp = driver.run(cmd);
+    assert_eq!(0, resp.get_values().unwrap().len());
+
+
+    // Set a key
+    let set = Set::new(SetInstr::Set, key_name, 15, 0, blob.clone(), false);
+    let cmd = Cmd::Set(set);
+    let resp = driver.run(cmd);
+    assert_eq!(resp, Resp::Stored);
+
+    // Do a flush - noreply
+    let cmd = Cmd::FlushAll(FlushAll::new(None, true));
+    let resp = driver.run(cmd);
+    assert_eq!(resp, Resp::Empty);
+
+    // The key is dead
+    let cmd = Cmd::Get(Get::one(key_name));
     let resp = driver.run(cmd);
     assert_eq!(0, resp.get_values().unwrap().len());
 }
