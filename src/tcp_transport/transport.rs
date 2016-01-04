@@ -365,6 +365,8 @@ impl<T: Read + Write> TcpTransport<T> {
             return self.parse_cmd_get();
         } else if keyword_str == "set" {
             return self.parse_cmd_set(SetInstr::Set);
+        } else if keyword_str == "add" {
+            return self.parse_cmd_set(SetInstr::Add);
         } else if keyword_str == "replace" {
             return self.parse_cmd_set(SetInstr::Replace);
         } else if keyword_str == "delete" {
