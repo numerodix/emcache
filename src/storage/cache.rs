@@ -47,17 +47,21 @@ impl CacheStats {
 
 pub struct Cache {
     pub capacity: u64, // in bytes
-    item_lifetime: f64, // in seconds, <0 for unlimited
-    key_maxlen: u64, // in bytes
-    stats: CacheStats,
-    value_maxlen: u64, // in bytes
     storage: LinkedHashMap<Key, Value>,
+    item_lifetime: f64, // in seconds, <0 for unlimited
+    global_exptime: f64, // unixtime, <0 for unset
+
+    key_maxlen: u64, // in bytes
+    value_maxlen: u64, // in bytes
+
+    stats: CacheStats,
 }
 
 impl Cache {
     pub fn new(capacity: u64) -> Cache {
         Cache {
             capacity: capacity,
+            global_exptime: -1.0,
             item_lifetime: -1.0,
             key_maxlen: 250, // 250b
             stats: CacheStats::new(),
@@ -112,12 +116,20 @@ impl Cache {
     }
 
     fn value_is_alive(&self, value: &Value) -> bool {
-        // if the value has an exptime set, that takes precedence
-        if value.exptime > 0.0 {
-            if value.exptime > time_now() {
-                return true;
-            } else {
+        // if we have a global exptime set, that takes precedence
+        if self.global_exptime > 0.0 {
+            if self.global_exptime < time_now() {
                 return false;
+            }
+        }
+
+        // otherwise, if the value has an exptime set, that determines lifetime
+        // regardless of item_lifetime in the cache
+        if value.exptime > 0.0 {
+            if value.exptime < time_now() {
+                return false;
+            } else {
+                return true;
             }
         }
 
@@ -142,6 +154,11 @@ impl Cache {
             // Some other error
             Err(x) => Err(x),
         }
+    }
+
+    pub fn flush_all(&mut self, exptime: f64) -> CacheResult<()> {
+        self.global_exptime = exptime;
+        Ok(())
     }
 
     pub fn get(&mut self, key: &Key) -> CacheResult<&Value> {

@@ -237,6 +237,38 @@ fn test_key_kept_alive_on_access() {
     assert!(cache.get(&key).is_err());
 }
 
+// this is a slow test that relies on sleeps
+#[ignore]
+#[test]
+fn test_flush_all() {
+    // our cache has a lifetime of 2 secs
+    let mut cache = Cache::new(1024);
+    cache.with_item_lifetime(2.0);
+
+    // this item lives for 3s
+    let key1 = key!(1);
+    let mut value1 = value!(9);
+    value1.set_exptime(time_now() + 3.0);
+    let rv = cache.set(key1.clone(), value1.clone());
+    assert!(rv.is_ok());
+
+    // this item lives until cache lifetime
+    let key2 = key!(2);
+    let value2 = value!(8);
+    let rv = cache.set(key2.clone(), value2.clone());
+    assert!(rv.is_ok());
+
+    // make all items dead in one second
+    cache.flush_all(time_now() + 1.0);
+
+    // sleep until flush time kicks in
+    sleep_secs(1.5);
+
+    // access both keys - both have expired
+    assert!(cache.get(&key1).is_err());
+    assert!(cache.get(&key2).is_err());
+}
+
 #[test]
 fn test_metrics() {
     // NOTE: The most crucial metric is bytes, so make sure to test every data
