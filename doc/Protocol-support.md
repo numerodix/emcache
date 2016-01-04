@@ -13,6 +13,7 @@ We follow [the official protocol specification](https://github.com/memcached/mem
 * PREPEND
 * REPLACE
 * SET
+* TOUCH
 * VERSION
 
 
@@ -26,7 +27,6 @@ We follow [the official protocol specification](https://github.com/memcached/mem
 * CAS/GETS
 * FLUSH_ALL
 * INCR/DECR
-* TOUCH
 
 
 ## No plan to support
