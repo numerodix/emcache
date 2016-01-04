@@ -10,6 +10,7 @@ We follow [the official protocol specification](https://github.com/memcached/mem
 * DELETE
 * GET
 * QUIT
+* PREPEND
 * REPLACE
 * SET
 * VERSION
@@ -22,7 +23,6 @@ We follow [the official protocol specification](https://github.com/memcached/mem
 
 ## Plan to support
 
-* PREPEND
 * CAS/GETS
 * FLUSH_ALL
 * INCR/DECR
