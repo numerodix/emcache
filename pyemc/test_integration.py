@@ -4,7 +4,7 @@ import time
 from pyemc.abstractions.test_api import TestCase
 from pyemc.client import DeleteFailedError
 from pyemc.client import ItemNotFoundError
-from pyemc.client import SetFailedError
+from pyemc.client import StoreFailedError
 from pyemc.util import generate_random_data
 from pyemc.util import generate_random_key
 
@@ -138,6 +138,30 @@ class TestApi(TestCase):
         with self.assert_raises(ItemNotFoundError):
             self.client.get(key)
 
+    def test_replace(self):
+        key = generate_random_key(8)
+        val = generate_random_data(10)
+        val2 = generate_random_data(10)
+
+        # try to replace an invalid key
+        with self.assert_raises(StoreFailedError):
+            self.client.replace(key, val)
+
+        self.client.set(key, val)
+        self.client.replace(key, val2)
+        item = self.client.get(key)
+        assert val2 == item.value
+
+    def test_replace_noreply(self):
+        key = generate_random_key(8)
+        val = generate_random_data(10)
+        val2 = generate_random_data(10)
+
+        self.client.set(key, val)
+        self.client.replace(key, val2, noreply=True)
+        item = self.client.get(key)
+        assert val2 == item.value
+
     def test_get_stats(self):
         self.client.print_stats()
 
@@ -169,7 +193,7 @@ class TestApi(TestCase):
         val = generate_random_data(1)
 
         self.write("Trying to set too large key (%s):   %r -> %r..." % (len(key), key[:7], val))
-        with self.assert_raises(SetFailedError):
+        with self.assert_raises(StoreFailedError):
             self.client.set(key, val)
 
         self.write("...set failed")
@@ -179,7 +203,7 @@ class TestApi(TestCase):
         val = generate_random_data(1 << 21)  # 2mb, limit is 1mb
 
         self.write("Trying to set too large value (%s):   %r -> %r..." % (len(val), key, val[:7]))
-        with self.assert_raises(SetFailedError):
+        with self.assert_raises(StoreFailedError):
             self.client.set(key, val)
 
         self.write("...set failed")

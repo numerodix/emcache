@@ -22,7 +22,7 @@ class DeleteFailedError(Exception):
 class ItemNotFoundError(Exception):
     pass
 
-class SetFailedError(Exception):
+class StoreFailedError(Exception):
     pass
 
 
@@ -142,9 +142,16 @@ class MemcacheClient(object):
         # execute command
         self.stream.write(command)
 
+    def replace(self, key, value, flags=0, exptime=0, noreply=False):
+        return self._set_family('replace', key, value, flags, exptime, noreply)
+
     def set(self, key, value, flags=0, exptime=0, noreply=False):
+        return self._set_family('set', key, value, flags, exptime, noreply)
+
+    def _set_family(self, instr, key, value, flags=0, exptime=0, noreply=False):
         # prepare command
-        header = 'set %(key)s %(flags)d %(exptime)d %(bytelen)d %(noreply)s\r\n' % {
+        header = '%(instr)s %(key)s %(flags)d %(exptime)d %(bytelen)d %(noreply)s\r\n' % {
+            'instr': instr,
             'key': key,
             'flags': flags,
             'exptime': exptime,
@@ -160,7 +167,8 @@ class MemcacheClient(object):
         if not noreply:
             resp = self.stream.read_line()
             if not resp == 'STORED\r\n':
-                raise SetFailedError('Could not set key %r to %r...' % (key, value[:10]))
+                raise StoreFailedError('Could not %s key %r to %r...' %
+                                       (instr, key, value[:10]))
 
     def send_malformed_cmd(self):
         '''Sends an invalid command - causes the server to drop the

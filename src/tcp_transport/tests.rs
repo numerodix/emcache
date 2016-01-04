@@ -271,6 +271,20 @@ fn test_read_cmd_quit() {
 }
 
 
+// Command parsing: Replace
+
+#[test]
+fn test_read_cmd_replace() {
+    let cmd_str = "replace x 15 0 3 \r\nabc\r\n".to_string();
+    let ts = TestStream::new(cmd_str.into_bytes());
+    let mut transport = TcpTransport::new(ts);
+
+    let cmd = transport.read_cmd().unwrap();
+    let exp = Set::new(SetInstr::Replace, "x", 15, 0, vec![97, 98, 99], false);
+    assert_eq!(cmd, Cmd::Set(exp));
+}
+
+
 // Command parsing: Set
 
 #[test]
@@ -423,6 +437,20 @@ fn test_write_resp_not_found() {
     let resp = Resp::NotFound;
     transport.write_resp(&resp).unwrap();
     let expected = "NOT_FOUND\r\n".to_string().into_bytes();
+    assert_eq!(transport.get_stream().outgoing, expected);
+}
+
+
+// Response writing: NotStored
+
+#[test]
+fn test_write_resp_not_stored() {
+    let ts = TestStream::new(vec![]);
+    let mut transport = TcpTransport::new(ts);
+
+    let resp = Resp::NotStored;
+    transport.write_resp(&resp).unwrap();
+    let expected = "NOT_STORED\r\n".to_string().into_bytes();
     assert_eq!(transport.get_stream().outgoing, expected);
 }
 

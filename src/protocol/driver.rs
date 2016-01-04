@@ -11,6 +11,7 @@ use super::cmd::Delete;
 use super::cmd::Get;
 use super::cmd::Resp;
 use super::cmd::Set;
+use super::cmd::SetInstr;
 use super::cmd::Stat;
 use super::cmd::Value as CmdValue;
 
@@ -117,6 +118,38 @@ impl Driver {
         Resp::Values(values)
     }
 
+    fn do_replace(&mut self, set: Set) -> Resp {
+        let key = Key::new(set.key.into_bytes());
+
+        // Do we store this item already? If not it's an early exit.
+        let rv = self.cache.contains_key(&key);
+        match rv {
+            Ok(true) => (),
+            Ok(false) => {
+                return Resp::NotStored;
+            }
+            Err(_) => {
+                return Resp::Error;
+            }
+        }
+
+        let mut value = Value::new(set.data);
+        value.with_flags(set.flags);
+        self.set_exptime(&mut value, set.exptime);
+
+        let rv = self.cache.set(key, value);
+
+        match set.noreply {
+            true => Resp::Empty,
+            false => {
+                match rv {
+                    Ok(_) => Resp::Stored,
+                    Err(_) => Resp::Error,
+                }
+            }
+        }
+    }
+
     fn do_set(&mut self, set: Set) -> Resp {
         // Update stats
         self.stats.cmd_set += 1;
@@ -216,7 +249,11 @@ impl Driver {
             Cmd::Delete(del) => self.do_delete(del),
             Cmd::Get(get) => self.do_get(get),
             Cmd::Quit => Resp::Empty,  // handled at transport level
-            Cmd::Set(set) => self.do_set(set),
+            Cmd::Set(set) => match set.instr {
+                SetInstr::Replace => self.do_replace(set),
+                SetInstr::Set => self.do_set(set),
+                _ => Resp::Error,  // TODO
+            },
             Cmd::Stats => self.do_stats(),
             Cmd::Version => self.do_version(),
         }

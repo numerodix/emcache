@@ -41,12 +41,7 @@ fn bench_cmd_get_key(b: &mut Bencher) {
     let blob = vec![1, 2, 3];
 
     // Set a key
-    let set = Set::new(SetInstr::Set,
-                        key_name,
-                        15,
-                        0,
-                        blob.clone(),
-                        false);
+    let set = Set::new(SetInstr::Set, key_name, 15, 0, blob.clone(), false);
     let cmd = Cmd::Set(set);
     let resp = driver.run(cmd);
     assert_eq!(resp, Resp::Stored);

@@ -137,6 +137,48 @@ fn test_cmd_delete() {
 }
 
 #[test]
+fn test_cmd_replace() {
+    let cache = Cache::new(100);
+    let mut driver = Driver::new(cache);
+
+    // Try to replace an non-existent key
+    let set = Set::new(SetInstr::Replace, "x", 0, 0, vec![8, 9], false);
+    let cmd = Cmd::Set(set);
+    let resp = driver.run(cmd);
+    assert_eq!(resp, Resp::NotStored);
+
+    // Set a key
+    let set = Set::new(SetInstr::Set, "x", 0, 0, vec![8, 9], false);
+    let cmd = Cmd::Set(set);
+    let resp = driver.run(cmd);
+    assert_eq!(resp, Resp::Stored);
+
+    // Replace a valid key
+    let set = Set::new(SetInstr::Replace, "x", 4, 0, vec![10], false);
+    let cmd = Cmd::Set(set);
+    let resp = driver.run(cmd);
+    assert_eq!(resp, Resp::Stored);
+
+    // Make sure it was updated
+    let cmd = Cmd::Get(Get::one("x"));
+    let resp = driver.run(cmd);
+    assert_eq!(vec![10], resp.get_first_value().unwrap().data);
+    assert_eq!(4, resp.get_first_value().unwrap().flags);
+
+    // Replace a valid key in noreply mode
+    let set = Set::new(SetInstr::Replace, "x", 6, 0, vec![11], true);
+    let cmd = Cmd::Set(set);
+    let resp = driver.run(cmd);
+    assert_eq!(resp, Resp::Empty);
+
+    // Make sure it was updated
+    let cmd = Cmd::Get(Get::one("x"));
+    let resp = driver.run(cmd);
+    assert_eq!(vec![11], resp.get_first_value().unwrap().data);
+    assert_eq!(6, resp.get_first_value().unwrap().flags);
+}
+
+#[test]
 fn test_cmd_stats() {
     let cache = Cache::new(100);
     let mut driver = Driver::new(cache);

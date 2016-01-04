@@ -287,7 +287,7 @@ impl<T: Read + Write> TcpTransport<T> {
         Ok(Cmd::Get(Get { keys: keys }))
     }
 
-    pub fn parse_cmd_set(&mut self) -> TcpTransportResult<Cmd> {
+    pub fn parse_cmd_set(&mut self, instr: SetInstr) -> TcpTransportResult<Cmd> {
         // parse the key
         let key_str = {
             let (key, end_of_line) = try!(self.read_word_in_line());
@@ -344,7 +344,7 @@ impl<T: Read + Write> TcpTransport<T> {
 
         // We got all the values we expected and there is nothing left
         return Ok(Cmd::Set(Set {
-            instr: SetInstr::Set,
+            instr: instr,
             key: key_str,
             flags: flags_num,
             exptime: exptime_num,
@@ -364,7 +364,9 @@ impl<T: Read + Write> TcpTransport<T> {
         if keyword_str == "get" {
             return self.parse_cmd_get();
         } else if keyword_str == "set" {
-            return self.parse_cmd_set();
+            return self.parse_cmd_set(SetInstr::Set);
+        } else if keyword_str == "replace" {
+            return self.parse_cmd_set(SetInstr::Replace);
         } else if keyword_str == "delete" {
             return self.parse_cmd_delete();
         } else if keyword_str == "stats" {
@@ -389,6 +391,9 @@ impl<T: Read + Write> TcpTransport<T> {
             }
             Resp::NotFound => {
                 try!(self.write_string("NOT_FOUND\r\n"));
+            }
+            Resp::NotStored => {
+                try!(self.write_string("NOT_STORED\r\n"));
             }
             Resp::Stats(ref stats) => {
                 for stat in stats {
