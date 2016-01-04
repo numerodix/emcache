@@ -377,6 +377,9 @@ impl Driver {
     }
 
     pub fn do_touch(&mut self, touch: Touch) -> Resp {
+        // Update stats
+        self.stats.cmd_touch += 1;
+
         let key = Key::new(touch.key.into_bytes());
 
         // See if the key is set
