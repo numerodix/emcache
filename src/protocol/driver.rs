@@ -131,6 +131,7 @@ impl Driver {
 
 
     fn set_exptime(&self, value: &mut Value, exptime: u32) {
+        // TODO use convert_exptime
         // If exptime is greater than zero we need to set it on the value
         if exptime > 0 {
             let tm;
