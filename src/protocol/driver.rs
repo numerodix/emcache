@@ -92,6 +92,8 @@ struct DriverStats {
     cmd_set: u64,
     cmd_flush: u64,
     cmd_touch: u64,
+    touch_misses: u64,
+    touch_hits: u64,
 }
 
 impl DriverStats {
@@ -101,6 +103,8 @@ impl DriverStats {
             cmd_set: 0,
             cmd_flush: 0,
             cmd_touch: 0,
+            touch_hits: 0,
+            touch_misses: 0,
         }
     }
 }
@@ -360,6 +364,8 @@ impl Driver {
         let get_misses = storage.get_misses.to_string();
         let delete_hits = storage.delete_hits.to_string();
         let delete_misses = storage.delete_misses.to_string();
+        let touch_hits = self.stats.touch_hits.to_string();
+        let touch_misses = self.stats.touch_misses.to_string();
         let bytes_read = self.transport_stats.bytes_read.to_string();
         let bytes_written = self.transport_stats.bytes_written.to_string();
         let limit_maxbytes = self.cache.capacity.to_string();
@@ -381,6 +387,8 @@ impl Driver {
         let st_get_misses = Stat::new("get_misses", get_misses);
         let st_delete_hits = Stat::new("delete_hits", delete_hits);
         let st_delete_misses = Stat::new("delete_misses", delete_misses);
+        let st_touch_hits = Stat::new("touch_hits", touch_hits);
+        let st_touch_misses = Stat::new("touch_misses", touch_misses);
         let st_bytes_read = Stat::new("bytes_read", bytes_read);
         let st_bytes_written = Stat::new("bytes_written", bytes_written);
         let st_limit_maxbytes = Stat::new("limit_maxbytes", limit_maxbytes);
@@ -402,6 +410,8 @@ impl Driver {
                          st_get_misses,
                          st_delete_hits,
                          st_delete_misses,
+                         st_touch_hits,
+                         st_touch_misses,
                          st_bytes_read,
                          st_bytes_written,
                          st_limit_maxbytes,
@@ -424,8 +434,18 @@ impl Driver {
         // If if it's not there we error out
         maybe_reply_stmt!(!touch.noreply,
                           match rv {
-                              Ok(true) => None,
-                              Ok(false) => Some(Resp::NotFound),
+                              Ok(true) => {
+                                  // Update stats
+                                  self.stats.touch_hits += 1;
+
+                                  None
+                              }
+                              Ok(false) => {
+                                  // Update stats
+                                  self.stats.touch_misses += 1;
+
+                                  Some(Resp::NotFound)
+                              }
                               Err(ref err) => Some(from_cache_err(err)),
                           });
 

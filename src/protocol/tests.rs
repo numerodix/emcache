@@ -428,6 +428,8 @@ fn test_cmd_stats() {
     let st_get_misses = Stat::new("get_misses", "0".to_string());
     let st_delete_hits = Stat::new("delete_hits", "0".to_string());
     let st_delete_misses = Stat::new("delete_misses", "0".to_string());
+    let st_touch_hits = Stat::new("touch_hits", "0".to_string());
+    let st_touch_misses = Stat::new("touch_misses", "0".to_string());
     let st_bytes_read = Stat::new("bytes_read", "0".to_string());
     let st_bytes_written = Stat::new("bytes_written", "0".to_string());
     let st_limit_maxbytes = Stat::new("limit_maxbytes", "100".to_string());
@@ -450,6 +452,8 @@ fn test_cmd_stats() {
                      st_get_misses,
                      st_delete_hits,
                      st_delete_misses,
+                     st_touch_hits,
+                     st_touch_misses,
                      st_bytes_read,
                      st_bytes_written,
                      st_limit_maxbytes,
