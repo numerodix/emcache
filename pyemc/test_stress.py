@@ -5,14 +5,15 @@ from pyemc.abstractions.test_api import TestCase
 
 class TestStress(TestCase):
     def run_bench(self, func, loops, desc):
-        # establish connection
-        self.client.get_stats()
-
-        start_time = time.time()
-
+        # untimed warmup
+        warmup_loops = loops / 3
         for _ in xrange(loops):
             func()
 
+        # timed execution
+        start_time = time.time()
+        for _ in xrange(loops):
+            func()
         end_time = time.time()
         interval = end_time - start_time
 
@@ -34,7 +35,16 @@ class TestStress(TestCase):
         self.run_bench(func, 100000, 'constant key set')
 
     def test_get_const_key(self):
+        self.client.set('x', 'abc')
+
         def func():
             self.client.get('x')
 
         self.run_bench(func, 100000, 'constant key get')
+
+    def test_version(self):
+        '''Does not even touch the storage layer.'''
+        def func():
+            self.client.version()
+
+        self.run_bench(func, 100000, 'version')
