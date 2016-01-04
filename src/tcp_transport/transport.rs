@@ -6,6 +6,7 @@ use bufstream::BufStream;
 use common::consts;
 use protocol::cmd::Cmd;
 use protocol::cmd::Delete;
+use protocol::cmd::FlushAll;
 use protocol::cmd::Get;
 use protocol::cmd::Resp;
 use protocol::cmd::Set;
@@ -272,6 +273,17 @@ impl<T: Read + Write> TcpTransport<T> {
         }))
     }
 
+    pub fn parse_cmd_flush_all(&mut self) -> TcpTransportResult<Cmd> {
+        // consume the line
+        //try!(self.read_line_as_words());
+
+        // TODO hardcoded - need better parser primitives
+        Ok(Cmd::FlushAll(FlushAll {
+            exptime: None,
+            noreply: false,
+        }))
+    }
+
     pub fn parse_cmd_get(&mut self) -> TcpTransportResult<Cmd> {
         let mut keys = vec![];
 
@@ -414,6 +426,8 @@ impl<T: Read + Write> TcpTransport<T> {
             return self.parse_cmd_touch();
         } else if keyword_str == "delete" {
             return self.parse_cmd_delete();
+        } else if keyword_str == "flush_all" {
+            return self.parse_cmd_flush_all();
         } else if keyword_str == "stats" {
             return Ok(Cmd::Stats);
         } else if keyword_str == "version" {
@@ -444,6 +458,9 @@ impl<T: Read + Write> TcpTransport<T> {
             }
             Resp::NotStored => {
                 try!(self.write_string("NOT_STORED\r\n"));
+            }
+            Resp::Ok => {
+                try!(self.write_string("OK\r\n"));
             }
             Resp::ServerError(ref err) => {
                 try!(self.write_string("SERVER_ERROR "));

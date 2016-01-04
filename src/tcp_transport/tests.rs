@@ -1,5 +1,6 @@
 use protocol::cmd::Cmd;
 use protocol::cmd::Delete;
+use protocol::cmd::FlushAll;
 use protocol::cmd::Get;
 use protocol::cmd::Resp;
 use protocol::cmd::Set;
@@ -231,6 +232,19 @@ fn test_read_cmd_delete_noreply() {
 
     let cmd = transport.read_cmd().unwrap();
     assert_eq!(cmd, Cmd::Delete(Delete::new("x", true)));
+}
+
+
+// Command parsing: FlushAll
+
+#[test]
+fn test_read_cmd_flush_all() {
+    let cmd_str = "flush_all\r\n".to_string();
+    let ts = TestStream::new(cmd_str.into_bytes());
+    let mut transport = TcpTransport::new(ts);
+
+    let cmd = transport.read_cmd().unwrap();
+    assert_eq!(cmd, Cmd::FlushAll(FlushAll::new(None, false)));
 }
 
 
@@ -533,6 +547,20 @@ fn test_write_resp_not_stored() {
     let resp = Resp::NotStored;
     transport.write_resp(&resp).unwrap();
     let expected = "NOT_STORED\r\n".to_string().into_bytes();
+    assert_eq!(transport.get_stream().outgoing, expected);
+}
+
+
+// Response writing: Ok
+
+#[test]
+fn test_write_resp_ok() {
+    let ts = TestStream::new(vec![]);
+    let mut transport = TcpTransport::new(ts);
+
+    let resp = Resp::Ok;
+    transport.write_resp(&resp).unwrap();
+    let expected = "OK\r\n".to_string().into_bytes();
     assert_eq!(transport.get_stream().outgoing, expected);
 }
 
