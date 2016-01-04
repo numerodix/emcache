@@ -215,6 +215,25 @@ class TestApi(TestCase):
 
         assert val == val2
 
+    # Incr
+
+    def test_incr(self):
+        key = generate_random_key(10)
+        val = '1'
+
+        self.client.set(key, val)
+        val2 = self.client.incr(key, '40')
+        assert int(val) + 40 == int(val2)
+
+    def test_incr_noreply(self):
+        key = generate_random_key(10)
+        val = '1'
+
+        self.client.set(key, val)
+        self.client.incr(key, noreply=True)
+        item = self.client.get(key)
+        assert int(val) + 1 == int(item.value)
+
     # Quit
 
     def test_quit(self):
@@ -338,6 +357,23 @@ class TestApi(TestCase):
             item = self.client.get(key)
 
         self.write("...key not found")
+
+    def test_incr_overflow(self):
+        key = generate_random_key(10)
+        val = str((1 << 64) - 1)
+
+        # set max unsigned 64bit value - overflows to 0
+        self.client.set(key, val)
+        val2 = self.client.incr(key)
+        assert val2 == str(0)
+
+    def test_incr_over_size(self):
+        key = generate_random_key(10)
+        val = str(1 << 64)  # cannot store in 64 bits
+
+        self.client.set(key, val)
+        with self.assert_raises(ClientError):
+            self.client.incr(key)  # not treated as a number
 
 
     ## Exceed limits

@@ -71,6 +71,7 @@ class Item(object):
 
 class MemcacheClient(object):
     rx_value = re.compile('VALUE (?P<key>[^ ]*) (?P<flags>\d+) (?P<len>\d+)')
+    rx_incr_value = re.compile('(?P<value>\d+)')
 
     def __init__(self, host, port):
         self.stream = BufferedSocketStream(host, port)
@@ -175,6 +176,26 @@ class MemcacheClient(object):
             line = self.stream.read_line()
 
         return dct
+
+    def incr(self, key, delta=1, noreply=False):
+        # prepare command
+        command = 'incr %(key)s %(delta)d %(noreply)s\r\n' % {
+            'key': key,
+            'delta': int(delta),
+            'noreply': 'noreply' if noreply else '',
+        }
+
+        # execute command
+        self.stream.write(command)
+
+        # read the response
+        if not noreply:
+            resp = self.stream.read_line()
+            try:
+                num = self.rx_incr_value.findall(resp)[0]
+                return num
+            except IndexError:
+                raise create_exc(resp, 'Could not incr key %r' % key)
 
     def quit(self):
         '''Tells the server to drop the connection.'''
