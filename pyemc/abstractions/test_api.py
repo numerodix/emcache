@@ -66,12 +66,13 @@ class TestRunner(object):
         test_name = '%s.%s' % (test_case.__class__.__name__, method.__name__)
         exc = None
 
-        self.write("Running test %s" % test_name)
+        self.write("%s..." % test_name)
+
         try:
             test_case.set_up(self.client_params)
         except Exception as e:
             traceback.print_exc()
-            self.write("Test %s set_up FAILED: %r" % e)
+            self.write("SETUP FAILED: %r" % e)
             return
 
         time_start = time.time()
@@ -85,10 +86,10 @@ class TestRunner(object):
         dur = time_stop - time_start
 
         if exc is None:
-            self.write("SUCCEEDED: %s in %.4fs" % (test_name, dur))
+            self.write("SUCCEEDED in %.4fs" % (dur))
             return True
         else:
-            self.write("FAILED: %s in %.4fs: %r" % (test_name, dur, exc))
+            self.write("FAILED in %.4fs: %r" % (dur, exc))
             return False
 
     def write(self, msg):

@@ -45,8 +45,6 @@ if __name__ == '__main__':
         filler.launch()
 
     else:
-        runner = TestRunner(cli_params, args)
-
         if options.stress_test:
             test_cases = [
                 TestStress,
@@ -55,6 +53,8 @@ if __name__ == '__main__':
             test_cases = [
                 TestApi,
             ]
+
+        runner = TestRunner(cli_params, args)
 
         rv = runner.execute_all(test_cases)
         sys.exit(not rv)

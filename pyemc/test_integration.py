@@ -139,12 +139,10 @@ class TestApi(TestCase):
         key = generate_random_key(4)
         val = generate_random_data(5, 8)
 
-        self.write("Setting small key:   %r -> %r" % (key, val))
         self.client.set(key, val)
 
         item = self.client.get(key)
         val2 = item.value
-        self.write("Retrieved small key: %r -> %r" % (key, val2))
 
         assert val == val2
 
@@ -152,12 +150,10 @@ class TestApi(TestCase):
         key = generate_random_key(10)
         val = generate_random_data(1 << 19)  # .5mb
 
-        self.write("Setting large value (%s):   %r -> %r..." % (len(val), key, val[:7]))
         self.client.set(key, val)
 
         item = self.client.get(key)
         val2 = item.value
-        self.write("Retrieved large value (%s): %r -> %r..." % (len(val), key, val2[:7]))
 
         assert val == val2
 
@@ -170,16 +166,12 @@ class TestApi(TestCase):
         key3 = generate_random_key(10)
         val3 = generate_random_data(10)
 
-        self.write("Setting key %r -> %r" % (key1, val1))
         self.client.set(key1, val1)
 
-        self.write("Setting key %r -> %r" % (key3, val3))
         self.client.set(key3, val3)
 
         keys = [key1, key2, key3]
-        self.write("Getting keys %r" % keys)
         dct = self.client.get_multi(keys)
-        self.write("Got keys: %r" % dct.keys())
 
         assert val1 == dct[key1].value
         assert val3 == dct[key3].value
@@ -378,12 +370,9 @@ class TestApi(TestCase):
     def test_get_invalid_key(self):
         key = generate_random_key(10)
 
-        self.write("Trying to get invalid key...")
         self.client.delete(key, noreply=True)
         with self.assert_raises(NotFoundError):
             item = self.client.get(key)
-
-        self.write("...key not found")
 
     def test_decr_underflow(self):
         key = generate_random_key(10)
@@ -391,7 +380,6 @@ class TestApi(TestCase):
 
         self.client.set(key, val)
         val2 = self.client.decr(key)
-        print val2
         assert int(val) == int(val2)
 
     def test_incr_overflow(self):
@@ -413,24 +401,18 @@ class TestApi(TestCase):
 
 
     ## Exceed limits
-    # TODO try key/val too large for each command
+    # TODO try key/val too large for each command?
 
     def test_set_too_large_key(self):
         key = generate_random_key(251)  # limit is 250b
         val = generate_random_data(1)
 
-        self.write("Trying to set too large key (%s):   %r -> %r..." % (len(key), key[:7], val))
         with self.assert_raises(ClientError):
             self.client.set(key, val)
-
-        self.write("...set failed")
 
     def test_set_too_large_value(self):
         key = generate_random_key(10)
         val = generate_random_data(1 << 21)  # 2mb, limit is 1mb
 
-        self.write("Trying to set too large value (%s):   %r -> %r..." % (len(val), key, val[:7]))
         with self.assert_raises(ServerError):
             self.client.set(key, val)
-
-        self.write("...set failed")
