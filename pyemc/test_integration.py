@@ -180,7 +180,7 @@ class TestApi(TestCase):
             self.client.get(key)
 
         # sleep a bit to make sure we don't get any rounding errors on the
-        # exact flush timestamp
+        # exact flush timestamp that might affect later stores
         time.sleep(1.5)
 
         # key set after flush works as expected
