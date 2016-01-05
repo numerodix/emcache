@@ -175,7 +175,7 @@ impl Driver {
                           });
 
         let mut value = Value::new(set.data);
-        value.with_flags(set.flags);
+        value.set_flags(set.flags);
         self.set_exptime(&mut value, set.exptime);
 
         let rv = self.cache.set(key, value);
@@ -205,7 +205,7 @@ impl Driver {
 
         // Update the value
         let mut value = rv.unwrap();
-        value.with_flags(set.flags);
+        value.set_flags(set.flags);
         self.set_exptime(&mut value, set.exptime);
 
         // Append the data we just received to the blob that is there
@@ -381,7 +381,7 @@ impl Driver {
 
         // Update the value
         let mut value = rv.unwrap();
-        value.with_flags(set.flags);
+        value.set_flags(set.flags);
         self.set_exptime(&mut value, set.exptime);
 
         // Prepend the data we just received to the blob that is there
@@ -413,7 +413,7 @@ impl Driver {
                           });
 
         let mut value = Value::new(set.data);
-        value.with_flags(set.flags);
+        value.set_flags(set.flags);
         self.set_exptime(&mut value, set.exptime);
 
         let rv = self.cache.set(key, value);
@@ -431,7 +431,7 @@ impl Driver {
 
         let key = Key::new(set.key.into_bytes());
         let mut value = Value::new(set.data);
-        value.with_flags(set.flags);
+        value.set_flags(set.flags);
         self.set_exptime(&mut value, set.exptime);
 
         let rv = self.cache.set(key, value);

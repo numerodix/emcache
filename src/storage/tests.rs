@@ -8,12 +8,30 @@ use super::Value;
 
 
 #[test]
+fn test_cas_id() {
+    let mut value = value!(1);
+    assert_eq!(0, *value.get_cas_id());
+
+    value.set_item(vec![2]);
+    assert_eq!(1, *value.get_cas_id());
+
+    value.set_flags(15);
+    assert_eq!(2, *value.get_cas_id());
+
+    value.set_exptime(0.0);
+    assert_eq!(3, *value.get_cas_id());
+
+    value.touch();
+    assert_eq!(4, *value.get_cas_id());
+}
+
+#[test]
 fn test_set_one_key() {
     let mut cache = Cache::new(1024);
 
     let key = key!(1, 2, 3);
     let mut value = value!(4, 5, 6);
-    value.with_flags(15);
+    value.set_flags(15);
 
     // First set it
     let rv = cache.set(key.clone(), value.clone());

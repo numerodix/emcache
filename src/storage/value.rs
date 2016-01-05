@@ -14,9 +14,10 @@ pub struct Value {
 }
 
 impl PartialEq for Value {
-    // Overload eq to make sure we only compare the payloads
+    // Overload eq to make sure we only compare the fields that the client
+    // stores explicitly
     fn eq(&self, other: &Value) -> bool {
-        self.item == other.item
+        self.item == other.item && self.flags == other.flags
     }
 }
 
@@ -81,13 +82,6 @@ impl Value {
     pub fn touch(&mut self) {
         self.bump_cas_id();
         self.atime = time_now();
-    }
-
-
-    // deprecated
-    pub fn with_flags(&mut self, flags: u16) -> &mut Self {
-        self.flags = flags;
-        self
     }
 
 
