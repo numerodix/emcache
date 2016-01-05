@@ -2,7 +2,7 @@
 
 [![Build Status](https://travis-ci.org/numerodix/emcache.svg?branch=master)](https://travis-ci.org/numerodix/emcache)
 
-A toy implementation of memcached in Rust.
+An implementation of memcached in Rust.
 
 
 ## Features and todo list
