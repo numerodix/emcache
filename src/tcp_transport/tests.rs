@@ -2,6 +2,7 @@ use protocol::cmd::Cmd;
 use protocol::cmd::Delete;
 use protocol::cmd::FlushAll;
 use protocol::cmd::Get;
+use protocol::cmd::GetInstr;
 use protocol::cmd::Inc;
 use protocol::cmd::IncInstr;
 use protocol::cmd::Resp;
@@ -214,6 +215,33 @@ fn test_read_cmd_append() {
 }
 
 
+// Command parsing: Cas
+
+#[test]
+fn test_read_cmd_cas() {
+    let cmd_str = "cas x 15 0 3 44 \r\nabc\r\n".to_string();
+    let ts = TestStream::new(cmd_str.into_bytes());
+    let mut transport = TcpTransport::new(ts);
+
+    let cmd = transport.read_cmd().unwrap();
+    let mut exp = Set::new(SetInstr::Cas, "x", 15, 0, vec![97, 98, 99], false);
+    exp.with_cas_unique(44);
+    assert_eq!(cmd, Cmd::Set(exp));
+}
+
+#[test]
+fn test_read_cmd_cas_noreply() {
+    let cmd_str = "cas x 15 0 3 44 noreply\r\nabc\r\n".to_string();
+    let ts = TestStream::new(cmd_str.into_bytes());
+    let mut transport = TcpTransport::new(ts);
+
+    let cmd = transport.read_cmd().unwrap();
+    let mut exp = Set::new(SetInstr::Cas, "x", 15, 0, vec![97, 98, 99], true);
+    exp.with_cas_unique(44);
+    assert_eq!(cmd, Cmd::Set(exp));
+}
+
+
 // Command parsing: Decr
 
 #[test]
@@ -282,7 +310,7 @@ fn test_read_cmd_get_one_key() {
     let mut transport = TcpTransport::new(ts);
 
     let cmd = transport.read_cmd().unwrap();
-    assert_eq!(cmd, Cmd::Get(Get::one("x")));
+    assert_eq!(cmd, Cmd::Get(Get::one(GetInstr::Get, "x")));
 }
 
 #[test]
@@ -293,7 +321,7 @@ fn test_read_cmd_get_two_keys() {
 
     let cmd = transport.read_cmd().unwrap();
     let keys = vec!["x".to_string(), "y".to_string()];
-    assert_eq!(cmd, Cmd::Get(Get::new(keys)));
+    assert_eq!(cmd, Cmd::Get(Get::new(GetInstr::Get, keys)));
 }
 
 #[test]
@@ -323,6 +351,19 @@ fn test_read_cmd_get_malformed() {
     try_cmd("get x");
     try_cmd("get ");
     try_cmd("get");
+}
+
+
+// Command parsing: Gets
+
+#[test]
+fn test_read_cmd_gets_one_key() {
+    let cmd_str = "gets x\r\n".to_string();
+    let ts = TestStream::new(cmd_str.into_bytes());
+    let mut transport = TcpTransport::new(ts);
+
+    let cmd = transport.read_cmd().unwrap();
+    assert_eq!(cmd, Cmd::Get(Get::one(GetInstr::Gets, "x")));
 }
 
 
@@ -571,6 +612,20 @@ fn test_write_resp_error() {
 }
 
 
+// Response writing: Exists
+
+#[test]
+fn test_write_resp_exists() {
+    let ts = TestStream::new(vec![]);
+    let mut transport = TcpTransport::new(ts);
+
+    let resp = Resp::Exists;
+    transport.write_resp(&resp).unwrap();
+    let expected = "EXISTS\r\n".to_string().into_bytes();
+    assert_eq!(transport.get_stream().outgoing, expected);
+}
+
+
 // Response writing: IntValue
 
 #[test]
@@ -709,6 +764,20 @@ fn test_write_resp_value_two() {
     let resp = Resp::Values(vec![val1, val2]);
     transport.write_resp(&resp).unwrap();
     let expected = "VALUE x 15 3\r\nabc\r\nVALUE y 17 3\r\ndef\r\nEND\r\n";
+    let exp_bytes = expected.to_string().into_bytes();
+    assert_eq!(transport.get_stream().outgoing, exp_bytes);
+}
+
+#[test]
+fn test_write_resp_value_one_cas() {
+    let ts = TestStream::new(vec![]);
+    let mut transport = TcpTransport::new(ts);
+
+    let mut val1 = Value::new("x", 15, "abc".to_string().into_bytes());
+    val1.with_cas_unique(45);
+    let resp = Resp::Values(vec![val1]);
+    transport.write_resp(&resp).unwrap();
+    let expected = "VALUE x 15 3 45\r\nabc\r\nEND\r\n";
     let exp_bytes = expected.to_string().into_bytes();
     assert_eq!(transport.get_stream().outgoing, exp_bytes);
 }

@@ -5,6 +5,7 @@ use storage::Cache;
 use super::Driver;
 use super::cmd::Cmd;
 use super::cmd::Get;
+use super::cmd::GetInstr;
 use super::cmd::Resp;
 use super::cmd::Set;
 use super::cmd::SetInstr;
@@ -48,7 +49,7 @@ fn bench_cmd_get_key(b: &mut Bencher) {
 
     b.iter(|| {
         // Retrieve it
-        let cmd = Cmd::Get(Get::one(key_name));
+        let cmd = Cmd::Get(Get::one(GetInstr::Get, key_name));
         let resp = driver.run(cmd);
         assert_eq!(15, resp.get_first_value().unwrap().flags);
         assert_eq!(blob, resp.get_first_value().unwrap().data);

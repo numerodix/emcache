@@ -119,21 +119,21 @@ impl Cache {
         // If we have a global exptime set, then any item touched before it is
         // dead
         if self.global_exptime > 0.0 {
-            if value.atime < self.global_exptime {
+            if *value.get_atime() < self.global_exptime {
                 return false;
             }
         }
 
         // If the value has an exptime set, that determines lifetime
         // regardless of item_lifetime in the cache
-        if value.exptime > 0.0 {
+        if *value.get_exptime() > 0.0 {
             if self.global_exptime > 0.0 {
-                if value.exptime < self.global_exptime {
+                if *value.get_exptime() < self.global_exptime {
                     return false;
                 }
             }
 
-            if value.exptime < time_now() {
+            if *value.get_exptime() < time_now() {
                 return false;
             } else {
                 return true;
@@ -146,7 +146,7 @@ impl Cache {
         }
 
         // otherwise use lifetime to determine liveness
-        value.atime + self.item_lifetime > time_now()
+        *value.get_atime() + self.item_lifetime > time_now()
     }
 
 

@@ -11,6 +11,7 @@ use super::cmd::Cmd;
 use super::cmd::Delete;
 use super::cmd::FlushAll;
 use super::cmd::Get;
+use super::cmd::GetInstr;
 use super::cmd::Inc;
 use super::cmd::IncInstr;
 use super::cmd::Resp;
@@ -100,6 +101,9 @@ struct DriverStats {
     incr_misses: u64,
     decr_hits: u64,
     decr_misses: u64,
+    cas_misses: u64,
+    cas_hits: u64,
+    cas_badval: u64,
     touch_misses: u64,
     touch_hits: u64,
 }
@@ -115,6 +119,9 @@ impl DriverStats {
             incr_misses: 0,
             decr_hits: 0,
             decr_misses: 0,
+            cas_misses: 0,
+            cas_hits: 0,
+            cas_badval: 0,
             touch_hits: 0,
             touch_misses: 0,
         }
@@ -175,7 +182,7 @@ impl Driver {
                           });
 
         let mut value = Value::new(set.data);
-        value.with_flags(set.flags);
+        value.set_flags(set.flags);
         self.set_exptime(&mut value, set.exptime);
 
         let rv = self.cache.set(key, value);
@@ -205,11 +212,70 @@ impl Driver {
 
         // Update the value
         let mut value = rv.unwrap();
-        value.with_flags(set.flags);
+        value.set_flags(set.flags);
         self.set_exptime(&mut value, set.exptime);
 
         // Append the data we just received to the blob that is there
-        value.item.extend(set.data);
+        {
+            let mut blob = value.get_item_mut();
+            blob.extend(set.data);
+        }
+
+        let rv = self.cache.set(key, value);
+
+        maybe_reply_expr!(!set.noreply,
+                          match rv {
+                              Ok(_) => Resp::Stored,
+                              Err(ref err) => from_cache_err(err),
+                          })
+    }
+
+    fn do_cas(&mut self, set: Set) -> Resp {
+        let key = Key::new(set.key.into_bytes());
+
+        // If the key is not set we bail
+        let rv = self.cache.contains_key(&key);
+        maybe_reply_stmt!(!set.noreply,
+                          match rv {
+                              Ok(true) => {
+                                  // Update stats
+                                  self.stats.cas_hits += 1;
+
+                                  None
+                              }
+                              Ok(false) => {
+                                  // Update stats
+                                  self.stats.cas_misses += 1;
+
+                                  Some(Resp::NotFound)
+                              }
+                              Err(ref err) => Some(from_cache_err(err)),
+                          });
+
+        // If cas_unique is out of date we bail
+        maybe_reply_stmt!(!set.noreply, {
+            let rv = self.cache.get(&key);
+            let value = rv.unwrap();
+
+            match *value.get_cas_id() == set.cas_unique.unwrap() {
+                true => None,
+                false => {
+                    // Update stats
+                    self.stats.cas_badval += 1;
+
+                    Some(Resp::Exists)
+                }
+            }
+        });
+
+        // Load the value
+        let rv = self.cache.remove(&key);
+        let mut value = rv.unwrap();
+
+        // Set all the data the client sent
+        value.set_item(set.data);
+        value.set_flags(set.flags);
+        self.set_exptime(&mut value, set.exptime);
 
         let rv = self.cache.set(key, value);
 
@@ -267,11 +333,17 @@ impl Driver {
 
             match rv {
                 Ok(value) => {
-                    let val_st = CmdValue {
+                    let mut val_st = CmdValue {
                         key: key_str,
-                        flags: value.flags,
-                        data: value.item.clone(),
+                        flags: value.get_flags().clone(),
+                        cas_unique: None,
+                        data: value.get_item().clone(),
                     };
+
+                    if get.instr == GetInstr::Gets {
+                        val_st.with_cas_unique(value.get_cas_id().clone());
+                    }
+
                     values.push(val_st);
                 }
                 // Keys that were not found are skipped, no error given
@@ -322,7 +394,7 @@ impl Driver {
             let value = rv.unwrap();
             // Does it represent a number?
             maybe_reply_stmt!(!inc.noreply,
-                              match bytes_to_u64(&value.item) {
+                              match bytes_to_u64(value.get_item()) {
                                   Some(_) => None,
                                   None => {
                                       Some(Resp::ClientError("Not a number"
@@ -336,7 +408,7 @@ impl Driver {
         let mut value = rv.unwrap();
 
         // Apply incr/decr
-        let mut num = bytes_to_u64(&value.item).unwrap();
+        let mut num = bytes_to_u64(value.get_item()).unwrap();
         match inc.instr {
             IncInstr::Decr => {
                 // saturates (stays at 0), does not underflow
@@ -345,10 +417,9 @@ impl Driver {
             IncInstr::Incr => {
                 // overflows
                 num = num.wrapping_add(inc.delta);
-                //num += inc.delta;
             }
         };
-        value.item = u64_to_bytes(&num);
+        value.set_item(u64_to_bytes(&num));
 
         // Set it
         let rv = self.cache.set(key, value);
@@ -378,15 +449,15 @@ impl Driver {
 
         // Update the value
         let mut value = rv.unwrap();
-        value.with_flags(set.flags);
+        value.set_flags(set.flags);
         self.set_exptime(&mut value, set.exptime);
 
         // Prepend the data we just received to the blob that is there
         let mut new_item = Vec::with_capacity(set.data.len() +
-                                              value.item.len());
+                                              value.get_item().len());
         new_item.extend(set.data);
-        new_item.extend(value.item);
-        value.item = new_item;
+        new_item.extend(value.get_item());
+        value.set_item(new_item);
 
         let rv = self.cache.set(key, value);
 
@@ -410,7 +481,7 @@ impl Driver {
                           });
 
         let mut value = Value::new(set.data);
-        value.with_flags(set.flags);
+        value.set_flags(set.flags);
         self.set_exptime(&mut value, set.exptime);
 
         let rv = self.cache.set(key, value);
@@ -427,8 +498,25 @@ impl Driver {
         self.stats.cmd_set += 1;
 
         let key = Key::new(set.key.into_bytes());
-        let mut value = Value::new(set.data);
-        value.with_flags(set.flags);
+
+        // Obtain either the existing value or a fresh one
+        let mut value = {
+            let rv = self.cache.remove(&key);
+            match rv {
+                Ok(_) => {
+                    let mut value = rv.unwrap();
+                    value
+                }
+                Err(_) => {
+                    let mut value = Value::empty();
+                    value
+                }
+            }
+        };
+
+        // Set all the data the client sent
+        value.set_item(set.data);
+        value.set_flags(set.flags);
         self.set_exptime(&mut value, set.exptime);
 
         let rv = self.cache.set(key, value);
@@ -459,6 +547,9 @@ impl Driver {
         let incr_misses = self.stats.incr_misses.to_string();
         let decr_hits = self.stats.decr_hits.to_string();
         let decr_misses = self.stats.decr_misses.to_string();
+        let cas_hits = self.stats.cas_hits.to_string();
+        let cas_misses = self.stats.cas_misses.to_string();
+        let cas_badval = self.stats.cas_badval.to_string();
         let touch_hits = self.stats.touch_hits.to_string();
         let touch_misses = self.stats.touch_misses.to_string();
         let bytes_read = self.transport_stats.bytes_read.to_string();
@@ -486,6 +577,9 @@ impl Driver {
         let st_incr_misses = Stat::new("incr_misses", incr_misses);
         let st_decr_hits = Stat::new("decr_hits", decr_hits);
         let st_decr_misses = Stat::new("decr_misses", decr_misses);
+        let st_cas_hits = Stat::new("cas_hits", cas_hits);
+        let st_cas_misses = Stat::new("cas_misses", cas_misses);
+        let st_cas_badval = Stat::new("cas_badval", cas_badval);
         let st_touch_hits = Stat::new("touch_hits", touch_hits);
         let st_touch_misses = Stat::new("touch_misses", touch_misses);
         let st_bytes_read = Stat::new("bytes_read", bytes_read);
@@ -513,6 +607,9 @@ impl Driver {
                          st_incr_misses,
                          st_decr_hits,
                          st_decr_misses,
+                         st_cas_hits,
+                         st_cas_misses,
+                         st_cas_badval,
                          st_touch_hits,
                          st_touch_misses,
                          st_bytes_read,
@@ -593,7 +690,7 @@ impl Driver {
                     SetInstr::Prepend => self.do_prepend(set),
                     SetInstr::Replace => self.do_replace(set),
                     SetInstr::Set => self.do_set(set),
-                    _ => Resp::Error,  // TODO
+                    SetInstr::Cas => self.do_cas(set),
                 }
             }
             Cmd::Stats => self.do_stats(),

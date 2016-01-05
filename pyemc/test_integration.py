@@ -4,6 +4,7 @@ import time
 from pyemc.abstractions.test_api import TestCase
 from pyemc.client import ClientError
 from pyemc.client import DeleteFailedError
+from pyemc.client import ExistsError
 from pyemc.client import NotFoundError
 from pyemc.client import NotStoredError
 from pyemc.client import ServerError
@@ -62,6 +63,62 @@ class TestApi(TestCase):
         self.client.append(key, val2, noreply=True)
         item = self.client.get(key)
         assert val + val2 == item.value
+
+    # Cas
+
+    def test_cas_ok(self):
+        key = generate_random_key(8)
+        val = generate_random_data(10)
+
+        # set a key
+        self.client.set(key, val)
+
+        # get the cas_unique
+        item = self.client.gets(key)
+        cas_unique = item.cas_unique
+
+        # conditional update
+        val2 = generate_random_data(10)
+        self.client.cas(key, val2, cas_unique=cas_unique)
+        item = self.client.get(key)
+        assert item.value == val2
+
+    def test_cas_noreply(self):
+        key = generate_random_key(8)
+        val = generate_random_data(10)
+
+        # set a key
+        self.client.set(key, val)
+
+        # get the cas_unique
+        item = self.client.gets(key)
+        cas_unique = item.cas_unique
+
+        # conditional update
+        val2 = generate_random_data(10)
+        self.client.cas(key, val2, cas_unique=cas_unique, noreply=True)
+        item = self.client.get(key)
+        assert item.value == val2
+
+    def test_cas_stale(self):
+        key = generate_random_key(8)
+        val = generate_random_data(10)
+
+        # set a key
+        self.client.set(key, val)
+
+        # get the cas_unique
+        item = self.client.gets(key)
+        cas_unique = item.cas_unique
+
+        # "another client" updates it
+        val2 = generate_random_data(10)
+        self.client.set(key, val2)
+
+        # conditional update
+        val3 = generate_random_data(10)
+        with self.assert_raises(ExistsError):
+            self.client.cas(key, val3, cas_unique=cas_unique)
 
     # Decr
 
@@ -229,6 +286,37 @@ class TestApi(TestCase):
         val2 = item.value
 
         assert val == val2
+
+    # Gets
+
+    def test_gets(self):
+        key = generate_random_key(8)
+        val = generate_random_data(10)
+
+        # set a key, record cas_unique
+        self.client.set(key, val)
+        item = self.client.gets(key)
+
+        # set again, cas_unique should have changed
+        val2 = generate_random_data(10)
+        self.client.set(key, val)
+        item2 = self.client.gets(key)
+        assert item.cas_unique != item2.cas_unique
+
+    def test_gets_multi(self):
+        key1 = generate_random_key(8)
+        val1 = generate_random_data(10)
+        key2 = generate_random_key(8)
+        val2 = generate_random_data(10)
+
+        # i can fetch values as normal, cas_unique is set
+        self.client.set(key1, val1)
+        self.client.set(key2, val2)
+        dct = self.client.gets_multi([key1, key2])
+        assert dct[key1].value == val1
+        assert dct[key2].value == val2
+        assert dct[key1].cas_unique is not None
+        assert dct[key2].cas_unique is not None
 
     # Incr
 
