@@ -1,5 +1,6 @@
 #!/usr/bin/env python
 
+import os
 import re
 import socket
 import sys
@@ -15,7 +16,7 @@ from pyemc.test_stress import TestStress
 
 if __name__ == '__main__':
     from optparse import OptionParser
-    parser = OptionParser()
+    parser = OptionParser(usage='%s  [options] [test_filter]' % os.path.basename(sys.argv[0]))
     parser.add_option('-n', '', action='store', dest='host',
                       help='Host to connect to')
     parser.add_option('-p', '', action='store', type='int', dest='port',
