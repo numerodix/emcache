@@ -17,13 +17,17 @@ parallelism.
 
 memcached:
 
-* 10,000x get (constant key): 67k/s
-* 10,000x set (constant key): 65k/s
+* 100,000x get (constant key): 26k/s  - 40k/s
+* 100,000x set (constant key): 27k/s  - 44k/s
+* 700,000x set w/ noreply (constant key): 87k/s  - 1225k/s
+* 100,000x version: 37k/s  - 54k/s
 
 emcache:
 
-* 10,000x get (constant key): 49k/s
-* 10,000x set (constant key): 41k/s
+* 100,000x get (constant key): 18k/s  - 20k/s
+* 100,000x set (constant key): 16k/s  - 31k/s
+* 700,000x set w/ noreply (constant key): 97k/s  - 87k/s
+* 100,000x version: 21k/s  - 33k/s
 
 
 ### Fill cache to a certain percentage
@@ -36,7 +40,9 @@ emcache:
 memcached:
 
 * 55k items/s - 31mb/s
+* 198k items/s - 111mb/s  (pypy)
 
 emcache:
 
 * 50k items/s - 28mb/s
+* 162k items/s - 90mb/s  (pypy)

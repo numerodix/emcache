@@ -13,7 +13,7 @@ An implementation of memcached in Rust.
 * [Modular architecture](doc/Architecture.md). Transport layer is separate from storage and is configured in a N:1 topology with communication using immutable Cmd/Resp values over async channels.
 * Fairly good test coverage.
 * No config file, logging or daemonization yet.
-* [Performance](pyemc/ABOUT.md) is roughly 1/3 of memcached (which uses async io).
+* [Performance](pyemc/ABOUT.md) is generally within 0.5-1x of memcached.
 * Currently (Dec 2015) only builds against rust-nightly due to linked-hash-map dependency.
 
 
