@@ -11,14 +11,18 @@ use super::cmd::Cmd;
 use super::cmd::Delete;
 use super::cmd::FlushAll;
 use super::cmd::Get;
+use super::cmd::Inc;
+use super::cmd::IncInstr;
 use super::cmd::Resp;
 use super::cmd::Set;
 use super::cmd::SetInstr;
 use super::cmd::Stat;
 use super::cmd::Touch;
 use super::cmd::Value as CmdValue;
+use super::util::bytes_to_u64;
 use super::util::convert_exptime;
 use super::util::from_cache_err;
+use super::util::u64_to_bytes;
 
 
 // For use to get an early exit from a function. The first parameter is a bool
@@ -92,6 +96,10 @@ struct DriverStats {
     cmd_set: u64,
     cmd_flush: u64,
     cmd_touch: u64,
+    incr_hits: u64,
+    incr_misses: u64,
+    decr_hits: u64,
+    decr_misses: u64,
     touch_misses: u64,
     touch_hits: u64,
 }
@@ -103,6 +111,10 @@ impl DriverStats {
             cmd_set: 0,
             cmd_flush: 0,
             cmd_touch: 0,
+            incr_hits: 0,
+            incr_misses: 0,
+            decr_hits: 0,
+            decr_misses: 0,
             touch_hits: 0,
             touch_misses: 0,
         }
@@ -270,6 +282,84 @@ impl Driver {
         Resp::Values(values)
     }
 
+    fn do_inc(&mut self, inc: Inc) -> Resp {
+        let key = Key::new(inc.key.clone().into_bytes());
+
+        {
+            // Check the value first
+            let rv = self.cache.get(&key);
+            maybe_reply_stmt!(!inc.noreply,
+                              match rv {
+                                  Ok(_) => {
+                                      // Update stats
+                                      match inc.instr {
+                                          IncInstr::Decr => {
+                                              self.stats.decr_hits += 1;
+                                          }
+                                          IncInstr::Incr => {
+                                              self.stats.incr_hits += 1;
+                                          }
+                                      };
+
+                                      None
+                                  }
+                                  Err(CacheError::KeyNotFound) => {
+                                      // Update stats
+                                      match inc.instr {
+                                          IncInstr::Decr => {
+                                              self.stats.decr_misses += 1;
+                                          }
+                                          IncInstr::Incr => {
+                                              self.stats.incr_misses += 1;
+                                          }
+                                      };
+
+                                      Some(Resp::NotFound)
+                                  }
+                                  Err(ref err) => Some(from_cache_err(err)),
+                              });
+
+            let value = rv.unwrap();
+            // Does it represent a number?
+            maybe_reply_stmt!(!inc.noreply,
+                              match bytes_to_u64(&value.item) {
+                                  Some(_) => None,
+                                  None => {
+                                      Some(Resp::ClientError("Not a number"
+                                                                 .to_string()))
+                                  }
+                              });
+        }
+
+        // Update the value
+        let rv = self.cache.remove(&key);
+        let mut value = rv.unwrap();
+
+        // Apply incr/decr
+        let mut num = bytes_to_u64(&value.item).unwrap();
+        match inc.instr {
+            IncInstr::Decr => {
+                // saturates (stays at 0), does not underflow
+                num = num.saturating_sub(inc.delta);
+            }
+            IncInstr::Incr => {
+                // overflows
+                num = num.wrapping_add(inc.delta);
+                //num += inc.delta;
+            }
+        };
+        value.item = u64_to_bytes(&num);
+
+        // Set it
+        let rv = self.cache.set(key, value);
+
+        maybe_reply_expr!(!inc.noreply,
+                          match rv {
+                              Ok(_) => Resp::IntValue(num),
+                              Err(ref err) => from_cache_err(err),
+                          })
+    }
+
     fn do_prepend(&mut self, set: Set) -> Resp {
         let key = Key::new(set.key.into_bytes());
 
@@ -365,6 +455,10 @@ impl Driver {
         let get_misses = storage.get_misses.to_string();
         let delete_hits = storage.delete_hits.to_string();
         let delete_misses = storage.delete_misses.to_string();
+        let incr_hits = self.stats.incr_hits.to_string();
+        let incr_misses = self.stats.incr_misses.to_string();
+        let decr_hits = self.stats.decr_hits.to_string();
+        let decr_misses = self.stats.decr_misses.to_string();
         let touch_hits = self.stats.touch_hits.to_string();
         let touch_misses = self.stats.touch_misses.to_string();
         let bytes_read = self.transport_stats.bytes_read.to_string();
@@ -388,6 +482,10 @@ impl Driver {
         let st_get_misses = Stat::new("get_misses", get_misses);
         let st_delete_hits = Stat::new("delete_hits", delete_hits);
         let st_delete_misses = Stat::new("delete_misses", delete_misses);
+        let st_incr_hits = Stat::new("incr_hits", incr_hits);
+        let st_incr_misses = Stat::new("incr_misses", incr_misses);
+        let st_decr_hits = Stat::new("decr_hits", decr_hits);
+        let st_decr_misses = Stat::new("decr_misses", decr_misses);
         let st_touch_hits = Stat::new("touch_hits", touch_hits);
         let st_touch_misses = Stat::new("touch_misses", touch_misses);
         let st_bytes_read = Stat::new("bytes_read", bytes_read);
@@ -411,6 +509,10 @@ impl Driver {
                          st_get_misses,
                          st_delete_hits,
                          st_delete_misses,
+                         st_incr_hits,
+                         st_incr_misses,
+                         st_decr_hits,
+                         st_decr_misses,
                          st_touch_hits,
                          st_touch_misses,
                          st_bytes_read,
@@ -482,7 +584,7 @@ impl Driver {
             Cmd::Delete(del) => self.do_delete(del),
             Cmd::FlushAll(flush_all) => self.do_flush_all(flush_all),
             Cmd::Get(get) => self.do_get(get),
-            Cmd::Inc(inc) => Resp::Error, // TODO
+            Cmd::Inc(inc) => self.do_inc(inc),
             Cmd::Quit => Resp::Empty,  // handled at transport level
             Cmd::Set(set) => {
                 match set.instr {

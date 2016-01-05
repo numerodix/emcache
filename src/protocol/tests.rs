@@ -9,6 +9,8 @@ use super::cmd::Cmd;
 use super::cmd::Delete;
 use super::cmd::FlushAll;
 use super::cmd::Get;
+use super::cmd::Inc;
+use super::cmd::IncInstr;
 use super::cmd::Resp;
 use super::cmd::Set;
 use super::cmd::SetInstr;
@@ -116,6 +118,73 @@ fn test_cmd_append() {
     let resp = driver.run(cmd);
     assert_eq!(vec![8, 9, 10, 11], resp.get_first_value().unwrap().data);
     assert_eq!(5, resp.get_first_value().unwrap().flags);
+}
+
+
+// Decr
+
+#[test]
+fn test_cmd_decr() {
+    let cache = Cache::new(4096);
+    let mut driver = Driver::new(cache);
+
+    // Try to decr an invalid key
+    let inc = Inc::new(IncInstr::Incr, "x", 4, false);
+    let cmd = Cmd::Inc(inc);
+    let resp = driver.run(cmd);
+    assert_eq!(resp, Resp::NotFound);
+
+    // Try to decr an invalid key - noreply
+    let inc = Inc::new(IncInstr::Decr, "x", 4, true);
+    let cmd = Cmd::Inc(inc);
+    let resp = driver.run(cmd);
+    assert_eq!(resp, Resp::Empty);
+
+    // Set a key we can decr
+    let set = Set::new(SetInstr::Set, "x", 0, 0, vec![b'2'], false);
+    let cmd = Cmd::Set(set);
+    let resp = driver.run(cmd);
+    assert_eq!(resp, Resp::Stored);
+
+    // Decr it
+    let inc = Inc::new(IncInstr::Decr, "x", 1, false);
+    let cmd = Cmd::Inc(inc);
+    let resp = driver.run(cmd);
+    assert_eq!(resp, Resp::IntValue(1));
+
+    // Make sure it was updated
+    let cmd = Cmd::Get(Get::one("x"));
+    let resp = driver.run(cmd);
+    assert_eq!(vec![b'1'], resp.get_first_value().unwrap().data);
+
+    // Decr it again - noreply
+    let inc = Inc::new(IncInstr::Decr, "x", 1, true);
+    let cmd = Cmd::Inc(inc);
+    let resp = driver.run(cmd);
+    assert_eq!(resp, Resp::Empty);
+
+    // Make sure it was updated
+    let cmd = Cmd::Get(Get::one("x"));
+    let resp = driver.run(cmd);
+    assert_eq!(vec![b'0'], resp.get_first_value().unwrap().data);
+
+    // Try to underflow it
+    let inc = Inc::new(IncInstr::Decr, "x", 1, false);
+    let cmd = Cmd::Inc(inc);
+    let resp = driver.run(cmd);
+    assert_eq!(resp, Resp::IntValue(0));
+
+    // Set a key we can't decr - would not fit in u64
+    let set = Set::new(SetInstr::Set, "y", 0, 0, vec![b'1'; 255], false);
+    let cmd = Cmd::Set(set);
+    let resp = driver.run(cmd);
+    assert_eq!(resp, Resp::Stored);
+
+    // Try to decr it - fails
+    let inc = Inc::new(IncInstr::Decr, "y", 1, false);
+    let cmd = Cmd::Inc(inc);
+    let resp = driver.run(cmd);
+    assert_eq!(resp, Resp::ClientError("Not a number".to_string()));
 }
 
 
@@ -292,6 +361,73 @@ fn test_cmd_set_and_get_multiple_keys() {
 }
 
 
+// Incr
+
+#[test]
+fn test_cmd_incr() {
+    let cache = Cache::new(4096);
+    let mut driver = Driver::new(cache);
+
+    // Try to incr an invalid key
+    let inc = Inc::new(IncInstr::Incr, "x", 4, false);
+    let cmd = Cmd::Inc(inc);
+    let resp = driver.run(cmd);
+    assert_eq!(resp, Resp::NotFound);
+
+    // Try to incr an invalid key - noreply
+    let inc = Inc::new(IncInstr::Incr, "x", 4, true);
+    let cmd = Cmd::Inc(inc);
+    let resp = driver.run(cmd);
+    assert_eq!(resp, Resp::Empty);
+
+    // Set a key we can incr
+    let set = Set::new(SetInstr::Set, "x", 0, 0, vec![b'1'], false);
+    let cmd = Cmd::Set(set);
+    let resp = driver.run(cmd);
+    assert_eq!(resp, Resp::Stored);
+
+    // Incr it
+    let inc = Inc::new(IncInstr::Incr, "x", 1, false);
+    let cmd = Cmd::Inc(inc);
+    let resp = driver.run(cmd);
+    assert_eq!(resp, Resp::IntValue(2));
+
+    // Make sure it was updated
+    let cmd = Cmd::Get(Get::one("x"));
+    let resp = driver.run(cmd);
+    assert_eq!(vec![b'2'], resp.get_first_value().unwrap().data);
+
+    // Incr it again - noreply
+    let inc = Inc::new(IncInstr::Incr, "x", 1, true);
+    let cmd = Cmd::Inc(inc);
+    let resp = driver.run(cmd);
+    assert_eq!(resp, Resp::Empty);
+
+    // Make sure it was updated
+    let cmd = Cmd::Get(Get::one("x"));
+    let resp = driver.run(cmd);
+    assert_eq!(vec![b'3'], resp.get_first_value().unwrap().data);
+
+    // Overflow it
+    let inc = Inc::new(IncInstr::Incr, "x", 0xffffffffffffffff, false);
+    let cmd = Cmd::Inc(inc);
+    let resp = driver.run(cmd);
+    assert_eq!(resp, Resp::IntValue(2));
+
+    // Set a key we can't incr - would not fit in u64
+    let set = Set::new(SetInstr::Set, "y", 0, 0, vec![b'1'; 255], false);
+    let cmd = Cmd::Set(set);
+    let resp = driver.run(cmd);
+    assert_eq!(resp, Resp::Stored);
+
+    // Try to incr it - fails
+    let inc = Inc::new(IncInstr::Incr, "y", 1, false);
+    let cmd = Cmd::Inc(inc);
+    let resp = driver.run(cmd);
+    assert_eq!(resp, Resp::ClientError("Not a number".to_string()));
+}
+
+
 // Prepend
 
 #[test]
@@ -428,6 +564,10 @@ fn test_cmd_stats() {
     let st_get_misses = Stat::new("get_misses", "0".to_string());
     let st_delete_hits = Stat::new("delete_hits", "0".to_string());
     let st_delete_misses = Stat::new("delete_misses", "0".to_string());
+    let st_incr_hits = Stat::new("incr_hits", "0".to_string());
+    let st_incr_misses = Stat::new("incr_misses", "0".to_string());
+    let st_decr_hits = Stat::new("decr_hits", "0".to_string());
+    let st_decr_misses = Stat::new("decr_misses", "0".to_string());
     let st_touch_hits = Stat::new("touch_hits", "0".to_string());
     let st_touch_misses = Stat::new("touch_misses", "0".to_string());
     let st_bytes_read = Stat::new("bytes_read", "0".to_string());
@@ -452,6 +592,10 @@ fn test_cmd_stats() {
                      st_get_misses,
                      st_delete_hits,
                      st_delete_misses,
+                     st_incr_hits,
+                     st_incr_misses,
+                     st_decr_hits,
+                     st_decr_misses,
                      st_touch_hits,
                      st_touch_misses,
                      st_bytes_read,

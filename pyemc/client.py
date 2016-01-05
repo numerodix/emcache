@@ -71,7 +71,7 @@ class Item(object):
 
 class MemcacheClient(object):
     rx_value = re.compile('VALUE (?P<key>[^ ]*) (?P<flags>\d+) (?P<len>\d+)')
-    rx_incr_value = re.compile('(?P<value>\d+)')
+    rx_inc_value = re.compile('(?P<value>\d+)')
 
     def __init__(self, host, port):
         self.stream = BufferedSocketStream(host, port)
@@ -81,6 +81,9 @@ class MemcacheClient(object):
 
     def append(self, key, value, flags=0, exptime=0, noreply=False):
         return self._set_family('append', key, value, flags, exptime, noreply)
+
+    def decr(self, key, delta=1, noreply=False):
+        return self._inc_family('decr', key, delta, noreply)
 
     def delete(self, key, noreply=False):
         # prepare command
@@ -178,8 +181,12 @@ class MemcacheClient(object):
         return dct
 
     def incr(self, key, delta=1, noreply=False):
+        return self._inc_family('incr', key, delta, noreply)
+
+    def _inc_family(self, instr, key, delta=1, noreply=False):
         # prepare command
-        command = 'incr %(key)s %(delta)d %(noreply)s\r\n' % {
+        command = '%(instr)s %(key)s %(delta)d %(noreply)s\r\n' % {
+            'instr': instr,
             'key': key,
             'delta': int(delta),
             'noreply': 'noreply' if noreply else '',
@@ -192,10 +199,10 @@ class MemcacheClient(object):
         if not noreply:
             resp = self.stream.read_line()
             try:
-                num = self.rx_incr_value.findall(resp)[0]
+                num = self.rx_inc_value.findall(resp)[0]
                 return num
             except IndexError:
-                raise create_exc(resp, 'Could not incr key %r' % key)
+                raise create_exc(resp, 'Could not %s key %r' % (instr, key))
 
     def quit(self):
         '''Tells the server to drop the connection.'''

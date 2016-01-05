@@ -4,6 +4,27 @@ use storage::CacheError;
 use super::cmd::Resp;
 
 
+pub fn bytes_to_u64(bytes: &Vec<u8>) -> Option<u64> {
+    match String::from_utf8(bytes.clone()) {
+        Ok(st) => {
+            match st.parse::<u64>() {
+                Ok(num) => Some(num),
+                Err(_) => None,
+            }
+        }
+        Err(_) => None,
+    }
+}
+
+pub fn u64_to_bytes(num: &u64) -> Vec<u8> {
+    let arr = num.to_string().into_bytes();
+
+    let mut bytes = vec![];
+    bytes.extend(arr);
+    bytes
+}
+
+
 pub fn convert_exptime(exptime: u32) -> Option<f64> {
     // If exptime is greater than zero it means it's set, otherwise unset
     if exptime > 0 {
@@ -34,4 +55,30 @@ pub fn from_cache_err(err: &CacheError) -> Resp {
         }
         _ => Resp::Error,
     }
+}
+
+
+#[test]
+fn test_bytes_to_u64() {
+    // whitespace
+    assert_eq!(None, bytes_to_u64(&vec![b' ', b'2']));
+
+    // alpha
+    assert_eq!(None, bytes_to_u64(&vec![b'0', b'x', b'2']));
+
+    // negative
+    assert_eq!(None, bytes_to_u64(&vec![b'-', b'2']));
+
+    // too long for u64
+    assert_eq!(None, bytes_to_u64(&vec![b'1'; 255]));
+
+    // ok
+    assert_eq!(12, bytes_to_u64(&vec![b'1', b'2']).unwrap());
+}
+
+#[test]
+fn test_u64_to_bytes() {
+    // any u64 is representable as bytes so there are no boundary conditions to
+    // check
+    assert_eq!(vec![b'1', b'2'], u64_to_bytes(&12));
 }

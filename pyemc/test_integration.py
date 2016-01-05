@@ -63,6 +63,29 @@ class TestApi(TestCase):
         item = self.client.get(key)
         assert val + val2 == item.value
 
+    # Decr
+
+    def test_decr(self):
+        key = generate_random_key(10)
+        val = '1'
+
+        # try to decr an invalid key
+        with self.assert_raises(NotFoundError):
+            self.client.decr(key)
+
+        self.client.set(key, val)
+        val2 = self.client.decr(key, '1')
+        assert int(val) - 1 == int(val2)
+
+    def test_decr_noreply(self):
+        key = generate_random_key(10)
+        val = '1'
+
+        self.client.set(key, val)
+        self.client.decr(key, noreply=True)
+        item = self.client.get(key)
+        assert int(val) - 1 == int(item.value)
+
     # Delete
 
     def test_delete(self):
@@ -221,6 +244,10 @@ class TestApi(TestCase):
         key = generate_random_key(10)
         val = '1'
 
+        # try to incr an invalid key
+        with self.assert_raises(NotFoundError):
+            self.client.incr(key)
+
         self.client.set(key, val)
         val2 = self.client.incr(key, '40')
         assert int(val) + 40 == int(val2)
@@ -357,6 +384,15 @@ class TestApi(TestCase):
             item = self.client.get(key)
 
         self.write("...key not found")
+
+    def test_decr_underflow(self):
+        key = generate_random_key(10)
+        val = '0'
+
+        self.client.set(key, val)
+        val2 = self.client.decr(key)
+        print val2
+        assert int(val) == int(val2)
 
     def test_incr_overflow(self):
         key = generate_random_key(10)
