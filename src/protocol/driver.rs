@@ -101,6 +101,9 @@ struct DriverStats {
     incr_misses: u64,
     decr_hits: u64,
     decr_misses: u64,
+    cas_misses: u64,
+    cas_hits: u64,
+    cas_badval: u64,
     touch_misses: u64,
     touch_hits: u64,
 }
@@ -116,6 +119,9 @@ impl DriverStats {
             incr_misses: 0,
             decr_hits: 0,
             decr_misses: 0,
+            cas_misses: 0,
+            cas_hits: 0,
+            cas_badval: 0,
             touch_hits: 0,
             touch_misses: 0,
         }

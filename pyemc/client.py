@@ -22,6 +22,9 @@ class ClientError(Exception):
 class DeleteFailedError(Exception):
     pass
 
+class ExistsError(Exception):
+    pass
+
 class NotFoundError(Exception):
     pass
 
@@ -34,6 +37,7 @@ class ServerError(Exception):
 
 _exc_map = {
     'ERROR': ServerError,
+    'EXISTS': ExistsError,
     'NOT_FOUND': NotFoundError,
     'NOT_STORED': NotStoredError,
 }
@@ -80,10 +84,35 @@ class MemcacheClient(object):
         self.stream = BufferedSocketStream(host, port)
 
     def add(self, key, value, flags=0, exptime=0, noreply=False):
-        return self._set_family('add', key, value, flags, exptime, noreply)
+        return self._set_family(
+            'add',
+            key=key,
+            value=value,
+            flags=flags,
+            exptime=exptime,
+            noreply=noreply,
+        )
 
     def append(self, key, value, flags=0, exptime=0, noreply=False):
-        return self._set_family('append', key, value, flags, exptime, noreply)
+        return self._set_family(
+            'append',
+            key=key,
+            value=value,
+            flags=flags,
+            exptime=exptime,
+            noreply=noreply,
+        )
+
+    def cas(self, key, value, flags=0, exptime=0, cas_unique=None, noreply=False):
+        return self._set_family(
+            'cas',
+            key=key,
+            value=value,
+            flags=flags,
+            exptime=exptime,
+            cas_unique=cas_unique,
+            noreply=noreply,
+        )
 
     def decr(self, key, delta=1, noreply=False):
         return self._inc_family('decr', key, delta, noreply)
@@ -241,22 +270,37 @@ class MemcacheClient(object):
         self.stream.write(command)
 
     def prepend(self, key, value, flags=0, exptime=0, noreply=False):
-        return self._set_family('prepend', key, value, flags, exptime, noreply)
+        return self._set_family(
+            'prepend',
+            key=key,
+            value=value,
+            flags=flags,
+            exptime=exptime,
+            noreply=noreply,
+        )
 
     def replace(self, key, value, flags=0, exptime=0, noreply=False):
-        return self._set_family('replace', key, value, flags, exptime, noreply)
+        return self._set_family(
+            'replace',
+            key=key,
+            value=value,
+            flags=flags,
+            exptime=exptime,
+            noreply=noreply,
+        )
 
     def set(self, key, value, flags=0, exptime=0, noreply=False):
         return self._set_family('set', key, value, flags, exptime, noreply)
 
-    def _set_family(self, instr, key, value, flags=0, exptime=0, noreply=False):
+    def _set_family(self, instr, key, value, flags=0, exptime=0, cas_unique=None, noreply=False):
         # prepare command
-        header = '%(instr)s %(key)s %(flags)d %(exptime)d %(bytelen)d %(noreply)s\r\n' % {
+        header = '%(instr)s %(key)s %(flags)d %(exptime)d %(bytelen)d %(cas)s%(noreply)s\r\n' % {
             'instr': instr,
             'key': key,
             'flags': flags,
             'exptime': exptime,
             'bytelen': len(value),
+            'cas': '%s ' % cas_unique if cas_unique else '',
             'noreply': 'noreply' if noreply else '',
         }
         command = header + value + '\r\n'
