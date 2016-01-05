@@ -41,38 +41,15 @@ macro_rules! return_err_if {
 
 pub struct TcpTransport<T: Read + Write> {
     stream: BufStream<T>,
-
-    pub line_buffer: Vec<u8>,
-    pub line_cursor: usize,
-    pub line_break_pos: usize,
-
-    key_maxlen: u64,
-
     stats: TransportStats,
 }
 
 impl<T: Read + Write> TcpTransport<T> {
     pub fn new(stream: T) -> TcpTransport<T> {
         TcpTransport {
-            key_maxlen: 250, // memcached standard
-
-            // Used to read the first line of a command, which includes a
-            // keyword, a key, flags and a bytecount. We don't expect it to be
-            // much longer than the key itself. If it is we panic...
-            line_buffer: vec![0; 250 + 100],
-            line_cursor: 0,
-            line_break_pos: 0,
-
             stats: TransportStats::new(),
             stream: BufStream::new(stream),
         }
-    }
-
-    pub fn with_key_maxlen(&mut self,
-                           key_maxlen: u64)
-                           -> &mut TcpTransport<T> {
-        self.key_maxlen = key_maxlen;
-        self
     }
 
 
@@ -379,7 +356,7 @@ impl<T: Read + Write> TcpTransport<T> {
         // parse cas_unique
         let cas_unique_opt = {
             if instr == SetInstr::Cas {
-                let (cas_unique, end_of_line) = try!(self.read_word_in_line());
+                let (cas_unique, _) = try!(self.read_word_in_line());
                 let cas_unique = try!(as_number(cas_unique));
                 Some(cas_unique)
             } else {
@@ -463,7 +440,7 @@ impl<T: Read + Write> TcpTransport<T> {
 
     pub fn read_cmd(&mut self) -> TcpTransportResult<Cmd> {
         let keyword_str = {
-            let (word, end_of_line) = try!(self.read_word_in_line());
+            let (word, _) = try!(self.read_word_in_line());
             try!(as_string(word))
         };
 

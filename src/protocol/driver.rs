@@ -294,8 +294,8 @@ impl Driver {
         self.stats.cmd_flush += 1;
 
         let exptime: f64 = match flush_all.exptime {
-            Some(exptime) => {
-                convert_exptime(flush_all.exptime.unwrap()).unwrap()
+            Some(ref exptime) => {
+                convert_exptime(*exptime).unwrap()
             }
             None => time_now(),
         };
@@ -494,12 +494,10 @@ impl Driver {
             let rv = self.cache.remove(&key);
             match rv {
                 Ok(_) => {
-                    let mut value = rv.unwrap();
-                    value
+                    rv.unwrap()
                 }
                 Err(_) => {
-                    let mut value = Value::empty();
-                    value
+                    Value::empty()
                 }
             }
         };

@@ -1,4 +1,3 @@
-use std::str;
 use std::str::FromStr;
 
 use super::errors::TcpTransportError;

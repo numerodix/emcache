@@ -264,9 +264,6 @@ fn test_cmd_delete() {
     let cache = Cache::new(100);
     let mut driver = Driver::new(cache);
 
-    let key_name = "x";
-    let blob = vec![1, 2, 3];
-
     // Try to delete a key that does not exist
     let cmd = Cmd::Delete(Delete::new("z", false));
     let resp = driver.run(cmd);
