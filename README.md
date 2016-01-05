@@ -30,3 +30,10 @@ To run unit tests:
 To run the server:
     
     $ ./run_server.sh
+
+The Python integration test suite supplies various forms of tests. To run them
+against a running server:
+
+    $ python -m pyemc.main -p $PORT            # integration tests
+    $ python -m pyemc.main -p $PORT --stress   # burn in tests
+    $ python -m pyemc.main -p $PORT --fill 45  # fill to 45% capacity
