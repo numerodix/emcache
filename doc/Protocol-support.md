@@ -7,8 +7,10 @@ We follow [the official protocol specification](https://github.com/memcached/mem
 
 * ADD
 * APPEND
+* DECR
 * DELETE
 * GET
+* INCR
 * QUIT
 * PREPEND
 * REPLACE
@@ -26,7 +28,6 @@ We follow [the official protocol specification](https://github.com/memcached/mem
 ## Plan to support
 
 * CAS/GETS
-* INCR/DECR
 
 
 ## No plan to support
