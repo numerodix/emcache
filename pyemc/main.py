@@ -44,22 +44,17 @@ if __name__ == '__main__':
         )
         filler.launch()
 
-    elif options.stress_test:
-        runner = TestRunner(cli_params)
-
-        test_cases = [
-            TestStress,
-        ]
-
-        rv = runner.execute_all(test_cases)
-        sys.exit(not rv)
-
     else:
-        runner = TestRunner(cli_params)
+        runner = TestRunner(cli_params, args)
 
-        test_cases = [
-            TestApi,
-        ]
+        if options.stress_test:
+            test_cases = [
+                TestStress,
+            ]
+        else:
+            test_cases = [
+                TestApi,
+            ]
 
         rv = runner.execute_all(test_cases)
         sys.exit(not rv)

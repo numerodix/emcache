@@ -1,4 +1,5 @@
 from contextlib import contextmanager
+import re
 import time
 import traceback
 import sys
@@ -15,8 +16,12 @@ class TestFailedError(Exception):
 
 
 class TestRunner(object):
-    def __init__(self, client_params):
+    def __init__(self, client_params, args):
         self.client_params = client_params
+
+        self.test_filter = None
+        if args:
+            self.test_filter = re.compile(args[0])
 
     def execute_all(self, test_cases_classes):
         test_id = -1
@@ -31,6 +36,10 @@ class TestRunner(object):
             for att in atts:
                 unbound_method = getattr(test_case_cls, att)
                 if not callable(unbound_method):
+                    continue
+
+                # Does not match the filter -> not selected to run
+                if self.test_filter and not self.test_filter.search(att):
                     continue
 
                 test_id += 1
