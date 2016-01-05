@@ -673,6 +673,9 @@ fn test_cmd_stats() {
     let st_incr_misses = Stat::new("incr_misses", "0".to_string());
     let st_decr_hits = Stat::new("decr_hits", "0".to_string());
     let st_decr_misses = Stat::new("decr_misses", "0".to_string());
+    let st_cas_hits = Stat::new("cas_hits", "0".to_string());
+    let st_cas_misses = Stat::new("cas_misses", "0".to_string());
+    let st_cas_badval = Stat::new("cas_badval", "0".to_string());
     let st_touch_hits = Stat::new("touch_hits", "0".to_string());
     let st_touch_misses = Stat::new("touch_misses", "0".to_string());
     let st_bytes_read = Stat::new("bytes_read", "0".to_string());
@@ -701,6 +704,9 @@ fn test_cmd_stats() {
                      st_incr_misses,
                      st_decr_hits,
                      st_decr_misses,
+                     st_cas_hits,
+                     st_cas_misses,
+                     st_cas_badval,
                      st_touch_hits,
                      st_touch_misses,
                      st_bytes_read,

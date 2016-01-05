@@ -235,21 +235,22 @@ impl Driver {
 
         // If the key is not set we bail
         let rv = self.cache.contains_key(&key);
-        maybe_reply_stmt!(!set.noreply, match rv {
-                Ok(true) => {
-                    // Update stats
-                    self.stats.cas_hits += 1;
+        maybe_reply_stmt!(!set.noreply,
+                          match rv {
+                              Ok(true) => {
+                                  // Update stats
+                                  self.stats.cas_hits += 1;
 
-                    None
-                }
-                Ok(false) => {
-                    // Update stats
-                    self.stats.cas_misses += 1;
+                                  None
+                              }
+                              Ok(false) => {
+                                  // Update stats
+                                  self.stats.cas_misses += 1;
 
-                    Some(Resp::NotFound)
-                }
-                Err(ref err) => Some(from_cache_err(err))
-        });
+                                  Some(Resp::NotFound)
+                              }
+                              Err(ref err) => Some(from_cache_err(err)),
+                          });
 
         // If cas_unique is out of date we bail
         maybe_reply_stmt!(!set.noreply, {
@@ -546,6 +547,9 @@ impl Driver {
         let incr_misses = self.stats.incr_misses.to_string();
         let decr_hits = self.stats.decr_hits.to_string();
         let decr_misses = self.stats.decr_misses.to_string();
+        let cas_hits = self.stats.cas_hits.to_string();
+        let cas_misses = self.stats.cas_misses.to_string();
+        let cas_badval = self.stats.cas_badval.to_string();
         let touch_hits = self.stats.touch_hits.to_string();
         let touch_misses = self.stats.touch_misses.to_string();
         let bytes_read = self.transport_stats.bytes_read.to_string();
@@ -573,6 +577,9 @@ impl Driver {
         let st_incr_misses = Stat::new("incr_misses", incr_misses);
         let st_decr_hits = Stat::new("decr_hits", decr_hits);
         let st_decr_misses = Stat::new("decr_misses", decr_misses);
+        let st_cas_hits = Stat::new("cas_hits", cas_hits);
+        let st_cas_misses = Stat::new("cas_misses", cas_misses);
+        let st_cas_badval = Stat::new("cas_badval", cas_badval);
         let st_touch_hits = Stat::new("touch_hits", touch_hits);
         let st_touch_misses = Stat::new("touch_misses", touch_misses);
         let st_bytes_read = Stat::new("bytes_read", bytes_read);
@@ -600,6 +607,9 @@ impl Driver {
                          st_incr_misses,
                          st_decr_hits,
                          st_decr_misses,
+                         st_cas_hits,
+                         st_cas_misses,
+                         st_cas_badval,
                          st_touch_hits,
                          st_touch_misses,
                          st_bytes_read,
