@@ -178,10 +178,7 @@ pub struct Value {
 }
 
 impl Value {
-    pub fn new(key: &str,
-               flags: u16,
-               data: Vec<u8>)
-               -> Value {
+    pub fn new(key: &str, flags: u16, data: Vec<u8>) -> Value {
         Value {
             key: key.to_string(),
             flags: flags,

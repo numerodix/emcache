@@ -32,6 +32,16 @@ impl Value {
         }
     }
 
+    pub fn empty() -> Value {
+        Value {
+            item: vec![],
+            flags: 0,
+            atime: -1.0,
+            exptime: -1.0,
+            cas_id: 0,
+        }
+    }
+
 
     pub fn get_item_mut(&mut self) -> &mut Vec<u8> {
         self.bump_cas_id();
@@ -80,7 +90,6 @@ impl Value {
     }
 
     pub fn touch(&mut self) {
-        self.bump_cas_id();
         self.atime = time_now();
     }
 

@@ -11,6 +11,7 @@ use super::cmd::Cmd;
 use super::cmd::Delete;
 use super::cmd::FlushAll;
 use super::cmd::Get;
+use super::cmd::GetInstr;
 use super::cmd::Inc;
 use super::cmd::IncInstr;
 use super::cmd::Resp;
@@ -270,12 +271,17 @@ impl Driver {
 
             match rv {
                 Ok(value) => {
-                    let val_st = CmdValue {
+                    let mut val_st = CmdValue {
                         key: key_str,
                         flags: value.get_flags().clone(),
                         cas_unique: None,
                         data: value.get_item().clone(),
                     };
+
+                    if get.instr == GetInstr::Gets {
+                        val_st.with_cas_unique(value.get_cas_id().clone());
+                    }
+
                     values.push(val_st);
                 }
                 // Keys that were not found are skipped, no error given
@@ -430,7 +436,24 @@ impl Driver {
         self.stats.cmd_set += 1;
 
         let key = Key::new(set.key.into_bytes());
-        let mut value = Value::new(set.data);
+
+        // Obtain either the existing value or a fresh one
+        let mut value = {
+            let rv = self.cache.remove(&key);
+            match rv {
+                Ok(_) => {
+                    let mut value = rv.unwrap();
+                    value
+                }
+                Err(_) => {
+                    let mut value = Value::empty();
+                    value
+                }
+            }
+        };
+
+        // Set all the data the client sent
+        value.set_item(set.data);
         value.set_flags(set.flags);
         self.set_exptime(&mut value, set.exptime);
 

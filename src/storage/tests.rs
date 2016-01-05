@@ -21,8 +21,9 @@ fn test_cas_id() {
     value.set_exptime(0.0);
     assert_eq!(3, *value.get_cas_id());
 
+    // Touch is never due to a client changing it, just us
     value.touch();
-    assert_eq!(4, *value.get_cas_id());
+    assert_eq!(3, *value.get_cas_id());
 }
 
 #[test]

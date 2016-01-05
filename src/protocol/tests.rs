@@ -362,6 +362,42 @@ fn test_cmd_set_and_get_multiple_keys() {
 }
 
 
+// Gets
+
+#[test]
+fn get_cmd_gets() {
+    let cache = Cache::new(4096);
+    let mut driver = Driver::new(cache);
+
+    // Set a key
+    let set = Set::new(SetInstr::Set, "x", 0, 0, vec![b'1'], false);
+    let cmd = Cmd::Set(set);
+    let resp = driver.run(cmd);
+    assert_eq!(resp, Resp::Stored);
+
+    // Retrieve it
+    let get = Get::one(GetInstr::Gets, "x");
+    let cmd = Cmd::Get(get);
+    let gets_resp = driver.run(cmd);
+    // cas_unique is present
+    gets_resp.get_first_value().unwrap().cas_unique.unwrap();
+
+    // Set the key again
+    let set = Set::new(SetInstr::Set, "x", 0, 0, vec![b'2'], false);
+    let cmd = Cmd::Set(set);
+    let resp = driver.run(cmd);
+    assert_eq!(resp, Resp::Stored);
+
+    // Retrieve it again - cas_unique should have changed
+    let get = Get::one(GetInstr::Gets, "x");
+    let cmd = Cmd::Get(get);
+    let gets_resp2 = driver.run(cmd);
+    // cas_unique has changed
+    assert!(gets_resp.get_first_value().unwrap().cas_unique.unwrap() !=
+            gets_resp2.get_first_value().unwrap().cas_unique.unwrap());
+}
+
+
 // Incr
 
 #[test]
@@ -564,7 +600,7 @@ fn test_cmd_stats() {
     let st_get_hits = Stat::new("get_hits", "1".to_string());
     let st_get_misses = Stat::new("get_misses", "0".to_string());
     let st_delete_hits = Stat::new("delete_hits", "0".to_string());
-    let st_delete_misses = Stat::new("delete_misses", "0".to_string());
+    let st_delete_misses = Stat::new("delete_misses", "1".to_string());
     let st_incr_hits = Stat::new("incr_hits", "0".to_string());
     let st_incr_misses = Stat::new("incr_misses", "0".to_string());
     let st_decr_hits = Stat::new("decr_hits", "0".to_string());
