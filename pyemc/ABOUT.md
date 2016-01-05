@@ -15,12 +15,12 @@ parallelism.
 * key: 'x'
 * value: 'abc'
 
-| Test                    | memcache/cpython | emcache/cpython | memcache/pypy | emcache/pypy |
-|-------------------------|-----------------:|----------------:|--------------:|-------------:|
-| 100,000x get            | **26k/s**        | 18k/s           | **40k/s**     | 20k/s        |
-| 100,000x set            | **27k/s**        | 16k/s           | **44k/s**     | 31k/s        |
-| 700,000x set w/ noreply | 87k/s            | **97k/s**       | **1225k/s**   | 87k/s        |
-| 100,000x version        | **37k/s**        | 21k/s           | **54k/s**     | 33k/s        |
+| Test                   | memcache/cpython | emcache/cpython | memcache/pypy | emcache/pypy |
+|------------------------|-----------------:|----------------:|--------------:|-------------:|
+| 100,000x get           | **26k/s**        | 18k/s           | **40k/s**     | 20k/s        |
+| 100,000x set           | **27k/s**        | 16k/s           | **44k/s**     | 31k/s        |
+| 700,000x set w/noreply | 87k/s            | **97k/s**       | **1225k/s**   | 87k/s        |
+| 100,000x version       | **37k/s**        | 21k/s           | **54k/s**     | 33k/s        |
 
 The pypy version was run 10x longer to account for jit warmup, but the rate is
 still averaged over the whole run.
