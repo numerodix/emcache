@@ -1,4 +1,4 @@
-use testlib::datagen::get_rand_f64_vec;
+//use testlib::datagen::get_rand_f64_vec;
 
 use super::AggregatedMetric;
 use super::aggregate_metric;
@@ -9,7 +9,7 @@ use super::compute_p999;
 use super::compute_p99;
 use super::sort_f64;
 
-
+/*
 #[test]
 fn test_get_rand_f64_vec() {
     let vals = get_rand_f64_vec(1, 100);
@@ -120,3 +120,4 @@ fn test_compute_metric() {
     };
     assert_eq!(expected, metric);
 }
+*/

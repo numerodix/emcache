@@ -1,7 +1,8 @@
-use rand::Rng;
-use rand::thread_rng;
+//use rand::Rng;
+//use rand::thread_rng;
 
 
+/*
 pub fn get_rand_f64_vec(lower: u64, upper: u64) -> Vec<f64> {
     // create the floats
     let mut items: Vec<f64> = (lower..upper + 1)
@@ -14,3 +15,4 @@ pub fn get_rand_f64_vec(lower: u64, upper: u64) -> Vec<f64> {
 
     items
 }
+*/

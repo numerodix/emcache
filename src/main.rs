@@ -9,7 +9,7 @@ extern crate docopt;
 extern crate linked_hash_map;
 extern crate libc;
 extern crate net2;
-extern crate rand;
+//extern crate rand;
 extern crate rustc_serialize;
 extern crate time;
 

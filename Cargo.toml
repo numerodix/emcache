@@ -13,4 +13,4 @@ rustc-serialize = "0.3.16"  # needed for docopt
 time = "0.1"  # timing primitives in unix time
 # Testing related
 maplit = "0.1.2"  # hashmap literals
-rand = "0.3"  # random number generator
+#rand = "0.3"  # random number generator
