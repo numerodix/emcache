@@ -122,6 +122,74 @@ fn test_cmd_append() {
 }
 
 
+// Cas
+
+#[test]
+fn test_cmd_cas() {
+    let cache = Cache::new(100);
+    let mut driver = Driver::new(cache);
+
+    // Try to append to an invalid key
+    let mut set = Set::new(SetInstr::Cas, "x", 4, 0, vec![8, 9], false);
+    set.with_cas_unique(5);
+    let cmd = Cmd::Set(set);
+    let resp = driver.run(cmd);
+    assert_eq!(resp, Resp::NotFound);
+
+    // Try to append to an invalid key - noreply
+    let mut set = Set::new(SetInstr::Cas, "x", 4, 0, vec![8, 9], true);
+    set.with_cas_unique(5);
+    let cmd = Cmd::Set(set);
+    let resp = driver.run(cmd);
+    assert_eq!(resp, Resp::Empty);
+
+    // Set a key we can update
+    let set = Set::new(SetInstr::Set, "x", 0, 0, vec![8, 9], false);
+    let cmd = Cmd::Set(set);
+    let resp = driver.run(cmd);
+    assert_eq!(resp, Resp::Stored);
+
+    // Obtain cas value
+    let cmd = Cmd::Get(Get::one(GetInstr::Gets, "x"));
+    let resp = driver.run(cmd);
+    let cas_unique1 = resp.get_first_value().unwrap().cas_unique.unwrap();
+
+    // Update it
+    let mut set = Set::new(SetInstr::Cas, "x", 4, 0, vec![10], false);
+    set.with_cas_unique(cas_unique1);
+    let cmd = Cmd::Set(set);
+    let resp = driver.run(cmd);
+    assert_eq!(resp, Resp::Stored);
+
+    // Make sure it was updated
+    let cmd = Cmd::Get(Get::one(GetInstr::Gets, "x"));
+    let resp = driver.run(cmd);
+    assert_eq!(vec![10], resp.get_first_value().unwrap().data);
+    assert_eq!(4, resp.get_first_value().unwrap().flags);
+    let cas_unique2 = resp.get_first_value().unwrap().cas_unique.unwrap();
+
+    // Update it again - noreply
+    let mut set = Set::new(SetInstr::Cas, "x", 7, 0, vec![11], true);
+    set.with_cas_unique(cas_unique2);
+    let cmd = Cmd::Set(set);
+    let resp = driver.run(cmd);
+    assert_eq!(resp, Resp::Empty);
+
+    // Make sure it was updated
+    let cmd = Cmd::Get(Get::one(GetInstr::Get, "x"));
+    let resp = driver.run(cmd);
+    assert_eq!(vec![11], resp.get_first_value().unwrap().data);
+    assert_eq!(7, resp.get_first_value().unwrap().flags);
+
+    // Try to update it with a stale cas token
+    let mut set = Set::new(SetInstr::Cas, "x", 4, 0, vec![10], false);
+    set.with_cas_unique(cas_unique1);
+    let cmd = Cmd::Set(set);
+    let resp = driver.run(cmd);
+    assert_eq!(resp, Resp::Exists);
+}
+
+
 // Decr
 
 #[test]

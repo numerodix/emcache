@@ -290,7 +290,14 @@ class MemcacheClient(object):
         )
 
     def set(self, key, value, flags=0, exptime=0, noreply=False):
-        return self._set_family('set', key, value, flags, exptime, noreply)
+        return self._set_family(
+            'set',
+            key=key,
+            value=value,
+            flags=flags,
+            exptime=exptime,
+            noreply=noreply,
+        )
 
     def _set_family(self, instr, key, value, flags=0, exptime=0, cas_unique=None, noreply=False):
         # prepare command

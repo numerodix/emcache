@@ -612,6 +612,20 @@ fn test_write_resp_error() {
 }
 
 
+// Response writing: Exists
+
+#[test]
+fn test_write_resp_exists() {
+    let ts = TestStream::new(vec![]);
+    let mut transport = TcpTransport::new(ts);
+
+    let resp = Resp::Exists;
+    transport.write_resp(&resp).unwrap();
+    let expected = "EXISTS\r\n".to_string().into_bytes();
+    assert_eq!(transport.get_stream().outgoing, expected);
+}
+
+
 // Response writing: IntValue
 
 #[test]

@@ -236,13 +236,13 @@ impl Driver {
         // If the key is not set we bail
         let rv = self.cache.contains_key(&key);
         maybe_reply_stmt!(!set.noreply, match rv {
-                Ok(_) => {
+                Ok(true) => {
                     // Update stats
                     self.stats.cas_hits += 1;
 
                     None
                 }
-                Err(CacheError::KeyNotFound) => {
+                Ok(false) => {
                     // Update stats
                     self.stats.cas_misses += 1;
 

@@ -517,6 +517,9 @@ impl<T: Read + Write> TcpTransport<T> {
             Resp::Error => {
                 try!(self.write_string("ERROR\r\n"));
             }
+            Resp::Exists => {
+                try!(self.write_string("EXISTS\r\n"));
+            }
             Resp::IntValue(ref val) => {
                 try!(self.write_string(&val.to_string()));
                 try!(self.write_string("\r\n"));
@@ -573,9 +576,6 @@ impl<T: Read + Write> TcpTransport<T> {
                 try!(self.write_string("VERSION "));
                 try!(self.write_string(&version)); // key
                 try!(self.write_string(&"\r\n".to_string())); // newline
-            }
-            _ => {
-                return Err(TcpTransportError::StreamWriteError);
             }
         }
 
