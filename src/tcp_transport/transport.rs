@@ -8,6 +8,7 @@ use protocol::cmd::Cmd;
 use protocol::cmd::Delete;
 use protocol::cmd::FlushAll;
 use protocol::cmd::Get;
+use protocol::cmd::GetInstr;
 use protocol::cmd::Inc;
 use protocol::cmd::IncInstr;
 use protocol::cmd::Resp;
@@ -299,7 +300,10 @@ impl<T: Read + Write> TcpTransport<T> {
             }
         }
 
-        Ok(Cmd::Get(Get { keys: keys }))
+        Ok(Cmd::Get(Get {
+            instr: GetInstr::Get,
+            keys: keys,
+        }))
     }
 
     pub fn parse_cmd_inc(&mut self,

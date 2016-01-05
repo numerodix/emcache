@@ -36,17 +36,31 @@ impl FlushAll {
 
 
 #[derive(Debug, PartialEq, Clone)]
+pub enum GetInstr {
+    Get, // get blob + flags
+    Gets, // same + cas_unique
+}
+
+
+#[derive(Debug, PartialEq, Clone)]
 pub struct Get {
+    pub instr: GetInstr, // Instruction to perform
     pub keys: Vec<String>,
 }
 
 impl Get {
-    pub fn new(keys: Vec<String>) -> Get {
-        Get { keys: keys }
+    pub fn new(instr: GetInstr, keys: Vec<String>) -> Get {
+        Get {
+            instr: instr,
+            keys: keys,
+        }
     }
 
-    pub fn one(key: &str) -> Get {
-        Get { keys: vec![key.to_string()] }
+    pub fn one(instr: GetInstr, key: &str) -> Get {
+        Get {
+            instr: instr,
+            keys: vec![key.to_string()],
+        }
     }
 }
 

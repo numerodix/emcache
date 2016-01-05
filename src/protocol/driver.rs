@@ -348,7 +348,6 @@ impl Driver {
             IncInstr::Incr => {
                 // overflows
                 num = num.wrapping_add(inc.delta);
-                //num += inc.delta;
             }
         };
         value.set_item(u64_to_bytes(&num));

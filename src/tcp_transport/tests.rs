@@ -2,6 +2,7 @@ use protocol::cmd::Cmd;
 use protocol::cmd::Delete;
 use protocol::cmd::FlushAll;
 use protocol::cmd::Get;
+use protocol::cmd::GetInstr;
 use protocol::cmd::Inc;
 use protocol::cmd::IncInstr;
 use protocol::cmd::Resp;
@@ -282,7 +283,7 @@ fn test_read_cmd_get_one_key() {
     let mut transport = TcpTransport::new(ts);
 
     let cmd = transport.read_cmd().unwrap();
-    assert_eq!(cmd, Cmd::Get(Get::one("x")));
+    assert_eq!(cmd, Cmd::Get(Get::one(GetInstr::Get, "x")));
 }
 
 #[test]
@@ -293,7 +294,7 @@ fn test_read_cmd_get_two_keys() {
 
     let cmd = transport.read_cmd().unwrap();
     let keys = vec!["x".to_string(), "y".to_string()];
-    assert_eq!(cmd, Cmd::Get(Get::new(keys)));
+    assert_eq!(cmd, Cmd::Get(Get::new(GetInstr::Get, keys)));
 }
 
 #[test]

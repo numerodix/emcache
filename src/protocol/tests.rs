@@ -9,6 +9,7 @@ use super::cmd::Cmd;
 use super::cmd::Delete;
 use super::cmd::FlushAll;
 use super::cmd::Get;
+use super::cmd::GetInstr;
 use super::cmd::Inc;
 use super::cmd::IncInstr;
 use super::cmd::Resp;
@@ -33,7 +34,7 @@ fn test_cmd_add() {
     assert_eq!(resp, Resp::Stored);
 
     // Make sure it was added
-    let cmd = Cmd::Get(Get::one("x"));
+    let cmd = Cmd::Get(Get::one(GetInstr::Get, "x"));
     let resp = driver.run(cmd);
     assert_eq!(vec![8, 9], resp.get_first_value().unwrap().data);
     assert_eq!(4, resp.get_first_value().unwrap().flags);
@@ -51,7 +52,7 @@ fn test_cmd_add() {
     assert_eq!(resp, Resp::Empty);
 
     // Make sure it was not overwritten
-    let cmd = Cmd::Get(Get::one("x"));
+    let cmd = Cmd::Get(Get::one(GetInstr::Get, "x"));
     let resp = driver.run(cmd);
     assert_eq!(vec![8, 9], resp.get_first_value().unwrap().data);
     assert_eq!(4, resp.get_first_value().unwrap().flags);
@@ -63,7 +64,7 @@ fn test_cmd_add() {
     assert_eq!(resp, Resp::Empty);
 
     // Make sure it was added
-    let cmd = Cmd::Get(Get::one("y"));
+    let cmd = Cmd::Get(Get::one(GetInstr::Get, "y"));
     let resp = driver.run(cmd);
     assert_eq!(vec![11], resp.get_first_value().unwrap().data);
     assert_eq!(5, resp.get_first_value().unwrap().flags);
@@ -102,7 +103,7 @@ fn test_cmd_append() {
     assert_eq!(resp, Resp::Stored);
 
     // Make sure it was updated
-    let cmd = Cmd::Get(Get::one("x"));
+    let cmd = Cmd::Get(Get::one(GetInstr::Get, "x"));
     let resp = driver.run(cmd);
     assert_eq!(vec![8, 9, 10], resp.get_first_value().unwrap().data);
     assert_eq!(4, resp.get_first_value().unwrap().flags);
@@ -114,7 +115,7 @@ fn test_cmd_append() {
     assert_eq!(resp, Resp::Empty);
 
     // Make sure it was updated again
-    let cmd = Cmd::Get(Get::one("x"));
+    let cmd = Cmd::Get(Get::one(GetInstr::Get, "x"));
     let resp = driver.run(cmd);
     assert_eq!(vec![8, 9, 10, 11], resp.get_first_value().unwrap().data);
     assert_eq!(5, resp.get_first_value().unwrap().flags);
@@ -153,7 +154,7 @@ fn test_cmd_decr() {
     assert_eq!(resp, Resp::IntValue(1));
 
     // Make sure it was updated
-    let cmd = Cmd::Get(Get::one("x"));
+    let cmd = Cmd::Get(Get::one(GetInstr::Get, "x"));
     let resp = driver.run(cmd);
     assert_eq!(vec![b'1'], resp.get_first_value().unwrap().data);
 
@@ -164,7 +165,7 @@ fn test_cmd_decr() {
     assert_eq!(resp, Resp::Empty);
 
     // Make sure it was updated
-    let cmd = Cmd::Get(Get::one("x"));
+    let cmd = Cmd::Get(Get::one(GetInstr::Get, "x"));
     let resp = driver.run(cmd);
     assert_eq!(vec![b'0'], resp.get_first_value().unwrap().data);
 
@@ -226,7 +227,7 @@ fn test_cmd_delete() {
     assert_eq!(Resp::Deleted, resp);
 
     // Make sure it's gone
-    let cmd = Cmd::Get(Get::one("x"));
+    let cmd = Cmd::Get(Get::one(GetInstr::Get, "x"));
     let resp = driver.run(cmd);
     assert_eq!(0, resp.get_values().unwrap().len());
 
@@ -236,7 +237,7 @@ fn test_cmd_delete() {
     assert_eq!(Resp::Empty, resp);
 
     // Make sure it's gone
-    let cmd = Cmd::Get(Get::one("y"));
+    let cmd = Cmd::Get(Get::one(GetInstr::Get, "y"));
     let resp = driver.run(cmd);
     assert_eq!(0, resp.get_values().unwrap().len());
 }
@@ -265,7 +266,7 @@ fn test_flush_all() {
     assert_eq!(resp, Resp::Ok);
 
     // The key is dead
-    let cmd = Cmd::Get(Get::one(key_name));
+    let cmd = Cmd::Get(Get::one(GetInstr::Get, key_name));
     let resp = driver.run(cmd);
     assert_eq!(0, resp.get_values().unwrap().len());
 
@@ -282,7 +283,7 @@ fn test_flush_all() {
     assert_eq!(resp, Resp::Empty);
 
     // The key is dead
-    let cmd = Cmd::Get(Get::one(key_name));
+    let cmd = Cmd::Get(Get::one(GetInstr::Get, key_name));
     let resp = driver.run(cmd);
     assert_eq!(0, resp.get_values().unwrap().len());
 }
@@ -299,7 +300,7 @@ fn test_cmd_set_and_get_a_key() {
     let blob = vec![1, 2, 3];
 
     // Try to retrieve a key not set
-    let cmd = Cmd::Get(Get::one(key_name));
+    let cmd = Cmd::Get(Get::one(GetInstr::Get, key_name));
     let resp = driver.run(cmd);
     assert_eq!(0, resp.get_values().unwrap().len());
 
@@ -310,7 +311,7 @@ fn test_cmd_set_and_get_a_key() {
     assert_eq!(resp, Resp::Stored);
 
     // Retrieve it
-    let cmd = Cmd::Get(Get::one(key_name));
+    let cmd = Cmd::Get(Get::one(GetInstr::Get, key_name));
     let resp = driver.run(cmd);
     assert_eq!(15, resp.get_first_value().unwrap().flags);
     assert_eq!(blob, resp.get_first_value().unwrap().data);
@@ -322,7 +323,7 @@ fn test_cmd_set_and_get_a_key() {
     assert_eq!(resp, Resp::Empty);
 
     // Retrieve it
-    let cmd = Cmd::Get(Get::one("y"));
+    let cmd = Cmd::Get(Get::one(GetInstr::Get, "y"));
     let resp = driver.run(cmd);
     assert_eq!(15, resp.get_first_value().unwrap().flags);
     assert_eq!(blob, resp.get_first_value().unwrap().data);
@@ -349,7 +350,7 @@ fn test_cmd_set_and_get_multiple_keys() {
 
     // Try to retrieve three keys - get two
     let keys = vec!["a".to_string(), "b".to_string(), "c".to_string()];
-    let cmd = Cmd::Get(Get::new(keys));
+    let cmd = Cmd::Get(Get::new(GetInstr::Get, keys));
     let resp = driver.run(cmd);
 
     let values = resp.get_values().unwrap();
@@ -393,7 +394,7 @@ fn test_cmd_incr() {
     assert_eq!(resp, Resp::IntValue(2));
 
     // Make sure it was updated
-    let cmd = Cmd::Get(Get::one("x"));
+    let cmd = Cmd::Get(Get::one(GetInstr::Get, "x"));
     let resp = driver.run(cmd);
     assert_eq!(vec![b'2'], resp.get_first_value().unwrap().data);
 
@@ -404,7 +405,7 @@ fn test_cmd_incr() {
     assert_eq!(resp, Resp::Empty);
 
     // Make sure it was updated
-    let cmd = Cmd::Get(Get::one("x"));
+    let cmd = Cmd::Get(Get::one(GetInstr::Get, "x"));
     let resp = driver.run(cmd);
     assert_eq!(vec![b'3'], resp.get_first_value().unwrap().data);
 
@@ -460,7 +461,7 @@ fn test_cmd_prepend() {
     assert_eq!(resp, Resp::Stored);
 
     // Make sure it was updated
-    let cmd = Cmd::Get(Get::one("x"));
+    let cmd = Cmd::Get(Get::one(GetInstr::Get, "x"));
     let resp = driver.run(cmd);
     assert_eq!(vec![10, 8, 9], resp.get_first_value().unwrap().data);
     assert_eq!(4, resp.get_first_value().unwrap().flags);
@@ -472,7 +473,7 @@ fn test_cmd_prepend() {
     assert_eq!(resp, Resp::Empty);
 
     // Make sure it was updated again
-    let cmd = Cmd::Get(Get::one("x"));
+    let cmd = Cmd::Get(Get::one(GetInstr::Get, "x"));
     let resp = driver.run(cmd);
     assert_eq!(vec![11, 10, 8, 9], resp.get_first_value().unwrap().data);
     assert_eq!(5, resp.get_first_value().unwrap().flags);
@@ -511,7 +512,7 @@ fn test_cmd_replace() {
     assert_eq!(resp, Resp::Stored);
 
     // Make sure it was updated
-    let cmd = Cmd::Get(Get::one("x"));
+    let cmd = Cmd::Get(Get::one(GetInstr::Get, "x"));
     let resp = driver.run(cmd);
     assert_eq!(vec![10], resp.get_first_value().unwrap().data);
     assert_eq!(4, resp.get_first_value().unwrap().flags);
@@ -523,7 +524,7 @@ fn test_cmd_replace() {
     assert_eq!(resp, Resp::Empty);
 
     // Make sure it was updated
-    let cmd = Cmd::Get(Get::one("x"));
+    let cmd = Cmd::Get(Get::one(GetInstr::Get, "x"));
     let resp = driver.run(cmd);
     assert_eq!(vec![11], resp.get_first_value().unwrap().data);
     assert_eq!(6, resp.get_first_value().unwrap().flags);
@@ -544,7 +545,7 @@ fn test_cmd_stats() {
     assert_eq!(resp, Resp::Stored);
 
     // Retrieve it
-    let cmd = Cmd::Get(Get::one("x"));
+    let cmd = Cmd::Get(Get::one(GetInstr::Get, "x"));
     driver.run(cmd);
 
     // Run stats
@@ -655,7 +656,7 @@ fn test_cmd_touch() {
     sleep_secs(1.5);
 
     // It's still there
-    let cmd = Cmd::Get(Get::one("x"));
+    let cmd = Cmd::Get(Get::one(GetInstr::Get, "x"));
     let resp = driver.run(cmd);
     assert_eq!(1, resp.get_values().unwrap().len());
 
@@ -663,7 +664,7 @@ fn test_cmd_touch() {
     sleep_secs(2.5);
 
     // It's gone
-    let cmd = Cmd::Get(Get::one("x"));
+    let cmd = Cmd::Get(Get::one(GetInstr::Get, "x"));
     let resp = driver.run(cmd);
     assert_eq!(0, resp.get_values().unwrap().len());
 }
@@ -702,7 +703,7 @@ fn test_cmd_relative_exptime() {
     assert_eq!(resp, Resp::Stored);
 
     // Retrieve it right away - succeeds
-    let cmd = Cmd::Get(Get::one(key_name));
+    let cmd = Cmd::Get(Get::one(GetInstr::Get, key_name));
     let resp = driver.run(cmd);
     assert_eq!(blob, resp.get_first_value().unwrap().data);
 
@@ -710,7 +711,7 @@ fn test_cmd_relative_exptime() {
     sleep_secs(1.5);
 
     // Retrieve the key again - it's gone
-    let cmd = Cmd::Get(Get::one(key_name));
+    let cmd = Cmd::Get(Get::one(GetInstr::Get, key_name));
     let resp = driver.run(cmd);
     assert_eq!(0, resp.get_values().unwrap().len());
 }
@@ -733,7 +734,7 @@ fn test_cmd_absolute_exptime() {
     assert_eq!(resp, Resp::Stored);
 
     // Retrieve it right away - succeeds
-    let cmd = Cmd::Get(Get::one(key_name));
+    let cmd = Cmd::Get(Get::one(GetInstr::Get, key_name));
     let resp = driver.run(cmd);
     assert_eq!(blob, resp.get_first_value().unwrap().data);
 
@@ -741,7 +742,7 @@ fn test_cmd_absolute_exptime() {
     sleep_secs(2.5);
 
     // Retrieve the key again - it's gone
-    let cmd = Cmd::Get(Get::one(key_name));
+    let cmd = Cmd::Get(Get::one(GetInstr::Get, key_name));
     let resp = driver.run(cmd);
     assert_eq!(0, resp.get_values().unwrap().len());
 }
