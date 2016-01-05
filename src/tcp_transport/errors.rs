@@ -7,5 +7,4 @@ pub enum TcpTransportError {
     StreamReadError,
     StreamWriteError,
     Utf8Error,
-    WordReadError,
 }

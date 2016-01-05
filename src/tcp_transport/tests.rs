@@ -482,7 +482,7 @@ fn test_read_cmd_set_malformed() {
         let ts = TestStream::new(cmd_str.into_bytes());
         let mut transport = TcpTransport::new(ts);
 
-        let err = transport.read_cmd().unwrap_err();
+        transport.read_cmd().unwrap_err();
     }
 
     // Test for truncated stream

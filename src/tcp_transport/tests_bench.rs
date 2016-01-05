@@ -1,10 +1,6 @@
 use test::Bencher;
 
-use protocol::cmd::Cmd;
-use protocol::cmd::Get;
 use protocol::cmd::Resp;
-use protocol::cmd::Set;
-use protocol::cmd::SetInstr;
 use protocol::cmd::Value;
 use testlib::test_stream::TestStream;
 
@@ -13,7 +9,6 @@ use super::TcpTransport;
 
 // Reading
 
-use platform::time::sleep_secs;
 #[bench]
 fn bench_transport_read_cmd_get(b: &mut Bencher) {
     let cmd_str = "get variable1 variable2\r\n".to_string().into_bytes();

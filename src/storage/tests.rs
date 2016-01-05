@@ -278,7 +278,7 @@ fn test_flush_all() {
     assert!(rv.is_ok());
 
     // make all items dead in one second
-    cache.flush_all(time_now() + 1.0);
+    cache.flush_all(time_now() + 1.0).unwrap();
 
     // sleep until flush time kicks in
     sleep_secs(1.5);
@@ -289,7 +289,7 @@ fn test_flush_all() {
 
     // set a new item that came after flush_all
     let key3 = key!(3);
-    let mut value3 = value!(7);
+    let value3 = value!(7);
     let rv = cache.set(key3.clone(), value3.clone());
     assert!(rv.is_ok());
 
