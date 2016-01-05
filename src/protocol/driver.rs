@@ -150,21 +150,11 @@ impl Driver {
 
 
     fn set_exptime(&self, value: &mut Value, exptime: u32) {
-        // TODO use convert_exptime
-        // If exptime is greater than zero we need to set it on the value
-        if exptime > 0 {
-            let tm;
-
-            // Is it an interval greater than 30 days? Then it's a timestamp
-            if exptime > 60 * 60 * 24 * 30 {
-                tm = exptime as f64;
-
-            } else {
-                // Otherwise it's relative from now
-                tm = time_now() + exptime as f64;
-            }
-
-            value.set_exptime(tm);
+        match convert_exptime(exptime) {
+            Some(tm) => {
+                value.set_exptime(tm);
+            },
+            None => (),
         }
     }
 
