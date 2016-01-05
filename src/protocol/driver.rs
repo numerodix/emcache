@@ -209,7 +209,10 @@ impl Driver {
         self.set_exptime(&mut value, set.exptime);
 
         // Append the data we just received to the blob that is there
-        value.item.extend(set.data);
+        {
+            let mut blob = value.get_item_mut();
+            blob.extend(set.data);
+        }
 
         let rv = self.cache.set(key, value);
 
@@ -269,8 +272,8 @@ impl Driver {
                 Ok(value) => {
                     let val_st = CmdValue {
                         key: key_str,
-                        flags: value.flags,
-                        data: value.item.clone(),
+                        flags: value.get_flags().clone(),
+                        data: value.get_item().clone(),
                     };
                     values.push(val_st);
                 }
@@ -322,7 +325,7 @@ impl Driver {
             let value = rv.unwrap();
             // Does it represent a number?
             maybe_reply_stmt!(!inc.noreply,
-                              match bytes_to_u64(&value.item) {
+                              match bytes_to_u64(value.get_item()) {
                                   Some(_) => None,
                                   None => {
                                       Some(Resp::ClientError("Not a number"
@@ -336,7 +339,7 @@ impl Driver {
         let mut value = rv.unwrap();
 
         // Apply incr/decr
-        let mut num = bytes_to_u64(&value.item).unwrap();
+        let mut num = bytes_to_u64(value.get_item()).unwrap();
         match inc.instr {
             IncInstr::Decr => {
                 // saturates (stays at 0), does not underflow
@@ -348,7 +351,7 @@ impl Driver {
                 //num += inc.delta;
             }
         };
-        value.item = u64_to_bytes(&num);
+        value.set_item(u64_to_bytes(&num));
 
         // Set it
         let rv = self.cache.set(key, value);
@@ -383,10 +386,10 @@ impl Driver {
 
         // Prepend the data we just received to the blob that is there
         let mut new_item = Vec::with_capacity(set.data.len() +
-                                              value.item.len());
+                                              value.get_item().len());
         new_item.extend(set.data);
-        new_item.extend(value.item);
-        value.item = new_item;
+        new_item.extend(value.get_item());
+        value.set_item(new_item);
 
         let rv = self.cache.set(key, value);
 
