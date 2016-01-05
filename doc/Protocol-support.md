@@ -7,6 +7,7 @@ We follow [the official protocol specification](https://github.com/memcached/mem
 
 * ADD
 * APPEND
+* CAS
 * DECR
 * DELETE
 * GET
@@ -24,11 +25,6 @@ We follow [the official protocol specification](https://github.com/memcached/mem
 
 * FLUSH_ALL (without options)
 * STATS (not all stats are present)
-
-
-## Plan to support
-
-* CAS
 
 
 ## No plan to support
