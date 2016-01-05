@@ -2,6 +2,8 @@ use protocol::cmd::Cmd;
 use protocol::cmd::Delete;
 use protocol::cmd::FlushAll;
 use protocol::cmd::Get;
+use protocol::cmd::Inc;
+use protocol::cmd::IncInstr;
 use protocol::cmd::Resp;
 use protocol::cmd::Set;
 use protocol::cmd::SetInstr;
@@ -212,6 +214,29 @@ fn test_read_cmd_append() {
 }
 
 
+// Command parsing: Decr
+
+#[test]
+fn test_read_cmd_decr() {
+    let cmd_str = "decr x 5 \r\n".to_string();
+    let ts = TestStream::new(cmd_str.into_bytes());
+    let mut transport = TcpTransport::new(ts);
+
+    let cmd = transport.read_cmd().unwrap();
+    assert_eq!(cmd, Cmd::Inc(Inc::new(IncInstr::Decr, "x", 5, false)));
+}
+
+#[test]
+fn test_read_cmd_decr_noreply() {
+    let cmd_str = "decr x 5 noreply\r\n".to_string();
+    let ts = TestStream::new(cmd_str.into_bytes());
+    let mut transport = TcpTransport::new(ts);
+
+    let cmd = transport.read_cmd().unwrap();
+    assert_eq!(cmd, Cmd::Inc(Inc::new(IncInstr::Decr, "x", 5, true)));
+}
+
+
 // Command parsing: Delete
 
 #[test]
@@ -298,6 +323,29 @@ fn test_read_cmd_get_malformed() {
     try_cmd("get x");
     try_cmd("get ");
     try_cmd("get");
+}
+
+
+// Command parsing: Incr
+
+#[test]
+fn test_read_cmd_incr() {
+    let cmd_str = "incr x 5 \r\n".to_string();
+    let ts = TestStream::new(cmd_str.into_bytes());
+    let mut transport = TcpTransport::new(ts);
+
+    let cmd = transport.read_cmd().unwrap();
+    assert_eq!(cmd, Cmd::Inc(Inc::new(IncInstr::Incr, "x", 5, false)));
+}
+
+#[test]
+fn test_read_cmd_incr_noreply() {
+    let cmd_str = "incr x 5 noreply\r\n".to_string();
+    let ts = TestStream::new(cmd_str.into_bytes());
+    let mut transport = TcpTransport::new(ts);
+
+    let cmd = transport.read_cmd().unwrap();
+    assert_eq!(cmd, Cmd::Inc(Inc::new(IncInstr::Incr, "x", 5, true)));
 }
 
 
@@ -519,6 +567,20 @@ fn test_write_resp_error() {
     let resp = Resp::Error;
     transport.write_resp(&resp).unwrap();
     let expected = "ERROR\r\n".to_string().into_bytes();
+    assert_eq!(transport.get_stream().outgoing, expected);
+}
+
+
+// Response writing: IntValue
+
+#[test]
+fn test_write_resp_intvalue() {
+    let ts = TestStream::new(vec![]);
+    let mut transport = TcpTransport::new(ts);
+
+    let resp = Resp::IntValue(5);
+    transport.write_resp(&resp).unwrap();
+    let expected = "5\r\n".to_string().into_bytes();
     assert_eq!(transport.get_stream().outgoing, expected);
 }
 

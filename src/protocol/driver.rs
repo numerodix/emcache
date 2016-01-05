@@ -482,6 +482,7 @@ impl Driver {
             Cmd::Delete(del) => self.do_delete(del),
             Cmd::FlushAll(flush_all) => self.do_flush_all(flush_all),
             Cmd::Get(get) => self.do_get(get),
+            Cmd::Inc(inc) => Resp::Error, // TODO
             Cmd::Quit => Resp::Empty,  // handled at transport level
             Cmd::Set(set) => {
                 match set.instr {

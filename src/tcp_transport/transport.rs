@@ -8,6 +8,8 @@ use protocol::cmd::Cmd;
 use protocol::cmd::Delete;
 use protocol::cmd::FlushAll;
 use protocol::cmd::Get;
+use protocol::cmd::Inc;
+use protocol::cmd::IncInstr;
 use protocol::cmd::Resp;
 use protocol::cmd::Set;
 use protocol::cmd::SetInstr;
@@ -300,6 +302,43 @@ impl<T: Read + Write> TcpTransport<T> {
         Ok(Cmd::Get(Get { keys: keys }))
     }
 
+    pub fn parse_cmd_inc(&mut self,
+                         instr: IncInstr)
+                         -> TcpTransportResult<Cmd> {
+        // parse the key
+        let key_str = {
+            let (key, end_of_line) = try!(self.read_word_in_line());
+            return_err_if!(end_of_line, TcpTransportError::CommandParseError);
+            try!(as_string(key))
+        };
+
+        // parse the delta
+        let delta_num = {
+            let (exptime, end_of_line) = try!(self.read_word_in_line());
+            return_err_if!(end_of_line, TcpTransportError::CommandParseError);
+            try!(as_number::<u64>(exptime))
+        };
+
+        // parse noreply
+        let noreply_flag = {
+            let (noreply, end_of_line) = try!(self.read_word_in_line());
+            return_err_if!(!end_of_line, TcpTransportError::CommandParseError);
+            let noreply_str = try!(as_string(noreply));
+            match noreply_str == "noreply" {
+                true => true,
+                false => false,
+            }
+        };
+
+        // We got all the values we expected and there is nothing left
+        return Ok(Cmd::Inc(Inc {
+            instr: instr,
+            key: key_str,
+            delta: delta_num,
+            noreply: noreply_flag,
+        }));
+    }
+
     pub fn parse_cmd_set(&mut self,
                          instr: SetInstr)
                          -> TcpTransportResult<Cmd> {
@@ -410,6 +449,7 @@ impl<T: Read + Write> TcpTransport<T> {
             try!(as_string(word))
         };
 
+        // TODO replace if's with something nicer
         if keyword_str == "get" {
             return self.parse_cmd_get();
         } else if keyword_str == "set" {
@@ -424,6 +464,10 @@ impl<T: Read + Write> TcpTransport<T> {
             return self.parse_cmd_set(SetInstr::Prepend);
         } else if keyword_str == "touch" {
             return self.parse_cmd_touch();
+        } else if keyword_str == "incr" {
+            return self.parse_cmd_inc(IncInstr::Incr);
+        } else if keyword_str == "decr" {
+            return self.parse_cmd_inc(IncInstr::Decr);
         } else if keyword_str == "delete" {
             return self.parse_cmd_delete();
         } else if keyword_str == "flush_all" {
@@ -452,6 +496,10 @@ impl<T: Read + Write> TcpTransport<T> {
             }
             Resp::Error => {
                 try!(self.write_string("ERROR\r\n"));
+            }
+            Resp::IntValue(ref val) => {
+                try!(self.write_string(&val.to_string()));
+                try!(self.write_string("\r\n"));
             }
             Resp::NotFound => {
                 try!(self.write_string("NOT_FOUND\r\n"));

@@ -52,6 +52,33 @@ impl Get {
 
 
 #[derive(Debug, PartialEq, Clone)]
+pub enum IncInstr {
+    Incr,
+    Decr,
+}
+
+
+#[derive(Debug, PartialEq, Clone)]
+pub struct Inc {
+    pub instr: IncInstr, // Instruction to perform
+    pub key: String,
+    pub delta: u64,
+    pub noreply: bool,
+}
+
+impl Inc {
+    pub fn new(instr: IncInstr, key: &str, delta: u64, noreply: bool) -> Inc {
+        Inc {
+            instr: instr,
+            key: key.to_string(),
+            delta: delta,
+            noreply: noreply,
+        }
+    }
+}
+
+
+#[derive(Debug, PartialEq, Clone)]
 pub enum SetInstr {
     Set, // Store an item
     Add, // Store only if the key does not yet exist
@@ -153,6 +180,7 @@ pub enum Cmd {
     Delete(Delete),
     FlushAll(FlushAll),
     Get(Get),
+    Inc(Inc),
     Quit,
     Set(Set),
     Stats,
@@ -178,6 +206,7 @@ pub enum Resp {
     Stored, // The item was stored successfully
     Touched, // The item was touched successfully
 
+    IntValue(u64), // Result of an incr/decr
     Stats(Vec<Stat>),
     Values(Vec<Value>),
 
