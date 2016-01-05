@@ -75,7 +75,7 @@ class CacheFillerTasklet(Tasklet):
         capacity_fmt = insert_number_commas(capacity)
 
         metrics.pct_full = self.get_pct_full(client)
-        metrics.batch_size = 50
+        metrics.batch_size = 100
         metrics.bytes_cum = 0
         metrics.time_cum = 0
         metrics.items_cum = 0
