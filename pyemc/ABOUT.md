@@ -15,19 +15,15 @@ parallelism.
 * key: 'x'
 * value: 'abc'
 
-memcached:
+| Test                    | memcache/cpython | emcache/cpython | memcache/pypy | emcache/pypy |
+|-------------------------|-----------------:|----------------:|--------------:|-------------:|
+| 100,000x get            | **26k/s**        | 18k/s           | **40k/s**     | 20k/s        |
+| 100,000x set            | **27k/s**        | 16k/s           | **44k/s**     | 31k/s        |
+| 700,000x set w/ noreply | 87k/s            | **97k/s**       | **1225k/s**   | 87k/s        |
+| 100,000x version        | **37k/s**        | 21k/s           | **54k/s**     | 33k/s        |
 
-* 100,000x get (constant key): 26k/s  - 40k/s
-* 100,000x set (constant key): 27k/s  - 44k/s
-* 700,000x set w/ noreply (constant key): 87k/s  - 1225k/s
-* 100,000x version: 37k/s  - 54k/s
-
-emcache:
-
-* 100,000x get (constant key): 18k/s  - 20k/s
-* 100,000x set (constant key): 16k/s  - 31k/s
-* 700,000x set w/ noreply (constant key): 97k/s  - 87k/s
-* 100,000x version: 21k/s  - 33k/s
+The pypy version was run 10x longer to account for jit warmup, but the rate is
+still averaged over the whole run.
 
 
 ### Fill cache to a certain percentage
@@ -36,13 +32,9 @@ emcache:
 * connecting to 127.0.0.1
 * key: 10 printable chars, random
 * value: 100-1000 bytes, random
+* 512mb size cache
+* rate averaged over the whole run
 
-memcached:
-
-* 55k items/s - 31mb/s
-* 198k items/s - 111mb/s  (pypy)
-
-emcache:
-
-* 50k items/s - 28mb/s
-* 162k items/s - 90mb/s  (pypy)
+| Task              | memcache/cpython   | emcache/cpython | memcache/pypy        | emcache/pypy    |
+|-------------------|-------------------:|----------------:|---------------------:|----------------:|
+| Fill cache to 80% | **55k/s - 31mb/s** | 50k/s - 28mb/s  | **198k/s - 111mb/s** | 162k/s - 90mb/s |
