@@ -10,6 +10,7 @@ parallelism.
 
 ### Set/get a constant key
 
+* against commit 67c5cda (Jan 5, 2016)
 * single threaded client
 * connecting to 127.0.0.1
 * key: 'x'
@@ -28,6 +29,7 @@ still averaged over the whole run.
 
 ### Fill cache to a certain percentage
 
+* against commit 67c5cda (Jan 5, 2016)
 * using 4 client threads
 * connecting to 127.0.0.1
 * key: 10 printable chars, random
