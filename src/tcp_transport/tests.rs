@@ -327,6 +327,19 @@ fn test_read_cmd_get_malformed() {
 }
 
 
+// Command parsing: Gets
+
+#[test]
+fn test_read_cmd_gets_one_key() {
+    let cmd_str = "gets x\r\n".to_string();
+    let ts = TestStream::new(cmd_str.into_bytes());
+    let mut transport = TcpTransport::new(ts);
+
+    let cmd = transport.read_cmd().unwrap();
+    assert_eq!(cmd, Cmd::Get(Get::one(GetInstr::Gets, "x")));
+}
+
+
 // Command parsing: Incr
 
 #[test]
@@ -710,6 +723,20 @@ fn test_write_resp_value_two() {
     let resp = Resp::Values(vec![val1, val2]);
     transport.write_resp(&resp).unwrap();
     let expected = "VALUE x 15 3\r\nabc\r\nVALUE y 17 3\r\ndef\r\nEND\r\n";
+    let exp_bytes = expected.to_string().into_bytes();
+    assert_eq!(transport.get_stream().outgoing, exp_bytes);
+}
+
+#[test]
+fn test_write_resp_value_one_cas() {
+    let ts = TestStream::new(vec![]);
+    let mut transport = TcpTransport::new(ts);
+
+    let mut val1 = Value::new("x", 15, "abc".to_string().into_bytes());
+    val1.with_cas_unique(45);
+    let resp = Resp::Values(vec![val1]);
+    transport.write_resp(&resp).unwrap();
+    let expected = "VALUE x 15 3 45\r\nabc\r\nEND\r\n";
     let exp_bytes = expected.to_string().into_bytes();
     assert_eq!(transport.get_stream().outgoing, exp_bytes);
 }

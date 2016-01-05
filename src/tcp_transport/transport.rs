@@ -287,7 +287,7 @@ impl<T: Read + Write> TcpTransport<T> {
         }))
     }
 
-    pub fn parse_cmd_get(&mut self) -> TcpTransportResult<Cmd> {
+    pub fn parse_cmd_get(&mut self, instr: GetInstr) -> TcpTransportResult<Cmd> {
         let mut keys = vec![];
 
         loop {
@@ -301,7 +301,7 @@ impl<T: Read + Write> TcpTransport<T> {
         }
 
         Ok(Cmd::Get(Get {
-            instr: GetInstr::Get,
+            instr: instr,
             keys: keys,
         }))
     }
@@ -455,7 +455,9 @@ impl<T: Read + Write> TcpTransport<T> {
 
         // TODO replace if's with something nicer
         if keyword_str == "get" {
-            return self.parse_cmd_get();
+            return self.parse_cmd_get(GetInstr::Get);
+        } else if keyword_str == "gets" {
+            return self.parse_cmd_get(GetInstr::Gets);
         } else if keyword_str == "set" {
             return self.parse_cmd_set(SetInstr::Set);
         } else if keyword_str == "add" {
@@ -543,6 +545,10 @@ impl<T: Read + Write> TcpTransport<T> {
                     try!(self.write_string(&value.flags.to_string())); // flags
                     try!(self.write_string(" ")); // space
                     try!(self.write_string(&value.data.len().to_string())); // bytelen
+                    if !value.cas_unique.is_none() {
+                        try!(self.write_string(" ")); // space
+                        try!(self.write_string(&value.cas_unique.unwrap().to_string())); // flags
+                    }
                     try!(self.write_string(&"\r\n".to_string())); // newline
                     try!(self.write_bytes(&value.data)); // data block
                     try!(self.write_string(&"\r\n".to_string())); // newline
