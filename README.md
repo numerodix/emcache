@@ -9,10 +9,8 @@ A toy implementation of memcached in Rust.
 
 * Implements the [memcached protocol](doc/Protocol-support.md).
 * Bounded cache with LRU behavior.
-* Cache item lifetime can be controlled both globally and on a per-item basis.
 * Concurrency model based on thread-per-connection.
 * [Modular architecture](doc/Architecture.md). Transport layer is separate from storage and is configured in a N:1 topology with communication using immutable Cmd/Resp values over async channels.
-* Numerous opportunities for optimization by eliminating data copying.
 * Fairly good test coverage.
 * No config file, logging or daemonization yet.
 * [Performance](pyemc/ABOUT.md) is roughly 1/3 of memcached (which uses async io).
