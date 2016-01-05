@@ -273,6 +273,7 @@ impl Driver {
                     let val_st = CmdValue {
                         key: key_str,
                         flags: value.get_flags().clone(),
+                        cas_unique: None,
                         data: value.get_item().clone(),
                     };
                     values.push(val_st);

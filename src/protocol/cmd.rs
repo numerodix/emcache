@@ -173,16 +173,26 @@ impl Stat {
 pub struct Value {
     pub key: String,
     pub flags: u16,
+    pub cas_unique: Option<u64>,
     pub data: Vec<u8>,
 }
 
 impl Value {
-    pub fn new(key: &str, flags: u16, data: Vec<u8>) -> Value {
+    pub fn new(key: &str,
+               flags: u16,
+               data: Vec<u8>)
+               -> Value {
         Value {
             key: key.to_string(),
             flags: flags,
+            cas_unique: None,
             data: data,
         }
+    }
+
+    pub fn with_cas_unique(&mut self, cas_unique: u64) -> &mut Self {
+        self.cas_unique = Some(cas_unique);
+        self
     }
 }
 
