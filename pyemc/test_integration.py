@@ -280,9 +280,8 @@ class TestApi(TestCase):
 
         # verify that it worked
         item = self.client.get(key)
-        val2 = item.value
 
-        assert val == val2
+        assert val == item.value
 
     # Gets
 
@@ -295,7 +294,6 @@ class TestApi(TestCase):
         item = self.client.gets(key)
 
         # set again, cas_unique should have changed
-        val2 = generate_random_data(10)
         self.client.set(key, val)
         item2 = self.client.gets(key)
         assert item.cas_unique != item2.cas_unique
