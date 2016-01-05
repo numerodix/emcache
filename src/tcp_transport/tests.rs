@@ -215,6 +215,33 @@ fn test_read_cmd_append() {
 }
 
 
+// Command parsing: Cas
+
+#[test]
+fn test_read_cmd_cas() {
+    let cmd_str = "cas x 15 0 3 44 \r\nabc\r\n".to_string();
+    let ts = TestStream::new(cmd_str.into_bytes());
+    let mut transport = TcpTransport::new(ts);
+
+    let cmd = transport.read_cmd().unwrap();
+    let mut exp = Set::new(SetInstr::Cas, "x", 15, 0, vec![97, 98, 99], false);
+    exp.with_cas_unique(44);
+    assert_eq!(cmd, Cmd::Set(exp));
+}
+
+#[test]
+fn test_read_cmd_cas_noreply() {
+    let cmd_str = "cas x 15 0 3 44 noreply\r\nabc\r\n".to_string();
+    let ts = TestStream::new(cmd_str.into_bytes());
+    let mut transport = TcpTransport::new(ts);
+
+    let cmd = transport.read_cmd().unwrap();
+    let mut exp = Set::new(SetInstr::Cas, "x", 15, 0, vec![97, 98, 99], true);
+    exp.with_cas_unique(44);
+    assert_eq!(cmd, Cmd::Set(exp));
+}
+
+
 // Command parsing: Decr
 
 #[test]

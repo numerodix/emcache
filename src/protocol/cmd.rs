@@ -110,6 +110,7 @@ pub struct Set {
     pub flags: u16, // Arbitrary bit pattern chosen by the client
     pub exptime: u32, // Relative (secs) or absolute (unixtime) expiry time
     pub data: Vec<u8>, // Binary data
+    pub cas_unique: Option<u64>, // Client cookie used for conditional updates
     pub noreply: bool, // Indicates whether the server should reply to the set
 }
 
@@ -127,8 +128,14 @@ impl Set {
             flags: flags,
             exptime: exptime,
             data: data,
+            cas_unique: None,
             noreply: noreply,
         }
+    }
+
+    pub fn with_cas_unique(&mut self, cas_unique: u64) -> &mut Self {
+        self.cas_unique = Some(cas_unique);
+        self
     }
 }
 

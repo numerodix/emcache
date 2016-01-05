@@ -374,6 +374,17 @@ impl<T: Read + Write> TcpTransport<T> {
             try!(as_number::<u64>(bytelen))
         };
 
+        // parse cas_unique
+        let cas_unique_opt = {
+            if instr == SetInstr::Cas {
+                let (cas_unique, end_of_line) = try!(self.read_word_in_line());
+                let cas_unique = try!(as_number(cas_unique));
+                Some(cas_unique)
+            } else {
+                None
+            }
+        };
+
         // parse noreply
         let noreply_flag = {
             let (noreply, end_of_line) = try!(self.read_word_in_line());
@@ -407,6 +418,7 @@ impl<T: Read + Write> TcpTransport<T> {
             flags: flags_num,
             exptime: exptime_num,
             data: value,
+            cas_unique: cas_unique_opt,
             noreply: noreply_flag,
         }));
     }
@@ -460,6 +472,8 @@ impl<T: Read + Write> TcpTransport<T> {
             return self.parse_cmd_get(GetInstr::Gets);
         } else if keyword_str == "set" {
             return self.parse_cmd_set(SetInstr::Set);
+        } else if keyword_str == "cas" {
+            return self.parse_cmd_set(SetInstr::Cas);
         } else if keyword_str == "add" {
             return self.parse_cmd_set(SetInstr::Add);
         } else if keyword_str == "replace" {

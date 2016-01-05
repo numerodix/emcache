@@ -230,6 +230,61 @@ impl Driver {
                           })
     }
 
+    fn do_cas(&mut self, set: Set) -> Resp {
+        let key = Key::new(set.key.into_bytes());
+
+        // If the key is not set we bail
+        let rv = self.cache.contains_key(&key);
+        maybe_reply_stmt!(!set.noreply, match rv {
+                Ok(_) => {
+                    // Update stats
+                    self.stats.cas_hits += 1;
+
+                    None
+                }
+                Err(CacheError::KeyNotFound) => {
+                    // Update stats
+                    self.stats.cas_misses += 1;
+
+                    Some(Resp::NotFound)
+                }
+                Err(ref err) => Some(from_cache_err(err))
+        });
+
+        // If cas_unique is out of date we bail
+        maybe_reply_stmt!(!set.noreply, {
+            let rv = self.cache.get(&key);
+            let value = rv.unwrap();
+
+            match *value.get_cas_id() == set.cas_unique.unwrap() {
+                true => None,
+                false => {
+                    // Update stats
+                    self.stats.cas_badval += 1;
+
+                    Some(Resp::Exists)
+                }
+            }
+        });
+
+        // Load the value
+        let rv = self.cache.remove(&key);
+        let mut value = rv.unwrap();
+
+        // Set all the data the client sent
+        value.set_item(set.data);
+        value.set_flags(set.flags);
+        self.set_exptime(&mut value, set.exptime);
+
+        let rv = self.cache.set(key, value);
+
+        maybe_reply_expr!(!set.noreply,
+                          match rv {
+                              Ok(_) => Resp::Stored,
+                              Err(ref err) => from_cache_err(err),
+                          })
+    }
+
     fn do_delete(&mut self, delete: Delete) -> Resp {
         let key = Key::new(delete.key.clone().into_bytes());
 
@@ -625,7 +680,7 @@ impl Driver {
                     SetInstr::Prepend => self.do_prepend(set),
                     SetInstr::Replace => self.do_replace(set),
                     SetInstr::Set => self.do_set(set),
-                    _ => Resp::Error,  // TODO
+                    SetInstr::Cas => self.do_cas(set),
                 }
             }
             Cmd::Stats => self.do_stats(),
