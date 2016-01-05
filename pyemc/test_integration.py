@@ -268,11 +268,8 @@ class TestApi(TestCase):
         self.client.set(key, val, flags=flags)
         item = self.client.get(key)
 
-        flags2 = item.flags
-        val2 = item.value
-
-        assert val == val2
-        assert flags == flags2
+        assert val == item.value
+        assert flags == item.flags
 
     def test_set_noreply(self):
         key = generate_random_key(10)
