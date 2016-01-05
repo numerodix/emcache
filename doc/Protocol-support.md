@@ -10,6 +10,7 @@ We follow [the official protocol specification](https://github.com/memcached/mem
 * DECR
 * DELETE
 * GET
+* GETS
 * INCR
 * QUIT
 * PREPEND
@@ -27,7 +28,7 @@ We follow [the official protocol specification](https://github.com/memcached/mem
 
 ## Plan to support
 
-* CAS/GETS
+* CAS
 
 
 ## No plan to support
