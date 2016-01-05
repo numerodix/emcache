@@ -55,22 +55,25 @@ def create_exc(server_resp, exc_msg):
 
 
 class Item(object):
-    def __init__(self, key, flags, value):
+    def __init__(self, key, flags, value, cas_unique=None):
         self.key = key
         self.flags = flags
         self.value = value
+        self.cas_unique = cas_unique
 
     def __repr__(self):
-        return '<%s key=%r, flags=%r, value=%r>' % (
+        return '<%s key=%r, flags=%r, cas_unique=%r, value=%r>' % (
             self.__class__.__name__,
             self.key,
             self.flags,
+            self.cas_unique,
             self.value,
         )
 
 
 class MemcacheClient(object):
-    rx_value = re.compile('VALUE (?P<key>[^ ]*) (?P<flags>\d+) (?P<len>\d+)')
+    rx_get_value = re.compile('VALUE (?P<key>[^ ]*) (?P<flags>\d+) (?P<len>\d+)')
+    rx_gets_value = re.compile('VALUE (?P<key>[^ ]*) (?P<flags>\d+) (?P<len>\d+) (?P<cas>\d+)')
     rx_inc_value = re.compile('(?P<value>\d+)')
 
     def __init__(self, host, port):
@@ -116,9 +119,18 @@ class MemcacheClient(object):
                 raise create_exc(resp, 'Could not perform flush_all')
 
     def get_multi(self, keys):
+        return self._get_multi_family('get', keys)
+
+    def gets_multi(self, keys):
+        return self._get_multi_family('gets', keys)
+
+    def _get_multi_family(self, instr, keys):
         # prepare command
         keys = ' '.join(keys)
-        command = 'get %s\r\n' % keys
+        command = '%(instr)s %(keys)s\r\n' % {
+            'instr': instr,
+            'keys': keys,
+        }
 
         # execute command
         self.stream.write(command)
@@ -130,7 +142,13 @@ class MemcacheClient(object):
         while True:
             line = self.stream.read_line()
             try:
-                key, flags, bytelen = self.rx_value.findall(line)[0]
+                cas_unique = None
+
+                if instr == 'get':
+                    key, flags, bytelen = self.rx_get_value.findall(line)[0]
+                elif instr == 'gets':
+                    key, flags, bytelen, cas_unique = self.rx_gets_value.findall(line)[0]
+
                 flags = int(flags)
                 bytelen = int(bytelen)
             except IndexError:
@@ -142,7 +160,7 @@ class MemcacheClient(object):
             data = self.stream.read_exact(bytelen + 2)
 
             data = data[:-2]
-            item = Item(key, flags, data)
+            item = Item(key, flags, data, cas_unique=cas_unique)
             dct[key] = item
 
             if self.stream.peek_contains(stream_terminator, consume=True):
@@ -153,6 +171,15 @@ class MemcacheClient(object):
     def get(self, key):
         keys = (key,)
         dct = self.get_multi(keys)
+
+        try:
+            return dct[key]
+        except KeyError:
+            raise NotFoundError('The item with key %r was not found' % key)
+
+    def gets(self, key):
+        keys = (key,)
+        dct = self.gets_multi(keys)
 
         try:
             return dct[key]

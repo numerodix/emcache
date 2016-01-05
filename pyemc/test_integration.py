@@ -230,6 +230,37 @@ class TestApi(TestCase):
 
         assert val == val2
 
+    # Gets
+
+    def test_gets(self):
+        key = generate_random_key(8)
+        val = generate_random_data(10)
+
+        # set a key, record cas_unique
+        self.client.set(key, val)
+        item = self.client.gets(key)
+
+        # set again, cas_unique should have changed
+        val2 = generate_random_data(10)
+        self.client.set(key, val)
+        item2 = self.client.gets(key)
+        assert item.cas_unique != item2.cas_unique
+
+    def test_gets_multi(self):
+        key1 = generate_random_key(8)
+        val1 = generate_random_data(10)
+        key2 = generate_random_key(8)
+        val2 = generate_random_data(10)
+
+        # i can fetch values as normal, cas_unique is set
+        self.client.set(key1, val1)
+        self.client.set(key2, val2)
+        dct = self.client.gets_multi([key1, key2])
+        assert dct[key1].value == val1
+        assert dct[key2].value == val2
+        assert dct[key1].cas_unique is not None
+        assert dct[key2].cas_unique is not None
+
     # Incr
 
     def test_incr(self):
