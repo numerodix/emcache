@@ -70,6 +70,10 @@ class TestApi(TestCase):
         key = generate_random_key(8)
         val = generate_random_data(10)
 
+        # try to update a key that doesn't exist
+        with self.assert_raises(NotFoundError):
+            self.client.cas(key, val, cas_unique='1')
+
         # set a key
         self.client.set(key, val)
 
@@ -395,7 +399,8 @@ class TestApi(TestCase):
 
     # Stats
 
-    def test_get_stats(self):
+    # name mangle to get it to run last so we see stats from other tests
+    def test_z_get_stats(self):
         dct = self.client.get_stats()
         for (key, value) in dct.items():
             self.write('%s: %s' % (key, value))
