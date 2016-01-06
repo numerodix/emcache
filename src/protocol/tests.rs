@@ -3,6 +3,8 @@ use platform::process::get_pid;
 use platform::time::sleep_secs;
 use platform::time::time_now;
 use storage::Cache;
+use storage::Key as SKey;
+use storage::Value as SValue;
 
 use super::Driver;
 use super::cmd::Cmd;
@@ -261,7 +263,7 @@ fn test_cmd_decr() {
 
 #[test]
 fn test_cmd_delete() {
-    let cache = Cache::new(100);
+    let cache = Cache::new(1024);
     let mut driver = Driver::new(cache);
 
     // Try to delete a key that does not exist
@@ -396,7 +398,7 @@ fn test_cmd_set_and_get_a_key() {
 
 #[test]
 fn test_cmd_set_and_get_multiple_keys() {
-    let cache = Cache::new(100);
+    let cache = Cache::new(1024);
     let mut driver = Driver::new(cache);
 
     let val1 = vec![1];
@@ -653,8 +655,14 @@ fn test_cmd_stats() {
     let cmd = Cmd::Stats;
     let resp = driver.run(cmd);
 
+    // We need to know the bytecount, so figure out how much space the item we
+    // stored needs
+    let skey = SKey::new(vec![1]);
+    let svalue = SValue::new(vec![1, 2]);
+    let item_size = skey.mem_size() as u64 + svalue.mem_size() as u64;
+
     let st_pid = Stat::new("pid", get_pid().to_string());
-    let st_bytes = Stat::new("bytes", "3".to_string());
+    let st_bytes = Stat::new("bytes", item_size.to_string());
     let st_uptime = Stat::new("uptime", "0".to_string());
     let st_time = Stat::new("time", (time_now() as u64).to_string());
     let st_version = Stat::new("version", get_version_string());

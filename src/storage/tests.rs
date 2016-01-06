@@ -82,7 +82,8 @@ fn test_key_not_found() {
 
 #[test]
 fn test_store_beyond_capacity_lru() {
-    let mut cache = Cache::new(3);
+    let item_size = key!(1).mem_size() as u64 + value!(1).mem_size() as u64;
+    let mut cache = Cache::new(item_size);
 
     // we've now reached capacity
     let rv = cache.set(key!(1), value!(8));
@@ -127,7 +128,9 @@ fn test_store_beyond_capacity_lru() {
 
 #[test]
 fn test_multiple_evictions() {
-    let mut cache = Cache::new(4);
+    // Get a cache just big enough to store two items with short key/val
+    let item_size = key!(1).mem_size() as u64 + value!(1).mem_size() as u64;
+    let mut cache = Cache::new(item_size * 2);
 
     // Set a key
     let rv = cache.set(key!(1), value!(8));
@@ -302,13 +305,14 @@ fn test_metrics() {
     // NOTE: The most crucial metric is bytes, so make sure to test every data
     // path that affects it.
 
-    let mut cache = Cache::new(4);
+    let item_size = key!(1).mem_size() as u64 + value!(1, 2).mem_size() as u64;
+    let mut cache = Cache::new(item_size);
     assert_eq!(cache.get_stats().bytes, 0);
     assert_eq!(cache.get_stats().total_items, 0);
 
     // Set a key
     cache.set(key!(1), value!(2, 3)).unwrap();
-    assert_eq!(cache.get_stats().bytes, 3);
+    assert_eq!(cache.get_stats().bytes, item_size);
     assert_eq!(cache.get_stats().evictions, 0);
     assert_eq!(cache.get_stats().get_hits, 0);
     assert_eq!(cache.get_stats().get_misses, 0);
@@ -318,7 +322,7 @@ fn test_metrics() {
 
     // Set a different key, evicting the first
     cache.set(key!(5), value!(6, 7)).unwrap();
-    assert_eq!(cache.get_stats().bytes, 3);
+    assert_eq!(cache.get_stats().bytes, item_size);
     assert_eq!(cache.get_stats().evictions, 1);
     assert_eq!(cache.get_stats().get_hits, 0);
     assert_eq!(cache.get_stats().get_misses, 0);
@@ -327,8 +331,8 @@ fn test_metrics() {
     assert_eq!(cache.get_stats().total_items, 2);
 
     // Re-set the key with a different value
-    cache.set(key!(5), value!(6, 7, 8)).unwrap();
-    assert_eq!(cache.get_stats().bytes, 4);
+    cache.set(key!(5), value!(6, 8)).unwrap();
+    assert_eq!(cache.get_stats().bytes, item_size);
     assert_eq!(cache.get_stats().evictions, 1);
     assert_eq!(cache.get_stats().get_hits, 0);
     assert_eq!(cache.get_stats().get_misses, 0);
@@ -338,7 +342,7 @@ fn test_metrics() {
 
     // Retrieve the key successfully
     cache.get(&key!(5)).unwrap();
-    assert_eq!(cache.get_stats().bytes, 4);
+    assert_eq!(cache.get_stats().bytes, item_size);
     assert_eq!(cache.get_stats().evictions, 1);
     assert_eq!(cache.get_stats().get_hits, 1);
     assert_eq!(cache.get_stats().get_misses, 0);
@@ -348,7 +352,7 @@ fn test_metrics() {
 
     // Test for the key successfully
     cache.contains_key(&key!(5)).unwrap();
-    assert_eq!(cache.get_stats().bytes, 4);
+    assert_eq!(cache.get_stats().bytes, item_size);
     assert_eq!(cache.get_stats().evictions, 1);
     assert_eq!(cache.get_stats().get_hits, 2);
     assert_eq!(cache.get_stats().get_misses, 0);
@@ -358,7 +362,7 @@ fn test_metrics() {
 
     // Retrieve a key that doesn't exist
     cache.get(&key!(17)).unwrap_err();
-    assert_eq!(cache.get_stats().bytes, 4);
+    assert_eq!(cache.get_stats().bytes, item_size);
     assert_eq!(cache.get_stats().evictions, 1);
     assert_eq!(cache.get_stats().get_hits, 2);
     assert_eq!(cache.get_stats().get_misses, 1);
@@ -367,12 +371,12 @@ fn test_metrics() {
     assert_eq!(cache.get_stats().total_items, 3);
 
     // Create an expired value
-    let mut value = value!(10, 11, 12);
+    let mut value = value!(11, 12);
     value.set_exptime(time_now() - 1.0);
 
     // Set a key that expires immediately
     cache.set(key!(9), value).unwrap();
-    assert_eq!(cache.get_stats().bytes, 4);
+    assert_eq!(cache.get_stats().bytes, item_size);
     assert_eq!(cache.get_stats().evictions, 2);
     assert_eq!(cache.get_stats().get_hits, 2);
     assert_eq!(cache.get_stats().get_misses, 1);
@@ -391,8 +395,8 @@ fn test_metrics() {
     assert_eq!(cache.get_stats().total_items, 4);
 
     // Set another key
-    cache.set(key!(21), value!(12)).unwrap();
-    assert_eq!(cache.get_stats().bytes, 2);
+    cache.set(key!(21), value!(12, 13)).unwrap();
+    assert_eq!(cache.get_stats().bytes, item_size);
     assert_eq!(cache.get_stats().evictions, 2);
     assert_eq!(cache.get_stats().get_hits, 2);
     assert_eq!(cache.get_stats().get_misses, 2);

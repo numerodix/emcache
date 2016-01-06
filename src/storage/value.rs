@@ -1,3 +1,5 @@
+use std::mem;
+
 use platform::time::time_now;
 
 
@@ -96,5 +98,9 @@ impl Value {
 
     pub fn len(&self) -> usize {
         self.item.len()
+    }
+
+    pub fn mem_size(&self) -> usize {
+        mem::size_of::<Self>() + self.item.len()
     }
 }

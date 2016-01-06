@@ -2,7 +2,7 @@
 
 [![Build Status](https://travis-ci.org/numerodix/emcache.svg?branch=master)](https://travis-ci.org/numerodix/emcache)
 
-A toy implementation of memcached in Rust.
+An implementation of memcached in Rust.
 
 
 ## Features and todo list
@@ -13,7 +13,7 @@ A toy implementation of memcached in Rust.
 * [Modular architecture](doc/Architecture.md). Transport layer is separate from storage and is configured in a N:1 topology with communication using immutable Cmd/Resp values over async channels.
 * Fairly good test coverage.
 * No config file, logging or daemonization yet.
-* [Performance](pyemc/ABOUT.md) is roughly 1/3 of memcached (which uses async io).
+* [Performance](pyemc/ABOUT.md) is generally within 0.5-1x of memcached.
 * Currently (Dec 2015) only builds against rust-nightly due to linked-hash-map dependency.
 
 
@@ -30,3 +30,10 @@ To run unit tests:
 To run the server:
     
     $ ./run_server.sh
+
+The Python integration test suite supplies various forms of tests. To run them
+against a running server:
+
+    $ python -m pyemc.main -p $PORT            # integration tests
+    $ python -m pyemc.main -p $PORT --stress   # burn in tests
+    $ python -m pyemc.main -p $PORT --fill 45  # fill to 45% capacity

@@ -180,7 +180,7 @@ class TestApi(TestCase):
             self.client.get(key)
 
         # sleep a bit to make sure we don't get any rounding errors on the
-        # exact flush timestamp
+        # exact flush timestamp that might affect later stores
         time.sleep(1.5)
 
         # key set after flush works as expected
@@ -268,11 +268,8 @@ class TestApi(TestCase):
         self.client.set(key, val, flags=flags)
         item = self.client.get(key)
 
-        flags2 = item.flags
-        val2 = item.value
-
-        assert val == val2
-        assert flags == flags2
+        assert val == item.value
+        assert flags == item.flags
 
     def test_set_noreply(self):
         key = generate_random_key(10)
@@ -283,9 +280,8 @@ class TestApi(TestCase):
 
         # verify that it worked
         item = self.client.get(key)
-        val2 = item.value
 
-        assert val == val2
+        assert val == item.value
 
     # Gets
 
@@ -298,7 +294,6 @@ class TestApi(TestCase):
         item = self.client.gets(key)
 
         # set again, cas_unique should have changed
-        val2 = generate_random_data(10)
         self.client.set(key, val)
         item2 = self.client.gets(key)
         assert item.cas_unique != item2.cas_unique
