@@ -31,7 +31,7 @@ still averaged over the whole run.
 
 Test parameters:
 
-* Against commit 244c8f5 (Jan 6, 2016)
+* Against commit d81b62a (Jan 6, 2016)
 * Using 4 client threads
 * Connecting to 127.0.0.1
 * Cache size: 512mb
@@ -45,4 +45,4 @@ Fill mode:
 
 | Task              | memcached/cpython     | emcache/cpython   | memcached/pypy   | emcache/pypy         |
 |-------------------|----------------------:|------------------:|-----------------:|---------------------:|
-| Fill cache to 80% | **490k/s - 274mb/s**  | 489k/s - 273mb/s  | 1.1m/s - 621mb/s | **1.1m/s - 636mb/s** |
+| Fill cache to 80% | **567k/s - 317mb/s**  | 503k/s - 281mb/s  | 594k/s - 332mb/s | **614k/s - 343mb/s** |
