@@ -46,3 +46,28 @@ Fill mode:
 | Task              | memcached/cpython     | emcache/cpython   | memcached/pypy   | emcache/pypy         |
 |-------------------|----------------------:|------------------:|-----------------:|---------------------:|
 | Fill cache to 80% | **567k/s - 317mb/s**  | 503k/s - 281mb/s  | 594k/s - 332mb/s | **614k/s - 343mb/s** |
+
+
+### Memory efficiency - per commit 8741b0b (Jan 6, 2016)
+
+Ideally, emcache would use only as much memory as the user actually stores. In
+practice, there is a certain overhead because we also need various
+datastructures, and each transport needs a few buffers to operate.
+
+If we look at storage alone, there is a certain overhead to storing keys
+(storing the vector is 24 bytes on 64bit) and values (vector + flags + exptime
++ atime + cas_unique).
+
+A key is currently 24 bytes + the key data.
+A value is currently 56 bytes + the value data.
+
+For really small keys (ints), the overhead completely dominates the user data.
+
+For the fill test we see these numbers:
+
+* cache capacity is 1024mb
+* cache utilization is 80%
+
+| User stored size | emcache bytes stat | process residental size |
+|-----------------:|-------------------:|------------------------:|
+| 716mb            | 819mb (87% eff.)   | 993mb (72% eff.)        |
