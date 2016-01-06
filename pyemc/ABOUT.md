@@ -35,7 +35,7 @@ Test parameters:
 * Using 4 client threads
 * Connecting to 127.0.0.1
 * Cache size: 512mb
-* Rate is averaged over the whole run
+* Rate is averaged over the whole run (measuring items/s and bytes/s)
 
 Fill mode:
 
