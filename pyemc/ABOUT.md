@@ -54,19 +54,17 @@ Ideally, emcache would use only as much memory as the user actually stores. In
 practice, there is a certain overhead because we also need various
 datastructures, and each transport needs a few buffers to operate.
 
-If we look at storage alone, there is a certain overhead to storing keys
-(storing the vector is 24 bytes on 64bit) and values (vector + flags + exptime
-+ atime + cas_unique).
+If we look at storage alone, there is a certain overhead to storing keys (storing the vector is 24 bytes on 64bit) and values (vector + flags + exptime + atime + cas_unique).
 
-A key is currently 24 bytes + the key data.
-A value is currently 56 bytes + the value data.
+* A key is currently 24 bytes + the key data.
+* A value is currently 56 bytes + the value data.
 
 For really small keys (ints), the overhead completely dominates the user data.
 
 For the fill test we see these numbers:
 
-* cache capacity is 1024mb
-* cache utilization is 80%
+* Cache capacity is 1024mb
+* Cache utilization is 80%
 
 | User stored size | emcache bytes stat | process residental size |
 |-----------------:|-------------------:|------------------------:|
