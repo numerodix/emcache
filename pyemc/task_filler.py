@@ -41,6 +41,8 @@ class CacheFillerTask(Task):
         state.duration = state.time_stop - state.time_start
 
         time_cum = sum([m.time_cum for m in metrics_list])
+        time_total_cum = sum([m.time_total_cum for m in metrics_list])
+        overhead_pct = 100 * (time_total_cum - time_cum) / time_total_cum if time_total_cum else 0
 
         items_cum = sum([m.items_cum for m in metrics_list])
         rate_items_cum = float(items_cum) / float(time_cum) if time_cum > 0 else 0
@@ -56,6 +58,8 @@ class CacheFillerTask(Task):
         self.write("Done filling, took %.2fs to insert %s items"
                    " (avg rate: %s items/s - %s bytes/s)" %
                    (state.duration, items_cum, rate_items_str, rate_bytes_str))
+        self.write("Spent %.2fs in network io, %.2fs in total (%.2f%% overhead - data gen, thread scheduling)"
+                   % (time_cum, time_total_cum, overhead_pct))
         self.write("Wrote %s bytes in total" % bytes_cum_str)
 
 
@@ -83,8 +87,11 @@ class CacheFillerTasklet(Tasklet):
         metrics.batch_size = 100
         metrics.bytes_cum = 0
         metrics.time_cum = 0
+        metrics.time_total_cum = 0
         metrics.items_cum = 0
         rate = -1
+
+        time_total_st = time.time()
 
         while metrics.pct_full < self.percentage:
             self.write("Cache is %.2f%% full of %s, inserting %s items (rate: %s items/s)" %
@@ -115,3 +122,4 @@ class CacheFillerTasklet(Tasklet):
             metrics.items_cum += metrics.batch_size
 
             metrics.pct_full = self.get_pct_full(client)
+            metrics.time_total_cum = time.time() - time_total_st
