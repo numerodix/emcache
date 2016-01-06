@@ -153,7 +153,7 @@ impl Driver {
         match convert_exptime(exptime) {
             Some(tm) => {
                 value.set_exptime(tm);
-            },
+            }
             None => (),
         }
     }
@@ -294,9 +294,7 @@ impl Driver {
         self.stats.cmd_flush += 1;
 
         let exptime: f64 = match flush_all.exptime {
-            Some(ref exptime) => {
-                convert_exptime(*exptime).unwrap()
-            }
+            Some(ref exptime) => convert_exptime(*exptime).unwrap(),
             None => time_now(),
         };
 
@@ -493,12 +491,8 @@ impl Driver {
         let mut value = {
             let rv = self.cache.remove(&key);
             match rv {
-                Ok(_) => {
-                    rv.unwrap()
-                }
-                Err(_) => {
-                    Value::empty()
-                }
+                Ok(_) => rv.unwrap(),
+                Err(_) => Value::empty(),
             }
         };
 

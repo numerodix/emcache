@@ -267,7 +267,8 @@ impl Cache {
 
                 // Figure out how much more space we need to store the new value
                 if value.mem_size() > prev_value.mem_size() {
-                    plus_delta = value.mem_size() as u64 - prev_value.mem_size() as u64;
+                    plus_delta = value.mem_size() as u64 -
+                                 prev_value.mem_size() as u64;
                 }
             }
 
@@ -288,7 +289,8 @@ impl Cache {
             // Do we have space for the new item?
             loop {
                 if self.stats.bytes + key.mem_size() as u64 +
-                   value.mem_size() as u64 <= self.capacity {
+                   value.mem_size() as u64 <=
+                   self.capacity {
                     break;
                 }
 
