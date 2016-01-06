@@ -98,6 +98,7 @@ class CacheFillerTasklet(Tasklet):
             values = [generate_random_data(100, 1000)
                       for _ in xrange(metrics.batch_size)]
 
+            time_st = time.time()
             for key, value in izip(keys, values):
                 if not self._runnable:
                     return
@@ -106,7 +107,6 @@ class CacheFillerTasklet(Tasklet):
 
                 metrics.bytes_cum += len(key) + len(value)
 
-            time_st = time.time()
             client.flush_pipeline()
             duration = time.time() - time_st
 
