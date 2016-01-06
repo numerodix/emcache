@@ -12,7 +12,7 @@ use super::Timing;
 
 
 #[test]
-#[should_panic]
+#[should_panic(expected="Tried to stop non-live timer: \"resp\"")]
 fn test_live_timers_name_mismatch() {
     let mut lt = LiveTimers::new();
 
