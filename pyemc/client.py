@@ -83,6 +83,10 @@ class MemcacheClient(object):
     rx_inc_value = re.compile('(?P<value>\d+)')
 
     def __init__(self, host, port, pipeline_mode=False):
+        '''NOTE: pipeline_mode mode will queue up all requests that have noreply
+        set *until* flush_pipeline is called. If you're interleaving those with
+        get() etc they will not be sent in the order you expect!'''
+
         self.stream = BufferedSocketStream(host, port)
         self.pipeline_mode = pipeline_mode
 
