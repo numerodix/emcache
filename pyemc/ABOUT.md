@@ -45,4 +45,4 @@ Fill mode:
 
 | Task              | memcached/cpython     | emcache/cpython   | memcached/pypy   | emcache/pypy         |
 |-------------------|----------------------:|------------------:|-----------------:|---------------------:|
-| Fill cache to 80% | **490k/s - 274mb/s**  | 489k/s - 273mb/s  | 1.0m/s - 589mb/s | **1.1m/s - 636mb/s** |
+| Fill cache to 80% | **490k/s - 274mb/s**  | 489k/s - 273mb/s  | 1.1m/s - 621mb/s | **1.1m/s - 636mb/s** |

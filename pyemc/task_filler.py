@@ -48,6 +48,7 @@ class CacheFillerTask(Task):
         rate_items_str = insert_number_commas(str(int(rate_items_cum)))
 
         bytes_cum = sum([m.bytes_cum for m in metrics_list])
+        bytes_cum_str = insert_number_commas(str(bytes_cum))
         rate_bytes_cum = float(bytes_cum) / float(time_cum) if time_cum > 0 else 0
         rate_bytes_cum = rate_bytes_cum * len(metrics_list)
         rate_bytes_str = insert_number_commas(str(int(rate_bytes_cum)))
@@ -55,6 +56,7 @@ class CacheFillerTask(Task):
         self.write("Done filling, took %.2fs to insert %s items"
                    " (avg rate: %s items/s - %s bytes/s)" %
                    (state.duration, items_cum, rate_items_str, rate_bytes_str))
+        self.write("Wrote %s bytes in total" % bytes_cum_str)
 
 
 class CacheFillerTasklet(Tasklet):
@@ -91,12 +93,10 @@ class CacheFillerTasklet(Tasklet):
 
             # Pre-generate keys and values to avoid timing this work
             # TODO allow tuning the sizes of keys and values
-            keys = [generate_random_key(10)
+            keys = [generate_random_key_uuid(10)
                     for _ in xrange(metrics.batch_size)]
             values = [generate_random_data(100, 1000)
                       for _ in xrange(metrics.batch_size)]
-
-            time_st = time.time()
 
             for key, value in izip(keys, values):
                 if not self._runnable:
@@ -106,9 +106,10 @@ class CacheFillerTasklet(Tasklet):
 
                 metrics.bytes_cum += len(key) + len(value)
 
+            time_st = time.time()
             client.flush_pipeline()
-
             duration = time.time() - time_st
+
             rate = metrics.batch_size / duration
             metrics.time_cum += duration
             metrics.items_cum += metrics.batch_size
