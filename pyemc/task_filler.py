@@ -45,19 +45,18 @@ class CacheFillerTask(Task):
         overhead_pct = 100 * (time_total_cum - time_cum) / time_total_cum if time_total_cum else 0
 
         items_cum = sum([m.items_cum for m in metrics_list])
+        items_cum_str = insert_number_commas(str(items_cum))
         rate_items_cum = float(items_cum) / float(time_cum) if time_cum > 0 else 0
-        rate_items_cum = rate_items_cum * len(metrics_list)
         rate_items_str = insert_number_commas(str(int(rate_items_cum)))
 
         bytes_cum = sum([m.bytes_cum for m in metrics_list])
         bytes_cum_str = insert_number_commas(str(bytes_cum))
         rate_bytes_cum = float(bytes_cum) / float(time_cum) if time_cum > 0 else 0
-        rate_bytes_cum = rate_bytes_cum * len(metrics_list)
         rate_bytes_str = insert_number_commas(str(int(rate_bytes_cum)))
 
         self.write("Done filling, took %.2fs to insert %s items"
-                   " (avg rate: %s items/s - %s bytes/s)" %
-                   (state.duration, items_cum, rate_items_str, rate_bytes_str))
+                   " (net avg rate: %s items/s - %s bytes/s)" %
+                   (state.duration, items_cum_str, rate_items_str, rate_bytes_str))
         self.write("Spent %.2fs in network io, %.2fs in total (%.2f%% overhead - data gen, thread scheduling)"
                    % (time_cum, time_total_cum, overhead_pct))
         self.write("Wrote %s bytes in total" % bytes_cum_str)
@@ -105,7 +104,6 @@ class CacheFillerTasklet(Tasklet):
             values = [generate_random_data(100, 1000)
                       for _ in xrange(metrics.batch_size)]
 
-            time_st = time.time()
             for key, value in izip(keys, values):
                 if not self._runnable:
                     return
@@ -114,6 +112,7 @@ class CacheFillerTasklet(Tasklet):
 
                 metrics.bytes_cum += len(key) + len(value)
 
+            time_st = time.time()
             client.flush_pipeline()
             duration = time.time() - time_st
 
