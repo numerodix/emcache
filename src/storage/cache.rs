@@ -34,13 +34,13 @@ impl CacheStats {
     }
 
     fn bytes_add(&mut self, key: &Key, value: &Value) {
-        self.bytes += key.len() as u64;
-        self.bytes += value.len() as u64;
+        self.bytes += key.mem_size() as u64;
+        self.bytes += value.mem_size() as u64;
     }
 
     fn bytes_subtract(&mut self, key: &Key, value: &Value) {
-        self.bytes -= key.len() as u64;
-        self.bytes -= value.len() as u64;
+        self.bytes -= key.mem_size() as u64;
+        self.bytes -= value.mem_size() as u64;
     }
 }
 
@@ -251,7 +251,7 @@ impl Cache {
         }
 
         // Does this item even fit into our cache at all?
-        if key.len() as u64 + value.len() as u64 > self.capacity {
+        if key.mem_size() as u64 + value.mem_size() as u64 > self.capacity {
             return Err(CacheError::CapacityExceeded);
         }
 
@@ -266,14 +266,14 @@ impl Cache {
                 self.stats.bytes_subtract(&key, &prev_value);
 
                 // Figure out how much more space we need to store the new value
-                if value.len() > prev_value.len() {
-                    plus_delta = value.len() as u64 - prev_value.len() as u64;
+                if value.mem_size() > prev_value.mem_size() {
+                    plus_delta = value.mem_size() as u64 - prev_value.mem_size() as u64;
                 }
             }
 
             // Would the new value exceed our capacity? Then we need to reclaim
             loop {
-                if self.stats.bytes + key.len() as u64 + plus_delta <=
+                if self.stats.bytes + key.mem_size() as u64 + plus_delta <=
                    self.capacity {
                     break;
                 }
@@ -287,8 +287,8 @@ impl Cache {
         } else {
             // Do we have space for the new item?
             loop {
-                if self.stats.bytes + key.len() as u64 +
-                   value.len() as u64 <= self.capacity {
+                if self.stats.bytes + key.mem_size() as u64 +
+                   value.mem_size() as u64 <= self.capacity {
                     break;
                 }
 
