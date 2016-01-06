@@ -70,6 +70,9 @@ class CacheFillerTasklet(Tasklet):
         return pct_full
 
     def run(self, client, metrics):
+        # use client.set + client.flush_pipeline pattern
+        client.pipeline_mode = True
+
         stats = client.get_stats()
         capacity = stats['limit_maxbytes']
         capacity_fmt = insert_number_commas(capacity)
@@ -102,6 +105,8 @@ class CacheFillerTasklet(Tasklet):
                 client.set(key, value, noreply=True)
 
                 metrics.bytes_cum += len(key) + len(value)
+
+            client.flush_pipeline()
 
             duration = time.time() - time_st
             rate = metrics.batch_size / duration

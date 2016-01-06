@@ -1,4 +1,8 @@
 import socket
+try:
+    import cStringIO as StringIO
+except ImportError:
+    import StringIO
 
 
 def connected(func):
@@ -18,6 +22,7 @@ class BufferedSocketStream(object):
         self.sock = None
         self.std_read_size = 4096
         self.read_ahead = ''
+        self.request_pipeline = StringIO.StringIO()
 
     def connect(self):
         self.sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -103,3 +108,11 @@ class BufferedSocketStream(object):
         '''Writes the complete buffer to the socket.'''
 
         self.sock.sendall(buf)
+
+    def write_pipelined(self, buf):
+        self.request_pipeline.write(buf)
+
+    @connected
+    def flush_pipeline(self):
+        self.sock.sendall(self.request_pipeline.getvalue())
+        self.request_pipeline.truncate(0)

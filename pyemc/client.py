@@ -5,14 +5,16 @@ from pyemc.socket_stream import BufferedSocketStream
 
 
 class MemcacheClientParams(object):
-    def __init__(self, host, port):
+    def __init__(self, host, port, pipeline_mode=False):
         self.host = host
         self.port = port
+        self.pipeline_mode = pipeline_mode
 
     def create_client(self):
         return MemcacheClient(
             host=self.host,
             port=self.port,
+            pipeline_mode=self.pipeline_mode,
         )
 
 
@@ -80,8 +82,9 @@ class MemcacheClient(object):
     rx_gets_value = re.compile('VALUE (?P<key>[^ ]*) (?P<flags>\d+) (?P<len>\d+) (?P<cas>\d+)')
     rx_inc_value = re.compile('(?P<value>\d+)')
 
-    def __init__(self, host, port):
+    def __init__(self, host, port, pipeline_mode=False):
         self.stream = BufferedSocketStream(host, port)
+        self.pipeline_mode = pipeline_mode
 
     def add(self, key, value, flags=0, exptime=0, noreply=False):
         return self._set_family(
@@ -125,7 +128,7 @@ class MemcacheClient(object):
         }
 
         # execute command
-        self.stream.write(command)
+        self.maybe_write_now(command, noreply=noreply)
 
         # parse the response
         if not noreply:
@@ -139,7 +142,7 @@ class MemcacheClient(object):
         command = 'flush_all\r\n'
 
         # execute command
-        self.stream.write(command)
+        self.maybe_write_now(command, noreply=noreply)
 
         # parse the response
         if not noreply:
@@ -249,7 +252,7 @@ class MemcacheClient(object):
         }
 
         # execute command
-        self.stream.write(command)
+        self.maybe_write_now(command, noreply=noreply)
 
         # read the response
         if not noreply:
@@ -313,7 +316,7 @@ class MemcacheClient(object):
         command = header + value + '\r\n'
 
         # execute command
-        self.stream.write(command)
+        self.maybe_write_now(command, noreply=noreply)
 
         # check for success
         if not noreply:
@@ -339,7 +342,7 @@ class MemcacheClient(object):
         }
 
         # execute command
-        self.stream.write(command)
+        self.maybe_write_now(command, noreply=noreply)
 
         # check for success
         if not noreply:
@@ -358,3 +361,12 @@ class MemcacheClient(object):
         resp = self.stream.read_line()
         kw, version = resp.split(' ', 1)
         return version.strip()
+
+    def maybe_write_now(self, command, noreply=False):
+        if noreply and self.pipeline_mode:
+            self.stream.write_pipelined(command)
+        else:
+            self.stream.write(command)
+
+    def flush_pipeline(self):
+        self.stream.flush_pipeline()
