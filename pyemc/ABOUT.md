@@ -29,14 +29,20 @@ still averaged over the whole run.
 
 ### Fill cache to a certain percentage
 
-* against commit 67c5cda (Jan 5, 2016)
-* using 4 client threads
-* connecting to 127.0.0.1
+Test parameters:
+
+* Against commit 244c8f5 (Jan 6, 2016)
+* Using 4 client threads
+* Connecting to 127.0.0.1
+* Cache size: 512mb
+* Rate is averaged over the whole run
+
+Fill mode:
+
 * key: 10 printable chars, random
 * value: 100-1000 bytes, random
-* 512mb size cache
-* rate averaged over the whole run
+* set w/noreply and pipelined in batches of 100
 
-| Task              | memcached/cpython   | emcache/cpython | memcached/pypy        | emcache/pypy    |
-|-------------------|--------------------:|----------------:|----------------------:|----------------:|
-| Fill cache to 80% | **55k/s - 31mb/s**  | 50k/s - 28mb/s  | **198k/s - 111mb/s**  | 162k/s - 90mb/s |
+| Task              | memcached/cpython     | emcache/cpython   | memcached/pypy   | emcache/pypy         |
+|-------------------|----------------------:|------------------:|-----------------:|---------------------:|
+| Fill cache to 80% | **490k/s - 274mb/s**  | 489k/s - 273mb/s  | 1.0m/s - 589mb/s | **1.1m/s - 636mb/s** |
