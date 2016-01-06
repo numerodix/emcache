@@ -8,7 +8,7 @@ use super::typedefs::CacheResult;
 use super::value::Value;
 
 
-struct CacheStats {
+pub struct CacheStats {
     pub bytes: u64, // Bytes currently stored
     pub evictions: u64, // Number of items removed to make space for new items
     pub get_hits: u64,
