@@ -48,11 +48,7 @@ impl TestStream {
         let mut read_cnt: usize = 0;
         let mut buf_cur: usize = 0;
 
-        loop {
-            if read_cnt >= read_len {
-                break;
-            }
-
+        while read_cnt < read_len {
             // We're going to read until the end of the buffer, then loop
             let left_to_read = cmp::min(read_len - read_cnt,
                                         self.incoming_rep.len() -
