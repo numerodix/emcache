@@ -60,7 +60,6 @@ impl MetricsTask {
             let avg = agg.avg.unwrap_or(-1.0) * 1000.0;
             let p0 = agg.p0.unwrap_or(-1.0) * 1000.0;
             let p99 = agg.p99.unwrap_or(-1.0) * 1000.0;
-            let p999 = agg.p999.unwrap_or(-1.0) * 1000.0;
 
             println!("{:30}  n: {:5}  p0: {:.3}ms  avg: {:.3}ms  p99: {:.3}ms",
                      name,
