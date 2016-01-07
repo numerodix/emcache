@@ -21,15 +21,16 @@ pub struct ListenerTask {
 impl ListenerTask {
     pub fn new(options: MemcacheOptions) -> ListenerTask {
         ListenerTask {
-            cur_transport_id: 0,
+            cur_transport_id: TransportId(0),
             options: options,
         }
     }
 
     fn next_transport_id(&mut self) -> TransportId {
-        let id = self.cur_transport_id.clone();
-        self.cur_transport_id += 1;
-        id
+        let TransportId(id) = self.cur_transport_id;
+        let next_id = id + 1;
+        self.cur_transport_id = TransportId(next_id);
+        TransportId(next_id)
     }
 
     pub fn run(&mut self) {
