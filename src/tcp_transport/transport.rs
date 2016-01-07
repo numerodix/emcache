@@ -3,7 +3,6 @@ use std::io::Write;
 
 use bufstream::BufStream;
 
-use common::consts;
 use protocol::cmd::Cmd;
 use protocol::cmd::Delete;
 use protocol::cmd::FlushAll;
@@ -134,7 +133,7 @@ impl<T: Read + Write> TcpTransport<T> {
             // Update stats
             self.stats.bytes_read += 1;
 
-            if byte[0] == consts::BYTE_SPACE {
+            if byte[0] == b' ' {
                 // We found a space
 
                 if word.is_empty() {
@@ -145,7 +144,7 @@ impl<T: Read + Write> TcpTransport<T> {
                 // All good, we've found the end of the word
                 break;
 
-            } else if byte[0] == consts::BYTE_CARRIAGE_RETURN {
+            } else if byte[0] == b'\r' {
                 // We found \r, we think it's the end of the line
 
                 // Try to read \n
@@ -160,7 +159,7 @@ impl<T: Read + Write> TcpTransport<T> {
                 self.stats.bytes_read += 1;
 
                 // If it's not a correct end of line we storm out in protest
-                if byte[0] != consts::BYTE_LINE_FEED {
+                if byte[0] != b'\n' {
                     return Err(TcpTransportError::LineReadError);
                 }
 
@@ -385,8 +384,7 @@ impl<T: Read + Write> TcpTransport<T> {
 
         // Verify that we found the line terminator
         let terminator = try!(self.read_bytes_exact(2));
-        if !terminator.ends_with(&[consts::BYTE_CARRIAGE_RETURN,
-                                   consts::BYTE_LINE_FEED]) {
+        if !terminator.ends_with(&[b'\r', b'\n']) {
             return Err(TcpTransportError::CommandParseError);
         }
 

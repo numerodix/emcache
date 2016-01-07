@@ -9,7 +9,8 @@ use tcp_transport::stats::TransportStats;
 
 // Cmd/Resp Protocol
 
-pub type TransportId = u64;
+#[derive(Debug, PartialEq, Eq, Hash, Clone, Copy)]
+pub struct TransportId(pub u64);
 
 pub type RespSender = Sender<Resp>;
 pub type RespReceiver = Receiver<Resp>;
