@@ -28,6 +28,16 @@ impl MetricsRecorder {
         }
     }
 
+    pub fn time_it<T>(&mut self, name: &str, closure: &mut FnMut() -> T) -> T {
+        self.start_timer(name);
+
+        let rv = closure();
+
+        self.stop_timer(name);
+        
+        rv
+    }
+
     pub fn start_timer(&mut self, name: &str) {
         if !self.enabled {
             return;

@@ -48,10 +48,9 @@ impl TransportTask {
             rec.start_timer("TransportTask:loop");
 
             // println!("Ready to read command...");
-            let rv = {
-                let _t = Timer::new(&mut rec, "TransportTask:read_cmd");
+            let rv = rec.time_it("TransportTask::read_cmd", &mut || {
                 transport.read_cmd()
-            };
+            });
 
             // If we couldn't parse the command return an error
             if !rv.is_ok() {
@@ -76,25 +75,22 @@ impl TransportTask {
             // Send the command to the driver
             let resp_tx_clone = resp_tx.clone();
             let stats = transport.get_stats_clone();
-            {
-                let _t = Timer::new(&mut rec, "TransportTask:send_cmd");
+            rec.time_it("TransportTask::send_cmd", &mut move || {
                 self.cmd_tx
                     .send((self.id, resp_tx_clone, cmd, stats))
                     .unwrap();
-            }
+            });
 
             // Obtain a response
-            let resp = {
-                let _t = Timer::new(&mut rec, "TransportTask:recv_resp");
+            let resp = rec.time_it("TransportTask::recv_resp", &mut || {
                 resp_rx.recv().unwrap()
-            };
+            });
 
             // Return a response
             // println!("Returning response: {:?}", &resp);
-            let rv = {
-                let _t = Timer::new(&mut rec, "TransportTask:write_resp");
+            let rv = rec.time_it("TransportTask::write_resp", &mut || {
                 transport.write_resp(&resp)
-            };
+            });
             if !rv.is_ok() {
                 println!("Failed to write response :(");
             }
