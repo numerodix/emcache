@@ -4,6 +4,7 @@ import time
 from pyemc.abstractions.task_api import Task
 from pyemc.abstractions.task_api import Tasklet
 from pyemc.util import generate_random_data
+from pyemc.util import generate_random_data_prng
 from pyemc.util import generate_random_key
 from pyemc.util import generate_random_key_uuid
 from pyemc.util import insert_number_commas

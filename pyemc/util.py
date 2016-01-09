@@ -10,6 +10,18 @@ def generate_random_data(length_from, length_to=None):
 
     return os.urandom(length)
 
+def generate_random_data_prng(length_from, length_to=None):
+    length = length_from
+    if length_to is not None:
+        length = random.randint(length_from, length_to)
+
+    def get(length):
+        for _ in xrange(length):
+            yield random.getrandbits(8)
+
+    num = bytearray(get(length))
+    return num
+
 def generate_random_key(length):
     data = ''
     while len(data) < length:
@@ -75,5 +87,6 @@ if __name__ == '__main__':
               ))
 
     gen(100000, 100, generate_random_data, 'byte strings')
+    gen(100000, 100, generate_random_data_prng, 'byte strings')
     gen(10000, 100, generate_random_key, 'alphanum strings')
     gen(10000, 100, generate_random_key_uuid, 'uuid strings')
