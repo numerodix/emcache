@@ -13,7 +13,7 @@
 ## Parameters
 
     delimiter: String - What separates words. Space in our case.
-    sloppy_delimiter: bool - Allows multiple spaces between tokens
+    sloppy_delimiter: bool - Allows multiple spaces between tokens (and start/end of line)
 
 ## Modes
 
