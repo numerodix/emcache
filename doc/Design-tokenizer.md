@@ -14,34 +14,34 @@
 
     set_line_mode() -> ()
 
-allows reading words until the end of the line, then fails
+Allows reading words until the end of the line, then starts returning errors.
 
     set_byte_mode() -> ()
 
-disallows reading words, only allows reading bytes
+Disallows reading words, only allows reading bytes.
 
 ## Reading bytes
 
     read_bytes_exact(len: u64) -> Vec<u8>
 
-for payloads (length prefixed)
+For reading payloads (length prefixed).
 
     read_line_terminator() -> Result<()>
 
-curried version of read_bytes_exact
+Curried version of read_bytes_exact.
 
 ## Reading words
 
     read_word_as::<T>() -> Result<T>
 
-for reading keywords, keys, int fields
+For reading keywords, keys, int fields.
 
 ## Lookahead
 
     next_word_is_type::<T>() -> Result<T>
 
-match against known type of value, return value if type matches
+Match against known type of value, return the value if the type matches.
 
     next_word_is_value::<T>(value: T) -> bool
 
-match against known value (for keywords like noreply)
+Match against known value (for keywords like noreply).
