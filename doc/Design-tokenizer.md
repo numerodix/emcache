@@ -26,6 +26,10 @@ disallows reading words, only allows reading bytes
 
 for payloads (length prefixed)
 
+    read_line_terminator() -> Result<()>
+
+curried version of read_bytes_exact
+
 ## Reading words
 
     read_word_as::<T> -> Result<T>
