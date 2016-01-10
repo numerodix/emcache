@@ -32,13 +32,13 @@ curried version of read_bytes_exact
 
 ## Reading words
 
-    read_word_as::<T> -> Result<T>
+    read_word_as::<T>() -> Result<T>
 
 for reading keywords, keys, int fields
 
 ## Lookahead
 
-    next_word_is_type::<T> -> Result<T>
+    next_word_is_type::<T>() -> Result<T>
 
 match against known type of value, return value if type matches
 
