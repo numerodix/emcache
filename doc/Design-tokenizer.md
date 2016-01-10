@@ -9,7 +9,6 @@
 
 # Desired
 
-
 ## Parameters
 
     delimiter: String - What separates words. Space in our case.
@@ -40,6 +39,14 @@ Curried version of read_bytes_exact.
     read_word_as::<T>() -> Result<T>
 
 For reading keywords, keys, int fields.
+
+    try_read_word_as_type::<T>() -> Result<Option<T>>
+
+Combo of `next_word_is_type` + `read_word_as`.
+
+    try_read_word_as_value::<T>(value: T) -> bool
+
+Combo of `next_word_is_value` + `read_word_as`.
 
 ## Lookahead
 
