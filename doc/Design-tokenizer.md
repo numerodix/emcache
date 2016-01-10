@@ -32,7 +32,7 @@ For reading payloads (length prefixed).
 
     read_line_terminator() -> Result<()>
 
-Curried version of read_bytes_exact.
+Curried version of `read_bytes_exact`.
 
 ## Reading words
 
