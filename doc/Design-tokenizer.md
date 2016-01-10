@@ -10,6 +10,11 @@
 # Desired
 
 
+## Parameters
+
+    delimiter: String - What separates words. Space in our case.
+    sloppy_delimiter: bool - Allows multiple spaces between tokens
+
 ## Modes
 
     set_line_mode() -> ()
