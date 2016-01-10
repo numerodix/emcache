@@ -42,6 +42,6 @@ for reading keywords, keys, int fields
 
 match against known type of value, return value if type matches
 
-    next_word_is_value::<T> -> bool
+    next_word_is_value::<T>(value: T) -> bool
 
 match against known value (for keywords like noreply)
