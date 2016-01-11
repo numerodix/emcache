@@ -2,6 +2,7 @@
 pub mod conversions;
 pub mod errors;
 pub mod stats;
+pub mod tokenizer;
 pub mod transport;
 pub mod typedefs;
 
