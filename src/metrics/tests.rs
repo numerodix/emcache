@@ -127,7 +127,7 @@ fn test_timer_correct() {
     let metrics = met_rx.recv().unwrap();
     // verify that the timing is correct
     let dur = metrics.first().get_timing().duration;
-    assert!(eq_f64(0.25, dur, 0.01));
+    assert!(eq_f64(0.25, dur, 0.03));
 }
 
 // this is a slow test that relies on sleeps
