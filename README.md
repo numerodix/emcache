@@ -1,6 +1,7 @@
 # emcache
 
 [![Build Status](https://travis-ci.org/numerodix/emcache.svg?branch=master)](https://travis-ci.org/numerodix/emcache)
+[![Coverage Status](https://coveralls.io/repos/numerodix/emcache/badge.svg?branch=coverage)](https://coveralls.io/r/numerodix/emcache?branch=coverage)
 
 An implementation of memcached in Rust.
 
