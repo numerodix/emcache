@@ -58,27 +58,34 @@ pub fn from_cache_err(err: &CacheError) -> Resp {
 }
 
 
-#[test]
-fn test_bytes_to_u64() {
-    // whitespace
-    assert_eq!(None, bytes_to_u64(&vec![b' ', b'2']));
+#[cfg(test)]
+mod tests {
+    use super::bytes_to_u64;
+    use super::u64_to_bytes;
 
-    // alpha
-    assert_eq!(None, bytes_to_u64(&vec![b'0', b'x', b'2']));
 
-    // negative
-    assert_eq!(None, bytes_to_u64(&vec![b'-', b'2']));
+    #[test]
+    fn test_bytes_to_u64() {
+        // whitespace
+        assert_eq!(None, bytes_to_u64(&vec![b' ', b'2']));
 
-    // too long for u64
-    assert_eq!(None, bytes_to_u64(&vec![b'1'; 255]));
+        // alpha
+        assert_eq!(None, bytes_to_u64(&vec![b'0', b'x', b'2']));
 
-    // ok
-    assert_eq!(12, bytes_to_u64(&vec![b'1', b'2']).unwrap());
-}
+        // negative
+        assert_eq!(None, bytes_to_u64(&vec![b'-', b'2']));
 
-#[test]
-fn test_u64_to_bytes() {
-    // any u64 is representable as bytes so there are no boundary conditions to
-    // check
-    assert_eq!(vec![b'1', b'2'], u64_to_bytes(&12));
+        // too long for u64
+        assert_eq!(None, bytes_to_u64(&vec![b'1'; 255]));
+
+        // ok
+        assert_eq!(12, bytes_to_u64(&vec![b'1', b'2']).unwrap());
+    }
+
+    #[test]
+    fn test_u64_to_bytes() {
+        // any u64 is representable as bytes so there are no boundary conditions to
+        // check
+        assert_eq!(vec![b'1', b'2'], u64_to_bytes(&12));
+    }
 }
