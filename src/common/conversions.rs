@@ -11,6 +11,7 @@ pub fn string_to_str<'a>(st: &'a String) -> &'a str {
 mod tests {
     use super::string_to_str;
 
+
     #[test]
     fn test_string_to_str() {
         let st = "abc".to_string();
