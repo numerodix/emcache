@@ -110,74 +110,83 @@ impl Write for TestStream {
 }
 
 
-#[test]
-fn test_stream_read_whole() {
-    let mut ts = TestStream::new(vec![1, 2, 3]);
+#[cfg(test)]
+mod tests {
+    use std::io::Read;
+    use std::io::Write;
 
-    let mut buf = [0; 4];
-    let read_cnt = ts.read(&mut buf).unwrap();
-    assert_eq!(buf, [1, 2, 3, 0]);
-    assert_eq!(read_cnt, 3);
-    assert_eq!(ts.incoming, [1, 2, 3]);
-    assert_eq!(ts.incoming_cursor, 3);
-}
+    use super::TestStream;
 
-#[test]
-fn test_stream_read_incremental() {
-    let mut ts = TestStream::new(vec![1, 2, 3]);
 
-    // Read once
-    let mut buf = [0; 2];
-    let read_cnt = ts.read(&mut buf).unwrap();
-    assert_eq!(read_cnt, 2);
-    assert_eq!(buf, [1, 2]);
-    assert_eq!(ts.incoming, [1, 2, 3]);
-    assert_eq!(ts.incoming_cursor, 2);
+    #[test]
+    fn test_stream_read_whole() {
+        let mut ts = TestStream::new(vec![1, 2, 3]);
 
-    // Read once more
-    let mut buf = [0; 2];
-    let read_cnt = ts.read(&mut buf).unwrap();
-    assert_eq!(read_cnt, 1);
-    assert_eq!(buf, [3, 0]);
-    assert_eq!(ts.incoming, [1, 2, 3]);
-    assert_eq!(ts.incoming_cursor, 3);
-}
+        let mut buf = [0; 4];
+        let read_cnt = ts.read(&mut buf).unwrap();
+        assert_eq!(buf, [1, 2, 3, 0]);
+        assert_eq!(read_cnt, 3);
+        assert_eq!(ts.incoming, [1, 2, 3]);
+        assert_eq!(ts.incoming_cursor, 3);
+    }
 
-#[test]
-fn test_stream_read_repeating() {
-    let mut ts = TestStream::new(vec![]);
-    ts.set_incoming_rep(vec![1, 2, 3]);
+    #[test]
+    fn test_stream_read_incremental() {
+        let mut ts = TestStream::new(vec![1, 2, 3]);
 
-    // Read once
-    let mut buf = [0; 2];
-    let read_cnt = ts.read(&mut buf).unwrap();
-    assert_eq!(read_cnt, 2);
-    assert_eq!(buf, [1, 2]);
-    assert_eq!(ts.incoming_rep, [1, 2, 3]);
-    assert_eq!(ts.incoming_rep_cursor, 2);
+        // Read once
+        let mut buf = [0; 2];
+        let read_cnt = ts.read(&mut buf).unwrap();
+        assert_eq!(read_cnt, 2);
+        assert_eq!(buf, [1, 2]);
+        assert_eq!(ts.incoming, [1, 2, 3]);
+        assert_eq!(ts.incoming_cursor, 2);
 
-    // Read once more
-    let mut buf = [0; 5];
-    let read_cnt = ts.read(&mut buf).unwrap();
-    assert_eq!(read_cnt, 5);
-    assert_eq!(buf, [3, 1, 2, 3, 1]);
-    assert_eq!(ts.incoming_rep, [1, 2, 3]);
-    assert_eq!(ts.incoming_rep_cursor, 1);
-}
+        // Read once more
+        let mut buf = [0; 2];
+        let read_cnt = ts.read(&mut buf).unwrap();
+        assert_eq!(read_cnt, 1);
+        assert_eq!(buf, [3, 0]);
+        assert_eq!(ts.incoming, [1, 2, 3]);
+        assert_eq!(ts.incoming_cursor, 3);
+    }
 
-#[test]
-fn test_stream_write() {
-    let mut ts = TestStream::new(vec![]);
+    #[test]
+    fn test_stream_read_repeating() {
+        let mut ts = TestStream::new(vec![]);
+        ts.set_incoming_rep(vec![1, 2, 3]);
 
-    // Write once
-    let buf = [1, 2];
-    let write_cnt = ts.write(&buf).unwrap();
-    assert_eq!(write_cnt, 2);
-    assert_eq!(ts.outgoing, [1, 2]);
+        // Read once
+        let mut buf = [0; 2];
+        let read_cnt = ts.read(&mut buf).unwrap();
+        assert_eq!(read_cnt, 2);
+        assert_eq!(buf, [1, 2]);
+        assert_eq!(ts.incoming_rep, [1, 2, 3]);
+        assert_eq!(ts.incoming_rep_cursor, 2);
 
-    // Write once more
-    let buf = [3, 4, 5];
-    let write_cnt = ts.write(&buf).unwrap();
-    assert_eq!(write_cnt, 3);
-    assert_eq!(ts.outgoing, [1, 2, 3, 4, 5]);
+        // Read once more
+        let mut buf = [0; 5];
+        let read_cnt = ts.read(&mut buf).unwrap();
+        assert_eq!(read_cnt, 5);
+        assert_eq!(buf, [3, 1, 2, 3, 1]);
+        assert_eq!(ts.incoming_rep, [1, 2, 3]);
+        assert_eq!(ts.incoming_rep_cursor, 1);
+    }
+
+    #[test]
+    fn test_stream_write() {
+        let mut ts = TestStream::new(vec![]);
+
+        // Write once
+        let buf = [1, 2];
+        let write_cnt = ts.write(&buf).unwrap();
+        assert_eq!(write_cnt, 2);
+        assert_eq!(ts.outgoing, [1, 2]);
+
+        // Write once more
+        let buf = [3, 4, 5];
+        let write_cnt = ts.write(&buf).unwrap();
+        assert_eq!(write_cnt, 3);
+        assert_eq!(ts.outgoing, [1, 2, 3, 4, 5]);
+    }
 }
