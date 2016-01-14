@@ -60,7 +60,11 @@ pub fn from_cache_err(err: &CacheError) -> Resp {
 
 #[cfg(test)]
 mod tests {
+    use platform::time::time_now;
+    use testlib::cmp::eq_f64;
+
     use super::bytes_to_u64;
+    use super::convert_exptime;
     use super::u64_to_bytes;
 
 
@@ -87,5 +91,20 @@ mod tests {
         // any u64 is representable as bytes so there are no boundary conditions to
         // check
         assert_eq!(vec![b'1', b'2'], u64_to_bytes(&12));
+    }
+
+    #[test]
+    fn test_convert_exptime() {
+        assert_eq!(None, convert_exptime(0));
+
+        // big enough to be a timestamp
+        let val = (60 * 60 * 24 * 30) + 1;
+        assert_eq!(Some(val as f64), convert_exptime(val));
+
+        // not big enough to be a timestamp - it's a relative time
+        let val = 5;
+        let expected = time_now() + val as f64;
+        let actual = convert_exptime(val).unwrap();
+        assert!(eq_f64(expected, actual, 0.01));
     }
 }
