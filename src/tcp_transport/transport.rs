@@ -228,6 +228,14 @@ impl<T: Read + Write> TcpTransport<T> {
     // Parse individual commands
 
     pub fn parse_cmd_delete(&mut self) -> TcpTransportResult<Cmd> {
+/*
+        // NEW
+        let key_str = try!(self.stream.read_word_as::<String>());
+        let noreply_flag = try!(self.stream.next_word_is_value("noreply"));
+        try!(self.stream.read_line_terminator());
+*/
+
+
         // parse the key
         let key_str = {
             let (key, end_of_line) = try!(self.read_word_in_line());
@@ -253,6 +261,13 @@ impl<T: Read + Write> TcpTransport<T> {
     }
 
     pub fn parse_cmd_flush_all(&mut self) -> TcpTransportResult<Cmd> {
+/*
+        // NEW
+        let exptime = self.stream.read_word_as_number::<u32>().or(None);
+        let noreply = try!(self.stream.next_word_is_value("noreply"));
+        try!(self.stream.read_line_terminator());
+*/
+
         // consume the line
         // try!(self.read_line_as_words());
 
@@ -287,6 +302,16 @@ impl<T: Read + Write> TcpTransport<T> {
     pub fn parse_cmd_inc(&mut self,
                          instr: IncInstr)
                          -> TcpTransportResult<Cmd> {
+/*
+        // NEW
+        let key_str = try!(self.stream.read_word_as::<String>());
+        let delta_num = try!(self.stream.read_word_as::<u64>());
+        let noreply_flag = try!(self.stream.next_word_is_value("noreply"));
+        try!(self.stream.read_line_terminator());
+*/
+
+
+
         // parse the key
         let key_str = {
             let (key, end_of_line) = try!(self.read_word_in_line());
@@ -324,6 +349,25 @@ impl<T: Read + Write> TcpTransport<T> {
     pub fn parse_cmd_set(&mut self,
                          instr: SetInstr)
                          -> TcpTransportResult<Cmd> {
+/*
+        // NEW
+        let key_str = try!(self.stream.read_word_as::<String>());
+        let flags_num = try!(self.stream.read_word_as::<u16>());
+        let exptime_num = try!(self.stream.read_word_as::<u32>());
+        let bytelen_num = try!(self.stream.read_word_as::<u64>());
+        if (instr == SetInstr::Cas) {
+            let cas_unique = try!(self.stream.read_word_as::<u64>());
+        }
+        let noreply_flag = try!(self.stream.next_word_is_value("noreply"));
+        try!(self.stream.read_line_terminator());
+
+        // newline
+        let value = try!(self.stream.read_bytes_exact(bytelen_num));
+        try!(self.stream.read_line_terminator());
+*/
+
+
+
         // parse the key
         let key_str = {
             let (key, end_of_line) = try!(self.read_word_in_line());
@@ -401,6 +445,15 @@ impl<T: Read + Write> TcpTransport<T> {
     }
 
     pub fn parse_cmd_touch(&mut self) -> TcpTransportResult<Cmd> {
+/*
+        // NEW
+        let key_str = try!(self.stream.read_word_as::<String>());
+        let exptime_num = try!(self.stream.read_word_as::<u32>());
+        let noreply_flag = try!(self.stream.next_word_is_value("noreply"));
+        try!(self.stream.read_line_terminator());
+*/
+
+
         // parse the key
         let key_str = {
             let (key, end_of_line) = try!(self.read_word_in_line());
@@ -437,6 +490,12 @@ impl<T: Read + Write> TcpTransport<T> {
     // High level functions
 
     pub fn read_cmd(&mut self) -> TcpTransportResult<Cmd> {
+/*
+        // NEW
+        try!(self.stream.set_token_mode());
+        let keyword_str = try!(self.stream.read_word_as::<String>());
+*/
+
         let keyword_str = {
             let (word, _) = try!(self.read_word_in_line());
             try!(as_string(word))

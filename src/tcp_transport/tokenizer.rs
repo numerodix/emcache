@@ -1,20 +1,26 @@
 use std::io::Read;
 use std::io::Write;
+use std::mem;
+use std::str::FromStr;
 
+use super::conversions::as_number;
+use super::conversions::as_string;
 use super::errors::TcpTransportError;
 use super::typedefs::TcpTransportResult;
 
 
-enum ReadingMode {
-    LineMode,
-    BytesMode,
+#[derive(Debug, PartialEq)]
+pub enum Token {
+    Bytes(Vec<u8>),
+    LineTerminator(Vec<u8>),
+    Space(u8),
+    Word(Vec<u8>),
 }
 
 
 pub struct Tokenizer<T: Read + Write> {
     stream: T,
-
-    mode: ReadingMode,
+    token_buffer: Option<Token>,
 
     bytes_read: u64,
 }
@@ -23,14 +29,15 @@ impl<T: Read + Write> Tokenizer<T> {
     pub fn new(stream: T) -> Tokenizer<T> {
         Tokenizer { 
             stream: stream,
-            mode: ReadingMode::BytesMode,
+            token_buffer: None,
             bytes_read: 0,
         }
     }
 
+
     pub fn read_bytes_exact(&mut self,
                             len: u64)
-                            -> TcpTransportResult<Vec<u8>> {
+                            -> TcpTransportResult<Token> {
         let mut bytes = vec![0; len as usize];
         let mut cursor: usize = 0;
         let mut iteration = 0;
@@ -79,13 +86,12 @@ impl<T: Read + Write> Tokenizer<T> {
             bytes.truncate(cursor);
         }
 
-        Ok(bytes)
+        Ok(Token::Bytes(bytes))
     }
 
-    pub fn read_word(&mut self) -> TcpTransportResult<(Vec<u8>, bool)> {
+    pub fn read_token(&mut self) -> TcpTransportResult<Token> {
         let mut word = vec![];
         let mut byte = [0; 1];
-        let mut end_of_line = false;
 
         loop {
             // Read a byte
@@ -101,14 +107,7 @@ impl<T: Read + Write> Tokenizer<T> {
 
             if byte[0] == b' ' {
                 // We found a space
-
-                if word.is_empty() {
-                    // If it's one or more leading space we ignore it
-                    continue;
-                }
-
-                // All good, we've found the end of the word
-                break;
+                return Ok(Token::Space(byte[0]));
 
             } else if byte[0] == b'\r' {
                 // We found \r, we think it's the end of the line
@@ -131,8 +130,7 @@ impl<T: Read + Write> Tokenizer<T> {
 
                 // Else it's all good, we've read the whole line including the
                 // terminator
-                end_of_line = true;
-                break;
+                return Ok(Token::LineTerminator(vec![b'\r', b'\n']));
 
             } else {
                 // It's not a special char, append to our word
@@ -140,7 +138,127 @@ impl<T: Read + Write> Tokenizer<T> {
             }
         }
 
-        Ok((word, end_of_line))
+        Ok(Token::Word(word))
     }
 
+
+
+    pub fn maybe_fill_token_buffer(&mut self) -> TcpTransportResult<()> {
+        if self.token_buffer.is_none() {
+            self.token_buffer = Some(try!(self.read_token()));
+        }
+
+        Ok(())
+    }
+
+    pub fn flush_token_buffer(&mut self) -> TcpTransportResult<()> {
+        self.token_buffer = None;
+
+        Ok(())
+    }
+
+    pub fn get_next_token(&mut self) -> TcpTransportResult<Token> {
+        try!(self.maybe_fill_token_buffer());
+
+        // Release the token in the buffer so we can return it
+        let token = mem::replace(&mut self.token_buffer, None);
+
+        Ok(token.unwrap())
+    }
+
+    pub fn peek_next_token(&mut self) -> TcpTransportResult<&Token> {
+        try!(self.maybe_fill_token_buffer());
+
+        match self.token_buffer {
+            Some(ref token) => Ok(token),
+            _ => Err(TcpTransportError::StreamReadError),
+        }
+    }
+
+
+
+    pub fn read_word_as_number<N: FromStr>(&mut self) -> TcpTransportResult<N> {
+        let rv = {
+            let token = try!(self.peek_next_token());
+            match token {
+                &Token::Word(ref word) => {
+                    as_number(word.clone())
+                }
+                _ => Err(TcpTransportError::WrongToken)
+            }
+        };
+
+        match rv {
+            Ok(num) => {
+                // We have a successful value to return, so now empty the buffer
+                try!(self.flush_token_buffer());
+
+                Ok(num)
+            }
+            Err(e) => Err(e),
+        }
+    }
+
+    pub fn read_word_as_string(&mut self) -> TcpTransportResult<String> {
+        let rv = {
+            let token = try!(self.peek_next_token());
+            match token {
+                &Token::Word(ref word) => {
+                    as_string(word.clone())
+                }
+                _ => Err(TcpTransportError::WrongToken)
+            }
+        };
+
+        match rv {
+            Ok(st) => {
+                // We have a successful value to return, so now empty the buffer
+                try!(self.flush_token_buffer());
+
+                Ok(st)
+            }
+            Err(e) => Err(e),
+        }
+    }
+
+    pub fn next_word_is_string(&mut self, value: &str) -> TcpTransportResult<bool> {
+        let rv = {
+            let token = try!(self.peek_next_token());
+            match token {
+                &Token::Word(ref word) => {
+                    as_string(word.clone())
+                }
+                _ => Err(TcpTransportError::WrongToken)
+            }
+        };
+
+        match rv {
+            Ok(st) => {
+                if value != st {
+                    return Err(TcpTransportError::CommandParseError);
+                }
+
+                // We have a successful value to return, so now empty the buffer
+                try!(self.flush_token_buffer());
+
+                Ok(true)
+            }
+            Err(e) => Err(e),
+        }
+    }
+
+
+    pub fn read_line_terminator(&mut self) -> TcpTransportResult<Token> {
+        let token = try!(self.read_bytes_exact(2));
+
+        match token {
+            Token::Bytes(bytes) => match &bytes[..] {
+                b"\r\n" => {
+                    Ok(Token::LineTerminator(vec![b'\r', b'\n']))
+                }
+                _ => Err(TcpTransportError::StreamReadError),
+            },
+            _ => Err(TcpTransportError::WrongToken),
+        }
+    }
 }
