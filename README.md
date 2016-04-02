@@ -15,7 +15,7 @@ An implementation of memcached in Rust.
 * Fairly good test coverage.
 * No config file, logging or daemonization yet.
 * [Performance](pyemc/ABOUT.md) is generally within 0.5-1x of memcached.
-* Currently (Dec 2015) only builds against rust-nightly due to linked-hash-map dependency.
+* Currently (Apr 2016) only builds against rust-nightly due to dependency on unstable "test" crate for benchmarking.
 
 
 ## Development
